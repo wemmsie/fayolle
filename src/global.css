@@ -40,7 +40,7 @@
 }
 
 body {
-    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-pink text-text;
+    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-pink text-text  overflow-x-hidden;
 }
 
 h1 {
