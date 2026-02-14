@@ -242,211 +242,158 @@ export function RsvpForm() {
           animation: fadeIn 0.5s ease-in forwards;
         }
       `}</style>
-      
+
       {isSubmitted ? (
-        <div className="text-center py-10 bg-white rounded-lg px-8 md:p-20">
-          <h1 className='mb-10 max-w-70 mx-auto'>
-            Heck yeah!
-          </h1>
-          <p className="mb-4">
-            We're so excited to celebrate with you.
-          </p>
+        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+          <h1 className='mb-10 max-w-70 mx-auto'>Heck yeah!</h1>
+          <p className='mb-4'>We're so excited to celebrate with you.</p>
           <p>
-            If you have any questions or need to change or adjust your RSVP, no hard feelings. Just shoot us an email at <a href="mailto:wedding@fayolle.com" className="text-primary transition-all hover:underline">wedding@fayolle.com</a>
+            If you have any questions or need to change or adjust your RSVP, no hard feelings. Just shoot us an email at{' '}
+            <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
+              wedding@fayolle.com
+            </a>
           </p>
         </div>
       ) : (
-      <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
-        <h1 className='text-center mb-10 pt-15 max-w-70 mx-auto'>
-          Want to RSVP early?
-        </h1>
-        <p className='text-base!'>I mean okay but no rush or anything</p>
-        <div className="mb-6">
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            placeholder="Your name"
-          />
-        </div>
-        
-        <div className="mb-6">
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            placeholder="your.email@example.com"
-          />
-        </div>
-
-        <div className="mb-6">
-          <label>
-            Plus one?
-          </label>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('plusOne') ? 'flash-invalid' : ''}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-              <input
-                type="radio"
-                name="plusOne"
-                value="yes"
-                checked={formData.plusOne === 'yes'}
-                onChange={handleChange}
-              />
-              Yes
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-              <input
-                type="radio"
-                name="plusOne"
-                value="no"
-                checked={formData.plusOne === 'no'}
-                onChange={handleChange}
-              />
-              No
-            </label>
+        <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
+          <h1 className='text-center mb-10 pt-15 max-w-70 mx-auto'>Want to RSVP early?</h1>
+          <p className='text-base!'>I mean okay but no rush or anything</p>
+          <div className='mb-6'>
+            <input type='text' id='name' name='name' value={formData.name} onChange={handleChange} required placeholder='Your name' />
           </div>
-        </div>
 
-        {fieldState.plusOneFields.visible && (formData.plusOne === 'yes' || fieldState.plusOneFields.animating) && (
-          <div className={fieldState.plusOneFields.animating ? 'animate-out' : 'animate-in'}>
-            <div className="mb-6">
-              <label>
-                Bringing the kids?
-              </label>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('bringingKids') ? 'flash-invalid' : ''}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                  <input
-                    type="radio"
-                    name="bringingKids"
-                    value="yes"
-                    checked={formData.bringingKids === 'yes'}
-                    onChange={handleChange}
-                  />
-                  Yes
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                  <input
-                    type="radio"
-                    name="bringingKids"
-                    value="no"
-                    checked={formData.bringingKids === 'no'}
-                    onChange={handleChange}
-                  />
-                  No
-                </label>
-              </div>
-            </div>
-
-            {fieldState.kidsField.visible && (formData.bringingKids === 'yes' || fieldState.kidsField.animating) && (
-              <div className={`mb-6 ${fieldState.kidsField.animating ? 'animate-out' : 'animate-in'}`}>
-                <label htmlFor="kidCount">
-                  How many kids?
-                </label>
-                <input
-                  type="number"
-                  id="kidCount"
-                  name="kidCount"
-                  value={formData.kidCount}
-                  onChange={handleChange}
-                  required
-                  min="1"
-                  max="10"
-                  placeholder="Number of kids"
-                />
-              </div>
-            )}
+          <div className='mb-6'>
+            <input
+              type='email'
+              id='email'
+              name='email'
+              value={formData.email}
+              onChange={handleChange}
+              required
+              placeholder='your.email@example.com'
+            />
           </div>
-        )}
 
-        {formData.plusOne !== '' && (
-          <div className="mb-6 animate-in">
-            <label>
-              {formData.plusOne === 'yes' 
-                ? 'Any dietary restrictions in your party?' 
-                : 'Do you have any dietary restrictions?'}
-            </label>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}>
+          <div className='mb-6'>
+            <label>Plus one?</label>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('plusOne') ? 'flash-invalid' : ''}>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                <input
-                  type="radio"
-                  name="hasDietary"
-                  value="yes"
-                  checked={formData.hasDietary === 'yes'}
-                  onChange={handleChange}
-                />
+                <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
                 Yes
               </label>
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                <input
-                  type="radio"
-                  name="hasDietary"
-                  value="no"
-                  checked={formData.hasDietary === 'no'}
-                  onChange={handleChange}
-                />
+                <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
                 No
               </label>
             </div>
           </div>
-        )}
 
-        {fieldState.dietaryFields.visible && (formData.hasDietary === 'yes' || fieldState.dietaryFields.animating) && (
-          <div className={fieldState.dietaryFields.animating ? 'animate-out' : 'animate-in'}>
-            {getPartySize() > 1 && (
-              <div className="mb-6">
-                <label htmlFor="dietaryCount">
-                  How many people in your party have dietary restrictions?
+          {fieldState.plusOneFields.visible && (formData.plusOne === 'yes' || fieldState.plusOneFields.animating) && (
+            <div className={fieldState.plusOneFields.animating ? 'animate-out' : 'animate-in'}>
+              <div className='mb-6'>
+                <label>Bringing the kids?</label>
+                <div
+                  style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}
+                  className={invalidFields.includes('bringingKids') ? 'flash-invalid' : ''}
+                >
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                    <input type='radio' name='bringingKids' value='yes' checked={formData.bringingKids === 'yes'} onChange={handleChange} />
+                    Yes
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                    <input type='radio' name='bringingKids' value='no' checked={formData.bringingKids === 'no'} onChange={handleChange} />
+                    No
+                  </label>
+                </div>
+              </div>
+
+              {fieldState.kidsField.visible && (formData.bringingKids === 'yes' || fieldState.kidsField.animating) && (
+                <div className={`mb-6 ${fieldState.kidsField.animating ? 'animate-out' : 'animate-in'}`}>
+                  <label htmlFor='kidCount'>How many kids?</label>
+                  <input
+                    type='number'
+                    id='kidCount'
+                    name='kidCount'
+                    value={formData.kidCount}
+                    onChange={handleChange}
+                    required
+                    min='1'
+                    max='10'
+                    placeholder='Number of kids'
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {formData.plusOne !== '' && (
+            <div className='mb-6 animate-in'>
+              <label>{formData.plusOne === 'yes' ? 'Any dietary restrictions in your party?' : 'Do you have any dietary restrictions?'}</label>
+              <div
+                style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}
+                className={invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}
+              >
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                  <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
+                  Yes
                 </label>
-                <input
-                  type="number"
-                  id="dietaryCount"
-                  name="dietaryCount"
-                  value={formData.dietaryCount}
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                  <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
+                  No
+                </label>
+              </div>
+            </div>
+          )}
+
+          {fieldState.dietaryFields.visible && (formData.hasDietary === 'yes' || fieldState.dietaryFields.animating) && (
+            <div className={fieldState.dietaryFields.animating ? 'animate-out' : 'animate-in'}>
+              {getPartySize() > 1 && (
+                <div className='mb-6'>
+                  <label htmlFor='dietaryCount'>How many people in your party have dietary restrictions?</label>
+                  <input
+                    type='number'
+                    id='dietaryCount'
+                    name='dietaryCount'
+                    value={formData.dietaryCount}
+                    onChange={handleChange}
+                    required
+                    min='1'
+                    max={getPartySize()}
+                    placeholder='Number of people with restrictions'
+                  />
+                </div>
+              )}
+
+              <div className='mb-6'>
+                <textarea
+                  id='dietaryDetails'
+                  name='dietaryDetails'
+                  value={formData.dietaryDetails}
                   onChange={handleChange}
                   required
-                  min="1"
-                  max={getPartySize()}
-                  placeholder="Number of people with restrictions"
+                  rows='3'
+                  placeholder='Vegetarian, gluten free, nut allergy? Let us know!'
                 />
               </div>
-            )}
-
-            <div className="mb-6">
-              <textarea
-                id="dietaryDetails"
-                name="dietaryDetails"
-                value={formData.dietaryDetails}
-                onChange={handleChange}
-                required
-                rows="3"
-                placeholder="Vegetarian, gluten free, nut allergy? Let us know!"
-              />
             </div>
+          )}
+
+          <div className='mb-6'>
+            <textarea
+              id='message'
+              name='message'
+              value={formData.message}
+              onChange={handleChange}
+              rows='5'
+              placeholder='Any special requests or messages for us?'
+            />
           </div>
-        )}
-        
-        <div className="mb-6">
-          <textarea
-            id="message"
-            name="message"
-            value={formData.message}
-            onChange={handleChange}
-            rows="5"
-            placeholder="Any special requests or messages for us?"
-          />
-        </div>
-        
-        <button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Sending...' : "OH YEEEAH 🎉"}
-        </button>
-      </form>
+
+          <button type='submit' disabled={isSubmitting}>
+            {isSubmitting ? 'Sending...' : 'OH YEEEAH 🎉'}
+          </button>
+        </form>
       )}
     </>
-  )
+  );
 }

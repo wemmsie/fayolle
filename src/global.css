@@ -40,7 +40,7 @@
 }
 
 body {
-    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-pink text-text  overflow-x-hidden;
+    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-pink text-text;
 }
 
 h1 {
@@ -52,7 +52,7 @@ p {
 }
 
 section {
-    @apply py-20 px-4;
+    @apply py-15 md:py-18 px-4 overflow-x-clip;
 }
 
 @layer utilities {
@@ -91,7 +91,7 @@ input[type="email"],
 input[type="number"],
 select,
 textarea {
-    @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-sm md:text-lg;
+    @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-base md:text-lg;
 }
 
 input[type="text"]:focus,
