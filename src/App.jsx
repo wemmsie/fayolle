@@ -11,16 +11,16 @@ function App() {
     <div className='min-h-screen'>
       <hero
         id='hero'
-        className='relative h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center'
+        className='relative h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center overflow-x-hidden'
         style={{ backgroundImage: `url(${image.sparklers})` }}
       >
-        <div className='relative z-10'>
-          <img src={image.bothmarried} alt="We're Getting Married" />
+        <div className='relative z-10 flex items-center justify-center'>
+          <img src={image.bothmarried} alt="We're Getting Married" className='max-h-[70vh] w-[110%] md:w-full max-w-none mb-40 md:mb-0' />
         </div>
         <div className='absolute inset-0 bg-text opacity-50'></div>
-        <div className='absolute bottom-1/4 left-1/2 -translate-x-1/2 z-10'>
+        <div className='absolute bottom-1/4 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
           <svg
-            className='w-10 h-10 md:w-18 md:h-18 animate-bounce stroke-2 md:stroke-2.5 stroke-white'
+            className='w-12 h-12 md:w-18 md:h-18 animate-bounce stroke-2 md:stroke-2.5 stroke-white'
             viewBox='0 0 24 24'
             fill='none'
             strokeLinecap='round'
