@@ -18,7 +18,7 @@ function App() {
           <img src={image.bothmarried} alt="We're Getting Married" />
         </div>
         <div className='absolute inset-0 bg-text opacity-50'></div>
-        <div className='absolute bottom-20 left-1/2 -translate-x-1/2 z-10'>
+        <div className='absolute bottom-1/4 left-1/2 -translate-x-1/2 z-10'>
           <svg
             className='w-10 h-10 md:w-18 md:h-18 animate-bounce stroke-2 md:stroke-2.5 stroke-white'
             viewBox='0 0 24 24'
