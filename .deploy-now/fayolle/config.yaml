@@ -1,0 +1,16 @@
+# deployment configuration for fayolle
+# https://docs.ionos.space/docs/deployment-configuration/
+
+distFolder: dist
+
+bootstrap:
+  excludes:
+    - .git
+    - .github
+    - .deploy-now
+
+recurring:
+  excludes:
+    - .git
+    - .github
+    - .deploy-now
