@@ -71,6 +71,9 @@ section {
 .disco {
   @apply absolute w-60 top-0 left-1/2 -translate-x-1/2 -translate-y-40;
 }
+.letter {
+  @apply absolute w-40 top-0 left-1/2 -translate-x-1/2 -translate-y-15;
+}
 
 /* Form Styles */
 
@@ -91,7 +94,11 @@ input[type="email"],
 input[type="number"],
 select,
 textarea {
-    @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-base md:text-lg;
+    @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-base md:text-lg text-center bg-transparent focus:bg-transparent;
+}
+
+textarea {
+  @apply text-left;
 }
 
 input[type="text"]:focus,
@@ -166,4 +173,107 @@ button[type="submit"]:hover {
   60% {
     transform: translateY(-15px);
   }
+}
+
+/* RSVP Form Animations */
+@keyframes expandIn {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 2000px;
+    opacity: 1;
+  }
+}
+
+@keyframes collapseOut {
+  from {
+    max-height: 2000px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes flashRed {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0.4;
+  }
+}
+
+.flash-invalid label:has(input[type="radio"])::before {
+  border-color: #ef4444 !important;
+  animation: flashRed 0.6s ease-in-out;
+}
+
+.animate-in {
+  animation: expandIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+}
+
+.animate-out {
+  animation: collapseOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  overflow: hidden;
+}
+
+.fade-out {
+  animation: fadeOut 0.4s ease-out forwards;
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in forwards;
+}
+
+.address-form input {
+  @apply text-left;
+}
+
+.sub-form {
+  @apply bg-blue-50 p-6 rounded-lg mb-10 mt-5;
+}
+
+.suggestion-button {
+  @apply inline-block px-6 py-3 m-2 rounded-full bg-primary text-white font-medium text-lg border-2 border-primary transition-all transform
+  cursor-pointer;
+}
+
+.suggestion-button:hover {
+  @apply bg-primary text-white border-primary -translate-y-0.5;
+}
+
+/* State/Address Autocomplete Suggestions */
+.state-suggestions {
+  @apply absolute z-50 w-full bg-white border-2 border-primary/20 rounded-lg mt-2 max-h-48 overflow-y-auto shadow-lg;
+}
+
+.state-suggestion-item {
+  @apply px-4 py-3 cursor-pointer text-base md:text-lg font-routed tracking-wider transition-all;
+}
+
+.state-suggestion-item:hover {
+  @apply bg-primary/10;
 }

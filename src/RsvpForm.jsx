@@ -1,7 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import emailjs from '@emailjs/browser'
+import Fuse from 'fuse.js';
+import guestListRaw from './guests.csv?raw';
+
+// Guest list - loaded from guests.csv
+const guestList = guestListRaw.split('\n').filter((name) => name.trim() !== '');
 
 export function RsvpForm() {
+  // Name verification state
+  const [isVerified, setIsVerified] = useState(false);
+  const [nameInput, setNameInput] = useState('');
+  const [verifiedName, setVerifiedName] = useState('');
+  const [nameSuggestions, setNameSuggestions] = useState([]);
+  const [showNotOnList, setShowNotOnList] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,95 +24,136 @@ export function RsvpForm() {
     dietaryCount: '',
     dietaryDetails: '',
     message: '',
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [isFadingOut, setIsFadingOut] = useState(false)
-  const [invalidFields, setInvalidFields] = useState([])
-  
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const [invalidFields, setInvalidFields] = useState([]);
+
   // Track visibility and animation state for conditional fields
   const [fieldState, setFieldState] = useState({
     plusOneFields: { visible: false, animating: false },
     kidsField: { visible: false, animating: false },
     dietaryFields: { visible: false, animating: false },
-  })
-  
-  const prevValues = useRef({ plusOne: '', bringingKids: '', hasDietary: '' })
+  });
+
+  const prevValues = useRef({ plusOne: '', bringingKids: '', hasDietary: '' });
+
+  // Fuzzy search configuration
+  const fuse = useRef(
+    new Fuse(guestList, {
+      threshold: 0.4, // 0 = exact match, 1 = match anything
+      distance: 100,
+    }),
+  );
+
+  // Handle name verification
+  const handleNameCheck = (e) => {
+    e.preventDefault();
+    const trimmedName = nameInput.trim();
+
+    // Check for exact match (case-insensitive)
+    const exactMatch = guestList.find((guest) => guest.toLowerCase() === trimmedName.toLowerCase());
+
+    if (exactMatch) {
+      setVerifiedName(exactMatch);
+      setFormData((prev) => ({ ...prev, name: exactMatch }));
+      setIsVerified(true);
+      setNameSuggestions([]);
+      setShowNotOnList(false);
+      return;
+    }
+
+    // Try fuzzy matching
+    const results = fuse.current.search(trimmedName);
+
+    if (results.length > 0) {
+      // Show suggestions
+      setNameSuggestions(results.slice(0, 3).map((r) => r.item));
+      setShowNotOnList(false);
+    } else {
+      // No matches found
+      setNameSuggestions([]);
+      setShowNotOnList(true);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setVerifiedName(suggestion);
+    setFormData((prev) => ({ ...prev, name: suggestion }));
+    setIsVerified(true);
+    setNameSuggestions([]);
+    setShowNotOnList(false);
+  };
 
   // Map field names to their corresponding form data keys
   const fieldToDataKey = {
-    'plusOneFields': 'plusOne',
-    'kidsField': 'bringingKids',
-    'dietaryFields': 'hasDietary'
-  }
+    plusOneFields: 'plusOne',
+    kidsField: 'bringingKids',
+    dietaryFields: 'hasDietary',
+  };
 
   // Generic handler for conditional field visibility
   const handleFieldVisibility = (fieldName, condition, onClear) => {
-    const dataKey = fieldToDataKey[fieldName]
-    const prev = prevValues.current[dataKey]
-    
+    const dataKey = fieldToDataKey[fieldName];
+    const prev = prevValues.current[dataKey];
+
     if (condition === 'yes' && prev !== 'yes') {
-      setFieldState(s => ({ ...s, [fieldName]: { visible: true, animating: false } }))
+      setFieldState((s) => ({ ...s, [fieldName]: { visible: true, animating: false } }));
     } else if (condition === 'no' && prev === 'yes') {
-      setFieldState(s => ({ ...s, [fieldName]: { ...s[fieldName], animating: true } }))
+      setFieldState((s) => ({ ...s, [fieldName]: { ...s[fieldName], animating: true } }));
       setTimeout(() => {
-        setFieldState(s => ({ ...s, [fieldName]: { visible: false, animating: false } }))
-        onClear()
-      }, 500)
+        setFieldState((s) => ({ ...s, [fieldName]: { visible: false, animating: false } }));
+        onClear();
+      }, 500);
     }
-  }
+  };
 
   useEffect(() => {
-    handleFieldVisibility('plusOneFields', formData.plusOne, () => 
-      setFormData(prev => ({ ...prev, bringingKids: '', kidCount: '' }))
-    )
-    prevValues.current.plusOne = formData.plusOne
-  }, [formData.plusOne])
+    handleFieldVisibility('plusOneFields', formData.plusOne, () => setFormData((prev) => ({ ...prev, bringingKids: '', kidCount: '' })));
+    prevValues.current.plusOne = formData.plusOne;
+  }, [formData.plusOne]);
 
   useEffect(() => {
-    handleFieldVisibility('kidsField', formData.bringingKids, () => 
-      setFormData(prev => ({ ...prev, kidCount: '' }))
-    )
-    prevValues.current.bringingKids = formData.bringingKids
-  }, [formData.bringingKids])
+    handleFieldVisibility('kidsField', formData.bringingKids, () => setFormData((prev) => ({ ...prev, kidCount: '' })));
+    prevValues.current.bringingKids = formData.bringingKids;
+  }, [formData.bringingKids]);
 
   useEffect(() => {
-    handleFieldVisibility('dietaryFields', formData.hasDietary, () => 
-      setFormData(prev => ({ ...prev, dietaryCount: '', dietaryDetails: '' }))
-    )
-    prevValues.current.hasDietary = formData.hasDietary
-  }, [formData.hasDietary])
+    handleFieldVisibility('dietaryFields', formData.hasDietary, () => setFormData((prev) => ({ ...prev, dietaryCount: '', dietaryDetails: '' })));
+    prevValues.current.hasDietary = formData.hasDietary;
+  }, [formData.hasDietary]);
 
   // Calculate total party size
   const getPartySize = () => {
-    let size = 1 // The person filling out the form
-    if (formData.plusOne === 'yes') size += 1
+    let size = 1; // The person filling out the form
+    if (formData.plusOne === 'yes') size += 1;
     if (formData.bringingKids === 'yes' && formData.kidCount) {
-      size += parseInt(formData.kidCount) || 0
+      size += parseInt(formData.kidCount) || 0;
     }
-    return size
-  }
+    return size;
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     // Validate radio buttons (these will flash if not selected)
-    const invalid = []
-    if (!formData.plusOne) invalid.push('plusOne')
-    if (formData.plusOne === 'yes' && !formData.bringingKids) invalid.push('bringingKids')
-    if (!formData.hasDietary && formData.plusOne !== '') invalid.push('hasDietary')
-    
+    const invalid = [];
+    if (!formData.plusOne) invalid.push('plusOne');
+    if (formData.plusOne === 'yes' && !formData.bringingKids) invalid.push('bringingKids');
+    if (!formData.hasDietary && formData.plusOne !== '') invalid.push('hasDietary');
+
     if (invalid.length > 0) {
-      setInvalidFields(invalid)
-      return
+      setInvalidFields(invalid);
+      return;
     }
-    
-    setIsSubmitting(true)
+
+    setIsSubmitting(true);
 
     // EmailJS configuration
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID
-    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
     const templateParams = {
       to_email: 'emily@thisjones.com',
@@ -114,135 +167,68 @@ export function RsvpForm() {
       dietary_count: formData.dietaryCount || 'N/A',
       dietary_details: formData.dietaryDetails || 'None',
       message: formData.message,
-    }
+    };
 
-    emailjs.send(serviceId, templateId, templateParams, publicKey)
+    emailjs
+      .send(serviceId, templateId, templateParams, publicKey)
       .then((response) => {
-        console.log('SUCCESS!', response.status, response.text)
+        console.log('SUCCESS!', response.status, response.text);
         // Start fade out animation
-        setIsFadingOut(true)
-        
+        setIsFadingOut(true);
+
         // After fade out completes, show success message
         setTimeout(() => {
-          setIsSubmitted(true)
-          setIsFadingOut(false)
+          setIsSubmitted(true);
+          setIsFadingOut(false);
           // Reset form
-          setFormData({ 
-            name: '', 
-            email: '', 
-            plusOne: '', 
-            bringingKids: '', 
-            kidCount: '', 
+          setFormData({
+            name: '',
+            email: '',
+            plusOne: '',
+            bringingKids: '',
+            kidCount: '',
             hasDietary: '',
             dietaryCount: '',
             dietaryDetails: '',
             message: '',
-          })
+          });
           setFieldState({
             plusOneFields: { visible: false, animating: false },
             kidsField: { visible: false, animating: false },
             dietaryFields: { visible: false, animating: false },
-          })
-          prevValues.current = { plusOne: '', bringingKids: '', hasDietary: '' }
-        }, 400)
+          });
+          prevValues.current = { plusOne: '', bringingKids: '', hasDietary: '' };
+          // Reset name verification
+          setIsVerified(false);
+          setNameInput('');
+          setVerifiedName('');
+          setNameSuggestions([]);
+          setShowNotOnList(false);
+        }, 400);
       })
       .catch((error) => {
-        console.error('FAILED...', error)
-        alert('Oops! Something went wrong. Please try again.')
+        console.error('FAILED...', error);
+        alert('Oops! Something went wrong. Please try again.');
       })
       .finally(() => {
-        setIsSubmitting(false)
-      })
-  }
+        setIsSubmitting(false);
+      });
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
-    })
+      [name]: value,
+    });
     // Clear validation error when field is filled
     if (invalidFields.includes(name)) {
-      setInvalidFields(invalidFields.filter(field => field !== name))
+      setInvalidFields(invalidFields.filter((field) => field !== name));
     }
-  }
+  };
 
   return (
     <>
-      <style>{`
-        @keyframes expandIn {
-          from {
-            max-height: 0;
-            opacity: 0;
-          }
-          to {
-            max-height: 2000px;
-            opacity: 1;
-          }
-        }
-
-        @keyframes collapseOut {
-          from {
-            max-height: 2000px;
-            opacity: 1;
-          }
-          to {
-            max-height: 0;
-            opacity: 0;
-          }
-        }
-
-        @keyframes fadeOut {
-          from {
-            opacity: 1;
-          }
-          to {
-            opacity: 0;
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes flashRed {
-          0%, 50%, 100% {
-            opacity: 1;
-          }
-          25%, 75% {
-            opacity: 0.4;
-          }
-        }
-
-        .flash-invalid label:has(input[type="radio"])::before {
-          border-color: #ef4444 !important;
-          animation: flashRed 0.6s ease-in-out;
-        }
-
-        .animate-in {
-          animation: expandIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          overflow: hidden;
-        }
-
-        .animate-out {
-          animation: collapseOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-          overflow: hidden;
-        }
-
-        .fade-out {
-          animation: fadeOut 0.4s ease-out forwards;
-        }
-
-        .fade-in {
-          animation: fadeIn 0.5s ease-in forwards;
-        }
-      `}</style>
-
       {isSubmitted ? (
         <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
           <h1 className='mb-10 max-w-70 mx-auto'>Heck yeah!</h1>
@@ -254,13 +240,56 @@ export function RsvpForm() {
             </a>
           </p>
         </div>
+      ) : !isVerified ? (
+        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+          <h1 className='mb-10 max-w-70 mx-auto'>Want to RSVP early?</h1>
+          <p className='text-base! mb-6'>First things first...</p>
+
+          <form onSubmit={handleNameCheck}>
+            <div className='mb-6'>
+              <input
+                type='text'
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="What's your name?"
+                required
+                autoFocus
+              />
+            </div>
+            <button type='submit'>Check guest list</button>
+          </form>
+
+          {nameSuggestions.length > 0 && (
+            <div className='mt-8'>
+              <p className='mb-4'>Did you mean one of these?</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {nameSuggestions.map((suggestion, index) => (
+                  <button key={index} type='button' className='suggestion-button' onClick={() => handleSuggestionClick(suggestion)}>
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {showNotOnList && (
+            <div className='mt-8'>
+              <p className='mb-2' style={{ color: '#ef4444' }}>
+                Hmm, we couldn't find that name on our guest list.
+              </p>
+              <p className='text-base!'>
+                Double-check the spelling or reach out to us at{' '}
+                <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
+                  wedding@fayolle.com
+                </a>
+              </p>
+            </div>
+          )}
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
-          <h1 className='text-center mb-10 pt-15 max-w-70 mx-auto'>Want to RSVP early?</h1>
-          <p className='text-base!'>I mean okay but no rush or anything</p>
-          <div className='mb-6'>
-            <input type='text' id='name' name='name' value={formData.name} onChange={handleChange} required placeholder='Your name' />
-          </div>
+          <h1 className='text-center mb-10 pt-15 max-w-70 mx-auto'>Hey {verifiedName}! 👋</h1>
+          <p className='text-base!'>Let's get you RSVP'd</p>
 
           <div className='mb-6'>
             <input

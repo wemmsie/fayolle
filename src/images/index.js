@@ -8,3 +8,4 @@ export { default as cheers } from './cheers.png'
 export { default as disco } from './disco.png'
 export { default as discoBlue } from './disco-blue.png'
 export { default as cheersBlue } from './cheers-blue.png'
+export { default as letter } from './letter.png';
