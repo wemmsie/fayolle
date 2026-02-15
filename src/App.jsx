@@ -49,7 +49,6 @@ function App() {
             Good. Because we're getting married, and you <i>know</i> we've got good taste in music.
           </p>
           <p>
-            {' '}
             Come on up to Chicago on August 8th, 2026 to celebrate with us beneath an excessive number of disco balls (yes, really) and the
             ungovernable influence of actually really good espresso martinis.
           </p>
@@ -57,10 +56,25 @@ function App() {
       </section>
 
       {/* Block 3: Submit Form */}
-      <section className='max'>
+
+      {/*
+        <section className='max'>
         <div className='form-container relative'>
           <img src={image.cheersBlue} alt='Cheers!' className='cheers' />
           <RsvpForm />
+        </div>
+      </section>
+       */}
+      <section className='max'>
+        <div className='max-w-4xl mx-auto text-center bg-white rounded-xl px-8 md:p-20 pb-15 pt-25 relative'>
+          <img src={image.cheersBlue} alt='Cheers!' className='cheers' />
+          <h1>Stay tuned for an RSVP!</h1>
+          <p>
+            More details will be here soon. In the meantime, if you have any questions, please don't hesitate to reach out to us at{' '}
+            <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
+              wedding@fayolle.com
+            </a>
+          </p>
         </div>
       </section>
     </div>

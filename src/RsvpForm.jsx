@@ -173,10 +173,8 @@ export function RsvpForm() {
       .send(serviceId, templateId, templateParams, publicKey)
       .then((response) => {
         console.log('SUCCESS!', response.status, response.text);
-        // Start fade out animation
-        setIsFadingOut(true);
 
-        // After fade out completes, show success message
+        setIsFadingOut(true);
         setTimeout(() => {
           setIsSubmitted(true);
           setIsFadingOut(false);
