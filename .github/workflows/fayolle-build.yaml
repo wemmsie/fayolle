@@ -38,6 +38,7 @@ jobs:
           SITE_URL: ${{ inputs.site-url }}
           VITE_EMAILJS_SERVICE_ID: ${{ secrets.VITE_EMAILJS_SERVICE_ID }}
           VITE_EMAILJS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_TEMPLATE_ID }}
+          VITE_EMAILJS_ADDRESS_TEMPLATE_ID: ${{ secrets.VITE_EMAILJS_ADDRESS_TEMPLATE_ID }}
           VITE_EMAILJS_PUBLIC_KEY: ${{ secrets.VITE_EMAILJS_PUBLIC_KEY }}
         run: |
           npm ci
