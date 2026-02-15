@@ -1,8 +1,13 @@
 import './global.css'
 import * as image from './images'
 import { AddressForm } from './AddressForm'
+import { useEffect } from 'react';
 
 function AddressPage() {
+  useEffect(() => {
+    document.title = 'Address Please!';
+  }, []);
+
   return (
     <div className='min-h-screen bg-pink'>
       <section className='max my-10'>
