@@ -342,10 +342,11 @@ export function RsvpForm() {
               </div>
               <button
                 type='button'
-                className='mt-6 text-sm! opacity-60 hover:opacity-100 transition-opacity bg-transparent! border-none cursor-pointer'
+                className='mt-6 text-sm! bg-gray-200! text-gray-600! hover:bg-gray-300! rounded-full! px-5! py-2! border-none! cursor-pointer transition-colors group'
                 onClick={() => { setNameSuggestions([]); setNameInput(''); setShowNotOnList(false); }}
               >
-                ← Nevermind, let me try again
+                <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+                None of these
               </button>
             </>
           ) : showNotOnList ? (
@@ -361,10 +362,11 @@ export function RsvpForm() {
               </p>
               <button
                 type='button'
-                className='mt-2 text-sm! opacity-60 hover:opacity-100 transition-opacity bg-transparent! border-none cursor-pointer'
+                className='mt-2 text-sm! bg-gray-200! text-gray-600! hover:bg-gray-300! rounded-full! px-5! py-2! border-none! cursor-pointer transition-colors group'
                 onClick={() => { setShowNotOnList(false); setNameInput(''); }}
               >
-                ← Try again
+                <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+                Try again
               </button>
             </>
           ) : (
@@ -387,7 +389,16 @@ export function RsvpForm() {
           )}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
+        <>
+          <button
+            type='button'
+            className='absolute -top-10 left-1/2 -translate-x-1/2 z-10 text-xs! px-4! py-1.5! rounded-full! bg-white/70! backdrop-blur-sm border-none! cursor-pointer opacity-60 hover:opacity-100 transition-all whitespace-nowrap group'
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setFormData(prev => ({ ...prev, name: '' })); }}
+          >
+            <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+            Not {verifiedName.split(' ')[0]}?
+          </button>
+          <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
           {/* <h1 className='text-center text-3xl! pt-15'>👋</h1> */}
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto  text-primary!'>hey</h1>
           <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-15! mx-auto lowercase leading-12! md:leading-10!'>{verifiedName}!</h1>
@@ -553,6 +564,7 @@ export function RsvpForm() {
             {isSubmitting ? 'Sending...' : 'OH YEEEAH 🎉'}
           </button>
         </form>
+        </>
       )}
     </>
   );

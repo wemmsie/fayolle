@@ -552,8 +552,13 @@ button[type="submit"]:hover {
 }
 
 .scroll-nav-hidden {
-  transform: translateX(-120%) translateY(-50%);
   pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .scroll-nav-hidden {
+    transform: translateX(-120%) translateY(-50%);
+  }
 }
 
 .scroll-nav-item {
@@ -623,12 +628,12 @@ button[type="submit"]:hover {
 }
 
 .modal-close {
-  @apply absolute top-3 right-4 z-10 text-3xl text-text-light cursor-pointer bg-white/80 rounded-full w-10 h-10 flex items-center justify-center leading-none border-none;
+  @apply absolute top-3 right-4 z-10 text-2xl pb-1 leading-none text-text-light cursor-pointer bg-white/60 rounded-full w-10 h-10 flex items-center justify-center border-none;
   transition: all 0.15s ease;
 }
 
 .modal-close:hover {
-  @apply bg-primary/10 text-primary;
+  @apply bg-white/80 text-primary;
 }
 
 .modal-directions {
