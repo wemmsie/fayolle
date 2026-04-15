@@ -9,56 +9,345 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Sanremo Caps';
+  src: url('./fonts/sanremo/SanremoCaps-LighterTallerRough.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sanremo Script';
+  src: url('./fonts/sanremo/SanremoScript-Rough.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   /* Custom Color Definitions */
-  --color-primary: #0f25c3;
-  --color-red: #a71718;
-  --color-sky: #ABEAF9;
-  --color-blue: #7B8BBC;
+  --color-primary: #024159;
+  --color-primary-light: #e8f4f8;
+  --color-primary-dark: #01303f;
+
   --color-pink: #f5c8c7;
-  --color-darkpink: #F37E7C;
-  --color-yellow: #F7B557;
-  --color-orange: #E89F4B;
-  --color-background: #F9F5F5;
-  --color-text: #1e293b;
+  --color-red: #ff6969;
+  --color-red-light: #fff0f0;
+  --color-darkpink: rgb(207, 78, 76);
+
+  --color-sky: #DBEAFC;
+  --color-blue: #bad3ef;
+  --color-blue-light: #eaf1f9;
+  --color-blue-dark: #7ba8d4;
+
+  --color-green: #bbbd59;
+  --color-green-light: #f4f5e0;
+  --color-green-dark: #6e7030;
+  --color-yellow: #f5b54f;
+  --color-orange: #b8966c;
+
+  --color-cream: #fffaf2;
+  --color-warm: #fdf6ee;
+  --color-background: #fffaf2;
+  --color-text: #024159;
   --color-text-light: #64748b;
-  --color-radio: var(--color-orange);
+  --color-radio: var(--color-red);
   
   /* Custom Font Families */
   --font-primary: "rotunda-variable", sans-serif;
   --font-fields: fields, sans-serif;
+  --font-sanremo-caps: "Sanremo Caps", sans-serif;
+  --font-sanremo-script: "Sanremo Script", sans-serif;
   --font-routed: "Routed Gothic", sans-serif;
   
   /* Custom Font Sizes */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
-  --text-lg: 1.125rem;
+  --text-lg: 1.1rem;
   --text-xl: 2rem;
   --text-2xl: 2.25rem;
-  --text-3xl: 2.6rem;
+  --text-3xl: 3.5rem;
+  --text-4xl: 5rem;
+  --text-5xl: 7rem;
 }
 
 body {
-    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-pink text-text;
+    @apply font-routed font-light text-base leading-relaxed m-0 p-0 bg-cream text-text;
 }
 
 h1 {
-    @apply font-fields text-xl md:text-3xl mb-4 font-semibold text-primary leading-[1.1];
+    @apply font-sanremo-script text-3xl md:text-5xl mb-4 text-primary leading-[0.8]!;
+}
+
+h2 {
+    @apply font-sanremo-caps text-lg md:text-xl mb-2 text-primary;
 }
 
 p {
-    @apply mb-4 text-sm md:text-lg;
+    @apply mb-4 max-w-2xl m-auto;
+    b {
+        @apply font-sanremo-caps text-primary tracking-wider;
+    }
+}
+
+p, .button {
+  @apply text-base md:text-lg;
 }
 
 section {
-    @apply py-15 md:py-18 px-4 overflow-x-clip;
+    @apply py-15 md:py-24 px-6 md:px-10 pl-14 md:pl-22 overflow-x-clip;
 }
 
 @layer utilities {
   .max {
-    @apply max-w-4xl mx-auto;
+    @apply max-w-6xl mx-auto;
   }
+  .max-inner {
+    @apply max-w-2xl mx-auto;
+  }
+}
+
+/* Full-bleed section blocks */
+.block {
+  @apply py-16 md:py-24 px-6 md:px-10 pl-14 md:pl-22;
+}
+
+.block-inner {
+  @apply max-w-6xl mx-auto;
+}
+
+/* Block color themes */
+
+/* Theme 1: Cream background, primary blue text, red accents */
+.theme-cream {
+  @apply bg-cream;
+  h1, h2 { @apply text-red; }
+  p, a:not(.button) { @apply text-primary; }
+  .button { @apply text-primary bg-primary/15 hover:bg-primary hover:text-cream; }
+  form h1 { @apply text-primary; }
+  form h2 { @apply text-primary; }
+}
+
+/* Theme 2: Pink background, red accent */
+.theme-pink {
+  @apply bg-pink/50;
+  h1, h2 { color: var(--color-primary); }
+  p, a:not(.button) { @apply text-primary; }
+  p.sub { @apply text-sm text-darkpink/60 font-sanremo-caps tracking-wider -mt-2 mb-3; }
+  a:not(.button) { @apply underline decoration-darkpink/40 underline-offset-2 transition-colors hover:decoration-darkpink hover:text-darkpink; }
+  .button { @apply bg-darkpink/15 hover:bg-red hover:text-white; color: var(--color-red); }
+}
+
+/* Theme 3: Blue background, cream + primary highlights */
+.theme-blue {
+  @apply bg-blue;
+  h1, h2 { @apply text-cream; }
+  p, a:not(.button) { @apply text-primary; }
+  .button { @apply text-cream bg-primary/40 hover:bg-primary hover:text-cream; }
+  .form-container h1 { @apply text-red; }
+  .form-container h2 { @apply text-primary; }
+  .form-container p { @apply text-primary; }
+}
+
+/* Theme 4: Red background, cream accent */
+.theme-red {
+  @apply bg-pink;
+  h1, h2 { @apply text-primary; }
+  p, a:not(.button) { @apply text-primary; }
+  .button { @apply text-red bg-cream/60 hover:bg-cream hover:text-red; }
+}
+
+/* Split layout: content + image alternating */
+.block-split {
+  @apply flex flex-col md:flex-row items-center gap-10 md:gap-16;
+}
+
+.block-split-reverse {
+  @apply flex flex-col-reverse md:flex-row-reverse items-center gap-10 md:gap-16;
+}
+
+.block-copy {
+  @apply min-w-0 md:w-2/5 md:shrink-0;
+}
+
+.block-media {
+  @apply min-w-0 justify-center md:w-3/5 m-auto text-center;
+   img {
+    @apply m-auto;
+   }
+}
+
+/* Overlapping polaroid spread for desktop */
+.polaroid-spread {
+  @apply items-start gap-0;
+}
+
+.polaroid-spread .inline-block {
+  @apply max-w-[16rem] transition-transform duration-300 cursor-pointer;
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><text y='24' font-size='24'>💕</text></svg>") 16 16, pointer;
+}
+
+.polaroid-spread-1 {
+  transform: rotate(-6deg) translateX(1.5rem);
+  z-index: 1;
+}
+
+.polaroid-spread-2 {
+  transform: rotate(2deg) translateY(-0.5rem);
+  z-index: 2;
+}
+
+.polaroid-spread-3 {
+  transform: rotate(5deg) translateX(-1.5rem);
+  z-index: 1;
+}
+
+.polaroid-spread-1:hover {
+  transform: rotate(-4deg) translateX(1.5rem) translateY(-4px);
+}
+
+.polaroid-spread-2:hover {
+  transform: rotate(1deg) translateY(calc(-0.5rem - 4px));
+}
+
+.polaroid-spread-3:hover {
+  transform: rotate(3deg) translateX(-1.5rem) translateY(-4px);
+}
+
+/* Wedding Day timeline */
+.wedding-day {
+  @apply relative overflow-hidden;
+}
+
+.venue-address {
+  @apply text-sm md:text-base tracking-wider uppercase opacity-70;
+}
+
+.timeline {
+  @apply flex flex-col gap-6;
+}
+
+.timeline-item {
+  @apply flex items-baseline md:pl-[20%] gap-6;
+}
+
+.timeline-time {
+  @apply font-sanremo-caps text-lg md:text-2xl text-primary w-20 shrink-0 text-right;
+}
+
+.timeline-event {
+  @apply font-sanremo-caps text-lg md:text-2xl text-red block;
+}
+
+.timeline-detail {
+  @apply text-sm text-primary block opacity-70;
+}
+
+.wedding-day-img {
+  @apply absolute bottom-0 right-4 md:right-[10%] w-20 md:w-40 pointer-events-none;
+}
+
+/* Photo pile indicators */
+.photo-pile-wrap {
+  @apply relative;
+}
+
+.photo-pile-nav {
+  @apply flex justify-center gap-6 mt-4;
+}
+
+.photo-pile-arrow {
+  @apply w-12 h-12 rounded-full bg-white/70 text-primary text-2xl leading-none p-2
+    cursor-pointer border-none transition-all duration-200 flex items-center justify-center;
+  font-family: system-ui, sans-serif;
+}
+
+.photo-pile-arrow:hover {
+  @apply bg-white shadow-md scale-110;
+}
+
+.photo-pile-arrow-disabled {
+  @apply opacity-30 cursor-default;
+}
+
+.photo-pile-arrow-disabled:hover {
+  @apply bg-white/70 shadow-none scale-100;
+}
+
+/* Photo strip (photo booth style) */
+.strip-pile {
+  @apply relative w-full flex justify-center;
+}
+
+.photo-strip {
+  @apply rounded-lg overflow-hidden shadow-lg relative;
+  width: auto;
+  height: auto;
+  max-width: 180px;
+  max-height: 600px;
+}
+
+.strip-1 {
+  transform: rotate(-3deg) translateX(1.5rem);
+  z-index: 1;
+}
+
+.strip-2 {
+  transform: rotate(2deg) translateX(-1.5rem);
+  z-index: 2;
+  margin-top: 1.5rem;
+}
+
+/* Disposable camera print pile */
+.print-pile {
+  @apply relative w-full m-auto;
+}
+
+.print {
+  @apply absolute rounded-xs overflow-hidden;
+  /* background: linear-gradient(rgba(255,255,255,0.95), rgba(255,255,255,0.8)), url('https://i.imgur.com/fX4hFeu.jpg'); */
+  /* background-size: 30%;
+  padding: 8px 8px 24px; */
+  box-shadow: 0 4px 14px -3px rgba(0,0,0,0.25), inset 0 0 4px rgba(0,0,0,0.04);
+}
+
+.print img {
+  @apply w-full h-full object-cover rounded-sm aspect-5/3;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.15);
+}
+
+.print-1 {
+  width: 45%;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  transform: rotate(-3deg);
+}
+
+.print-2 {
+  width: 45%;
+  top: 20%;
+  right: 0;
+  z-index: 2;
+  transform: rotate(4deg);
+}
+
+.print-3 {
+  width: 45%;
+  bottom: 15%;
+  left: 4%;
+  z-index: 3;
+  transform: rotate(2deg);
+}
+
+.print-4 {
+  width: 45%;
+  bottom: 0;
+  right: 2%;
+  z-index: 4;
+  transform: rotate(-5deg);
 }
 
 #hero {
@@ -74,11 +363,10 @@ section {
 .letter {
   @apply absolute w-40 top-0 left-1/2 -translate-x-1/2 -translate-y-15;
 }
-
 /* Form Styles */
 
 form {
-    @apply bg-white rounded-xl px-8 py-10 md:p-10 shadow-none max-w-xl mx-auto;
+    @apply bg-white rounded-xl px-8 py-10 md:p-10 shadow-none mx-auto max-w-2xl;
     p {
         @apply mb-6 -mt-4 text-text-light/50 italic text-center;
     }
@@ -86,7 +374,7 @@ form {
 
 
 label {
-    @apply block mb-2 font-semibold text-base md:text-lg text-primary;
+    @apply block mb-2 text-base md:text-lg text-primary;
 }
 
 input[type="text"],
@@ -109,8 +397,16 @@ textarea:focus {
     @apply outline-none border-primary;
 }
 
+input:focus::placeholder,
+textarea:focus::placeholder {
+    @apply opacity-0;
+}
+
 textarea {
-    @apply bg-background border-none rounded-xl px-5;
+    @apply bg-blue/10 border-none rounded-xl px-5;
+}
+textarea:focus {
+    @apply bg-blue/20!;
 }
 
 /* Custom Radio Button Styles */
@@ -155,6 +451,244 @@ button[type="submit"]:hover {
     box-shadow: 4px 5px 0 0 var(--color-radio);
 }
 
+.button {
+    @apply inline-flex items-center gap-2 px-8 py-2 m-2 rounded-full text-primary bg-primary/20 hover:bg-primary hover:text-white font-medium text-base transition-all transform
+    cursor-pointer;
+}
+
+.to-do .button {
+  @apply md:text-nowrap px-4;
+}
+
+.to-do .tab {
+  @apply flex flex-col justify-start gap-0 items-center text-center flex-1 min-w-0;
+}
+
+.todo-tabs {
+  @apply flex gap-2 justify-center mb-4;
+}
+
+.todo-tab {
+  @apply px-6 py-2.5 rounded-full font-sanremo-caps text-base tracking-wider
+    border-2 border-primary/20 cursor-pointer transition-all duration-200
+    bg-transparent text-primary;
+}
+
+.todo-tab:hover {
+  @apply bg-primary/10;
+}
+
+.todo-tab-active {
+  @apply bg-red! text-white border-red;
+}
+
+.todo-tab-content {
+  min-height: 22rem;
+}
+
+.todo-tab-content .tab {
+  animation: fadeSlideIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tag {
+  @apply text-xs font-semibold tracking-wider uppercase rounded-full px-2 py-0.5 leading-none;
+}
+
+.tag-brunch {
+  @apply bg-yellow/30 text-orange;
+}
+
+.tag-dinner {
+  @apply bg-pink text-red;
+}
+
+/* Mouse-follow tooltip */
+.tip {
+  @apply fixed z-50 pointer-events-none flex items-center gap-2 rounded-full px-4 py-2 shadow-lg bg-white;
+  transform: translate(12px, -50%);
+  animation: tipIn 0.15s ease-out;
+}
+
+.tip-tag {
+  @apply text-xs font-bold tracking-widest uppercase rounded-full px-2 py-0.5;
+}
+
+.tip-brunch .tip-tag { @apply bg-yellow/40 text-orange; }
+.tip-dinner .tip-tag { @apply bg-pink text-darkpink; }
+.tip-all .tip-tag { @apply bg-blue/40 text-primary; }
+.tip-park .tip-tag { @apply bg-green-light text-green-dark; }
+.tip-museum .tip-tag { @apply bg-yellow/40 text-orange; }
+.tip-activity .tip-tag { @apply bg-pink text-darkpink; }
+.tip-drink .tip-tag { @apply bg-blue/40 text-primary; }
+
+.tip-desc {
+  @apply text-sm font-medium text-primary;
+}
+
+@keyframes tipIn {
+  from { opacity: 0; transform: translate(12px, -50%) scale(0.9); }
+  to { opacity: 1; transform: translate(12px, -50%) scale(1); }
+}
+
+/* Scroll Nav */
+.scroll-nav {
+  @apply fixed left-3 md:left-5 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-4 md:gap-3
+    opacity-0 pointer-events-none;
+  padding-right: 2rem; /* invisible hover zone */
+  transition: opacity 0.3s, transform 0.4s ease;
+}
+
+.scroll-nav-visible {
+  @apply opacity-100 pointer-events-auto;
+}
+
+.scroll-nav-hidden {
+  transform: translateX(-120%) translateY(-50%);
+  pointer-events: none;
+}
+
+.scroll-nav-item {
+  @apply flex items-center cursor-pointer border-none rounded-full
+    transition-all duration-200 text-left bg-white/60 opacity-70 bg-blend-lighten shadow-sm;
+  padding: 0.4rem;
+  gap: 0;
+}
+
+.scroll-nav-item.scroll-nav-active {
+  @apply bg-white shadow-sm opacity-100 scale-105;
+}
+
+.scroll-nav-item:hover {
+  @apply bg-white shadow-md scale-105;
+}
+
+.scroll-nav-item:hover .scroll-nav-emoji {
+  @apply scale-105;
+}
+
+.scroll-nav-item:hover .scroll-nav-label {
+  @apply text-primary;
+}
+
+.scroll-nav-emoji {
+  @apply text-[24px] md:text-[24px] leading-none shrink-0;
+}
+
+.scroll-nav-label {
+  @apply hidden md:inline-block text-sm font-routed tracking-wider text-primary/50
+    max-w-0 overflow-hidden opacity-0 whitespace-nowrap;
+  transition: max-width 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.scroll-nav:hover .scroll-nav-label {
+  @apply max-w-40 opacity-100;
+  padding-left: 0.5rem;
+  padding-right: 0.4rem;
+}
+
+.scroll-nav:hover .scroll-nav-item {
+  @apply bg-white/90 shadow-sm;
+}
+
+.scroll-nav-active .scroll-nav-label {
+  @apply text-primary font-medium;
+}
+
+.scroll-nav-active .scroll-nav-emoji {
+  @apply scale-105;
+}
+
+/* Place Modal */
+.modal-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+  @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden;
+  animation: modalIn 0.25s ease-out;
+}
+
+.modal-close {
+  @apply absolute top-3 right-4 z-10 text-3xl text-text-light cursor-pointer bg-white/80 rounded-full w-10 h-10 flex items-center justify-center leading-none border-none;
+  transition: all 0.15s ease;
+}
+
+.modal-close:hover {
+  @apply bg-primary/10 text-primary;
+}
+
+.modal-directions {
+  @apply block text-center py-3 text-primary font-medium text-sm border-t border-primary/10 transition-all;
+}
+
+.modal-directions:hover {
+  @apply bg-primary/5;
+}
+
+.modal-photo {
+  @apply w-full h-48 object-cover;
+}
+
+.modal-photo-placeholder {
+  @apply w-full h-32 flex items-center justify-center text-5xl;
+  background: linear-gradient(135deg, var(--color-primary-light, #e8ebfc) 0%, var(--color-primary, #0f25c3) 100%);
+  opacity: 0.15;
+}
+
+.modal-reserve {
+  @apply font-semibold;
+}
+
+.modal-body {
+  @apply px-5 py-4;
+}
+
+.modal-name {
+  @apply text-lg font-semibold text-text m-0;
+}
+
+.modal-rating {
+  @apply flex items-center gap-1.5 mt-1 text-sm;
+}
+
+.modal-stars {
+  @apply text-amber-500;
+}
+
+.modal-rating-num {
+  @apply font-medium text-text;
+}
+
+.modal-review-count {
+  @apply text-text-light;
+}
+
+.modal-address {
+  @apply text-sm text-text-light mt-2 mb-0 leading-snug;
+}
+
+.modal-loading, .modal-error {
+  @apply text-center py-12 text-text-light text-sm;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 
 /* Bounce Animation */
 .bounce {
@@ -276,4 +810,79 @@ button[type="submit"]:hover {
 
 .state-suggestion-item:hover {
   @apply bg-primary/10;
+}
+
+/* Menu Display */
+.menu {
+  @apply flex gap-4 md:gap-10 items-stretch;
+}
+
+.the-menu {
+  @apply relative shrink-0 hidden md:block;
+  width: 2.5rem;
+}
+
+.menu-title {
+  @apply absolute top-0 left-0 whitespace-nowrap text-blue/20 tracking-widest uppercase;
+  font-size: 2rem;
+  transform: rotate(-90deg) translateX(-100%);
+  transform-origin: top left;
+}
+
+.menu-display {
+  @apply flex flex-col gap-2 mb-10 flex-1 min-w-0;
+}
+.menu-item-card {
+  @apply rounded-xl p-3 md:p-5 bg-blue/20;
+}
+
+.menu-item-title {
+  @apply inline-block font-semibold text-primary text-base md:text-lg;
+}
+
+.menu-item-desc {
+  @apply block text-text-light text-xs md:text-sm leading-snug mt-1;
+}
+
+/* Guest Meal Selectors */
+.guest-meals {
+  @apply space-y-3;
+}
+
+.guest-meal-row {
+  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 p-3 rounded-lg;
+}
+
+.guest-name {
+  @apply font-semibold text-primary text-sm md:text-base md:min-w-36 shrink-0;
+}
+
+.meal-options {
+  @apply flex flex-wrap gap-2 flex-1;
+}
+
+.meal-pill {
+  @apply px-4 py-2 rounded-full text-xs md:text-sm cursor-pointer
+    transition-all duration-200 text-text-light font-medium;
+  background: #eef2ff;
+}
+
+.meal-pill:hover {
+  background: #dde4ff;
+}
+
+.meal-pill-selected {
+  @apply bg-primary text-white;
+}
+
+.meal-pill-selected:hover {
+  @apply bg-primary;
+}
+
+.flash-invalid-meal {
+  animation: flashRed 0.6s ease-in-out;
+}
+
+.flash-invalid-meal .meal-pill {
+  @apply border-2 border-red;
 }

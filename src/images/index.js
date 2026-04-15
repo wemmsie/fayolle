@@ -9,3 +9,10 @@ export { default as disco } from './disco.png'
 export { default as discoBlue } from './disco-blue.png'
 export { default as cheersBlue } from './cheers-blue.png'
 export { default as letter } from './letter.png';
+export { default as italy1 } from './italy-1.jpeg';
+export { default as italy2 } from './italy-2.webp';
+export { default as japan1 } from './japan-1.jpeg';
+export { default as japan2 } from './japan-2.jpg';
+export { default as wine } from './wine.png';
+export { default as strip1 } from './strip1.jpg';
+export { default as strip2 } from './strip2.jpg';
