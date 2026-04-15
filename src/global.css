@@ -37,7 +37,7 @@
   --color-darkpink: rgb(207, 78, 76);
 
   --color-sky: #DBEAFC;
-  --color-blue: #bad3ef;
+  --color-blue: #BFD3DB;
   --color-blue-light: #eaf1f9;
   --color-blue-dark: #7ba8d4;
 
@@ -66,7 +66,7 @@
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.1rem;
-  --text-xl: 2rem;
+  --text-xl: 1.8rem;
   --text-2xl: 2.25rem;
   --text-3xl: 3.5rem;
   --text-4xl: 5rem;
@@ -78,7 +78,7 @@ body {
 }
 
 h1 {
-    @apply font-sanremo-script text-3xl md:text-5xl mb-4 text-primary leading-[0.8]!;
+    @apply font-sanremo-script text-3xl md:text-5xl mb-4 text-primary md:leading-[0.6] pt-3;
 }
 
 h2 {
@@ -368,7 +368,7 @@ section {
 form {
     @apply bg-white rounded-xl px-8 py-10 md:p-10 shadow-none mx-auto max-w-2xl;
     p {
-        @apply mb-6 -mt-4 text-text-light/50 italic text-center;
+        @apply mb-6 text-text-light/50 text-center;
     }
 }
 
@@ -551,12 +551,9 @@ button[type="submit"]:hover {
   @apply opacity-100 pointer-events-auto;
 }
 
-.scroll-nav-hidden {
-  pointer-events: none;
-}
-
 @media (max-width: 767px) {
   .scroll-nav-hidden {
+    pointer-events: none;
     transform: translateX(-120%) translateY(-50%);
   }
 }
@@ -860,6 +857,37 @@ button[type="submit"]:hover {
 
 .guest-name {
   @apply font-semibold text-primary text-sm md:text-base md:min-w-36 shrink-0;
+}
+
+/* Attendance pills */
+.attendance-pill {
+  @apply px-6 py-2 rounded-full text-sm md:text-base cursor-pointer
+    transition-all duration-200 font-medium border-2 border-primary/20 select-none bg-transparent;
+}
+
+.attendance-pill:hover {
+  @apply border-primary/40 -translate-y-0.5;
+  background: #dde4ff;
+}
+
+.attendance-pill-selected {
+  @apply bg-primary text-white border-primary;
+}
+
+.attendance-pill-selected:hover {
+  @apply bg-primary border-primary;
+}
+
+.attendance-pill-decline {
+  @apply border-gray-200;
+}
+
+.attendance-pill-decline:hover {
+  @apply border-red/30 bg-red/10;
+}
+
+.attendance-pill-decline.attendance-pill-selected {
+  @apply bg-gray-500 text-white border-gray-500;
 }
 
 .meal-options {

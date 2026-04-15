@@ -7,7 +7,7 @@ const sections = [
     { id: 'todo', emoji: '🗺', label: 'To Do' },
     { id: 'rsvp', emoji: '💌', label: 'RSVP' },
     { id: 'story', emoji: '💕', label: 'Story' },
-    { id: 'registry', emoji: '🎁', label: 'Registry' },
+    { id: 'registry', emoji: '🎁', label: "Vote" },
 ];
 
 export function ScrollNav() {

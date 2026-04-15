@@ -1,10 +1,45 @@
 import { useState, useEffect, useRef } from 'react'
 import emailjs from '@emailjs/browser'
 import Fuse from 'fuse.js';
-import guestListRaw from './guests.csv?raw';
 
-// Guest list - loaded from guests.csv
-const guestList = guestListRaw.split('\n').filter((name) => name.trim() !== '');
+// Google Sheet published CSV URL for live guest+partner data
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
+
+// Parse CSV rows into { name, partner } objects (handles quoted fields)
+function parseGuestCSV(csv) {
+  const rows = csv.trim().split('\n');
+  const guests = [];
+  for (const row of rows) {
+    const cols = row.match(/"([^"]*)"/g);
+    if (!cols || cols.length < 2) continue;
+    const name = cols[0].replace(/"/g, '').trim();
+    const partner = cols[1].replace(/"/g, '').trim();
+    if (!name) continue;
+    guests.push({ name, partner: partner || null });
+  }
+  return guests;
+}
+
+// Build lookup maps from guest data
+function buildGuestMaps(guestData) {
+  const names = [];
+  const partnerMap = new Map(); // name (lowercase) -> partner name
+
+  for (const { name, partner } of guestData) {
+    names.push(name);
+    if (partner) {
+      partnerMap.set(name.toLowerCase(), partner);
+      // Add partner as a guest too (so they can RSVP from either side)
+      if (!guestData.some(g => g.name.toLowerCase() === partner.toLowerCase())) {
+        names.push(partner);
+      }
+      partnerMap.set(partner.toLowerCase(), name);
+    }
+  }
+  // Dedupe names
+  const uniqueNames = [...new Set(names)];
+  return { names: uniqueNames, partnerMap };
+}
 
 const meals = [
   { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', desc: 'Mashed potatoes, asparagus, crispy leeks and a rich red wine demi-glaze' },
@@ -20,6 +55,30 @@ const DEV_MODE = import.meta.env.DEV && SKIP_RSVP_GATES;
 const REQUIRE_PASSWORD = false;
 
 export function RsvpForm() {
+  // Guest data loaded from Google Sheet (with fallback to static CSV)
+  const [guestList, setGuestList] = useState([]);
+  const [partnerMap, setPartnerMap] = useState(new Map());
+  const [guestDataLoaded, setGuestDataLoaded] = useState(false);
+
+  // Fetch guest data from Google Sheet on mount
+  useEffect(() => {
+    fetch(SHEET_CSV_URL)
+      .then(res => res.text())
+      .then(csv => {
+        const guestData = parseGuestCSV(csv);
+        if (guestData.length > 0) {
+          const { names, partnerMap: pMap } = buildGuestMaps(guestData);
+          setGuestList(names);
+          setPartnerMap(pMap);
+        }
+        setGuestDataLoaded(true);
+      })
+      .catch(() => {
+        // Fallback to static CSV (no partner data)
+        setGuestDataLoaded(true);
+      });
+  }, []);
+
   // Password gate state
   const [isUnlocked, setIsUnlocked] = useState(DEV_MODE || !REQUIRE_PASSWORD);
   const [passwordInput, setPasswordInput] = useState('');
@@ -29,6 +88,9 @@ export function RsvpForm() {
   const [isVerified, setIsVerified] = useState(DEV_MODE);
   const [nameInput, setNameInput] = useState('');
   const [verifiedName, setVerifiedName] = useState(DEV_MODE ? 'Dev User' : '');
+  const [pairedPartner, setPairedPartner] = useState(null); // auto-matched partner from sheet
+  const [plusOneName, setPlusOneName] = useState(''); // manually entered plus-one name
+  const [attending, setAttending] = useState(''); // paired: 'both'|'solo'|'none', unpaired: 'yes'|'no'
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [showNotOnList, setShowNotOnList] = useState(false);
 
@@ -43,8 +105,10 @@ export function RsvpForm() {
     welcomeParty: '',
     message: '',
   });
+  const [dietaryMembers, setDietaryMembers] = useState([]); // indices of party members with dietary restrictions
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isDeclined, setIsDeclined] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [invalidFields, setInvalidFields] = useState([]);
 
@@ -57,14 +121,16 @@ export function RsvpForm() {
   const animationTimers = useRef({});
   const menuDisplayRef = useRef(null);
   const menuTitleRef = useRef(null);
+  const formTopRef = useRef(null);
 
-  // Fuzzy search configuration
-  const fuse = useRef(
-    new Fuse(guestList, {
-      threshold: 0.4, // 0 = exact match, 1 = match anything
-      distance: 100,
-    }),
-  );
+  // Fuzzy search configuration — rebuilds when guestList updates
+  const fuse = useRef(null);
+  useEffect(() => {
+    fuse.current = new Fuse(guestList, {
+      threshold: 0.25,
+      distance: 50,
+    });
+  }, [guestList]);
 
   // Handle name verification
   const handlePasswordCheck = (e) => {
@@ -77,6 +143,17 @@ export function RsvpForm() {
     }
   };
 
+  // Look up partner and set verified state
+  const verifyGuest = (name) => {
+    setVerifiedName(name);
+    setFormData((prev) => ({ ...prev, name }));
+    const partner = partnerMap.get(name.toLowerCase()) || null;
+    setPairedPartner(partner);
+    setIsVerified(true);
+    setNameSuggestions([]);
+    setShowNotOnList(false);
+  };
+
   const handleNameCheck = (e) => {
     e.preventDefault();
     const trimmedName = nameInput.trim();
@@ -85,34 +162,59 @@ export function RsvpForm() {
     const exactMatch = guestList.find((guest) => guest.toLowerCase() === trimmedName.toLowerCase());
 
     if (exactMatch) {
-      setVerifiedName(exactMatch);
-      setFormData((prev) => ({ ...prev, name: exactMatch }));
-      setIsVerified(true);
-      setNameSuggestions([]);
+      verifyGuest(exactMatch);
+      return;
+    }
+
+    // Check for first-name matches (exact first name or first name starts with input)
+    const input = trimmedName.toLowerCase();
+    const firstNameMatches = guestList.filter(guest => {
+      const firstName = guest.split(' ')[0].toLowerCase();
+      return firstName === input || firstName.startsWith(input);
+    });
+
+    if (firstNameMatches.length === 1) {
+      verifyGuest(firstNameMatches[0]);
+      return;
+    }
+
+    if (firstNameMatches.length > 1) {
+      setNameSuggestions(firstNameMatches.slice(0, 5));
       setShowNotOnList(false);
       return;
     }
 
-    // Try fuzzy matching
+    // Fall back to fuzzy matching
     const results = fuse.current.search(trimmedName);
 
     if (results.length > 0) {
-      // Show suggestions
-      setNameSuggestions(results.slice(0, 3).map((r) => r.item));
-      setShowNotOnList(false);
+      // If the top result is a very close match (score < 0.15), skip suggestions
+      if (results[0].score < 0.15) {
+        verifyGuest(results[0].item);
+        return;
+      }
+
+      const filtered = results.filter(r => r.score < 0.25);
+
+      if (filtered.length === 1) {
+        verifyGuest(filtered[0].item);
+        return;
+      }
+
+      if (filtered.length > 0) {
+        setNameSuggestions(filtered.slice(0, 3).map(r => r.item));
+      } else {
+        setNameSuggestions([]);
+        setShowNotOnList(true);
+      }
     } else {
-      // No matches found
       setNameSuggestions([]);
       setShowNotOnList(true);
     }
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setVerifiedName(suggestion);
-    setFormData((prev) => ({ ...prev, name: suggestion }));
-    setIsVerified(true);
-    setNameSuggestions([]);
-    setShowNotOnList(false);
+    verifyGuest(suggestion);
   };
 
   // Map field names to their corresponding form data keys
@@ -140,18 +242,24 @@ export function RsvpForm() {
   };
 
   useEffect(() => {
-    handleFieldVisibility('dietaryFields', formData.hasDietary, () => setFormData((prev) => ({ ...prev, dietaryCount: '', dietaryDetails: '' })), ['yes', 'help']);
+    handleFieldVisibility('dietaryFields', formData.hasDietary, () => { setFormData((prev) => ({ ...prev, dietaryCount: '', dietaryDetails: '' })); setDietaryMembers([]); }, ['yes', 'help']);
     prevValues.current.hasDietary = formData.hasDietary;
   }, [formData.hasDietary]);
 
   // Calculate total party size
   const getPartySize = () => {
-    let size = 1; // The person filling out the form
-    if (formData.plusOne === 'yes') size += 1;
-    return size;
+    if (attending === 'none' || attending === 'no') return 0;
+    if (pairedPartner && attending === 'both') return 2;
+    if (!pairedPartner && formData.plusOne === 'yes') return 2;
+    return 1;
   };
 
-  const partyComplete = formData.plusOne !== '';
+  // Whether the attendance question has been answered
+  const attendanceAnswered = attending !== '';
+  // Whether guest is declining entirely
+  const isDeclining = attending === 'none' || attending === 'no';
+  // Party is "complete" when we know the final headcount (and they're coming)
+  const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
 
   useEffect(() => {
     const display = menuDisplayRef.current;
@@ -177,7 +285,21 @@ export function RsvpForm() {
 
   const getGuestLabel = (index) => {
     if (index === 0) return verifiedName;
-    return 'Your plus one';
+    if (pairedPartner) return pairedPartner;
+    return plusOneName || 'Your plus one';
+  };
+
+  // The resolved plus-one name for email (partner name, manual name, or 'None')
+  const getPlusOneName = () => {
+    if (pairedPartner && attending === 'both') return pairedPartner;
+    if (!pairedPartner && formData.plusOne === 'yes') return plusOneName || 'Unnamed plus one';
+    return 'None';
+  };
+
+  const toggleDietaryMember = (index) => {
+    setDietaryMembers(prev =>
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
   };
 
   const handleMealChange = (guestIndex, value) => {
@@ -193,10 +315,43 @@ export function RsvpForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Decline path — skip all validation, just send the decline
+    if (isDeclining) {
+      setIsSubmitting(true);
+      const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+      const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+      const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+      const declineParams = {
+        to_email: 'emily@thisjones.com',
+        from_name: formData.name,
+        from_email: formData.email || 'N/A',
+        plus_one: pairedPartner ? `${pairedPartner} (also declining)` : 'N/A',
+        party_size: 0,
+        has_dietary: 'N/A',
+        dietary_count: 'N/A',
+        dietary_details: 'N/A',
+        meal_choices: 'DECLINED',
+        welcome_party: 'N/A',
+        message: formData.message || 'No message',
+      };
+      emailjs.send(serviceId, templateId, declineParams, publicKey)
+        .then(() => {
+          setIsFadingOut(true);
+          setTimeout(() => {
+            setIsDeclined(true);
+            formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+            setIsFadingOut(false);
+          }, 400);
+        })
+        .catch(() => alert('Oops! Something went wrong. Please try again.'))
+        .finally(() => setIsSubmitting(false));
+      return;
+    }
+
     // Validate radio buttons (these will flash if not selected)
     const invalid = [];
-    if (!formData.plusOne) invalid.push('plusOne');
-    if (!formData.hasDietary && formData.plusOne !== '') invalid.push('hasDietary');
+    if (!pairedPartner && !formData.plusOne) invalid.push('plusOne');
+    if (!formData.hasDietary && partyComplete) invalid.push('hasDietary');
     const partySize = getPartySize();
     for (let i = 0; i < partySize; i++) {
       if (!formData.mealChoices[i]) invalid.push(`meal_${i}`);
@@ -218,10 +373,12 @@ export function RsvpForm() {
       to_email: 'emily@thisjones.com',
       from_name: formData.name,
       from_email: formData.email,
-      plus_one: formData.plusOne,
+      plus_one: getPlusOneName(),
       party_size: getPartySize(),
       has_dietary: formData.hasDietary === 'help' ? 'Needs alternative meal' : formData.hasDietary,
-      dietary_count: formData.dietaryCount || 'N/A',
+      dietary_count: dietaryMembers.length > 0
+        ? dietaryMembers.map(i => getGuestLabel(i)).join(', ')
+        : 'N/A',
       dietary_details: formData.dietaryDetails || 'None',
       meal_choices: Array.from({ length: getPartySize() }, (_, i) => {
         const choice = meals.find(m => m.value === formData.mealChoices[i]);
@@ -239,6 +396,7 @@ export function RsvpForm() {
         setIsFadingOut(true);
         setTimeout(() => {
           setIsSubmitted(true);
+          formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
           setIsFadingOut(false);
           // Reset form
           setFormData({
@@ -260,6 +418,10 @@ export function RsvpForm() {
           setIsVerified(false);
           setNameInput('');
           setVerifiedName('');
+          setPairedPartner(null);
+          setPlusOneName('');
+          setAttending('');
+          setDietaryMembers([]);
           setNameSuggestions([]);
           setShowNotOnList(false);
         }, 400);
@@ -287,12 +449,24 @@ export function RsvpForm() {
 
   return (
     <>
+      <div ref={formTopRef} />
       {isSubmitted ? (
         <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
           <p className='mb-4'>We're so excited to celebrate with you.</p>
           <p>
-            If you have any questions or need to change or adjust your RSVP, no hard feelings. Just shoot us an email at{' '}
+            If you have any questions or need to change or adjust your RSVP, no hard feelings. Just send us an email at{' '}
+            <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
+              wedding@fayolle.com
+            </a>
+          </p>
+        </div>
+      ) : isDeclined ? (
+        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+          <h1 className='text-center text-5xl!'>we'll miss you!</h1>
+          <p className='mb-4'>Thanks for letting us know. We totally understand.</p>
+          <p>
+            If anything changes, just reach out at{' '}
             <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
               wedding@fayolle.com
             </a>
@@ -393,7 +567,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='absolute -top-10 left-1/2 -translate-x-1/2 z-10 text-xs! px-4! py-1.5! rounded-full! bg-white/70! backdrop-blur-sm border-none! cursor-pointer opacity-60 hover:opacity-100 transition-all whitespace-nowrap group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setFormData(prev => ({ ...prev, name: '' })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -401,12 +575,88 @@ export function RsvpForm() {
           <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
           {/* <h1 className='text-center text-3xl! pt-15'>👋</h1> */}
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto  text-primary!'>hey</h1>
-          <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-15! mx-auto lowercase leading-12! md:leading-10!'>{verifiedName}!</h1>
-          <h1 className='font-sanremo-caps! text-center text-lg! pb-10 mx-auto text-primary! tracking-wider'>Let's get you RSVP'd</h1>
-          {/* <svg viewBox='0 0 200 20' className='w-full mx-auto my-6' preserveAspectRatio='none'>
-            <path d='M0 10 Q25 0 50 10 T100 10 T150 10 T200 10' fill='none' stroke='var(--color-blue)' strokeWidth='2.5' strokeLinecap='round' />
-          </svg> */}
+          <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-10! mx-auto lowercase leading-12! md:leading-10!'>{verifiedName}!</h1>
+          {pairedPartner && (
+            <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
+          )}
 
+          {/* <h1 className='font-sanremo-caps! text-center text-lg! pb-10 mx-auto text-primary! tracking-wider'>Let's get you RSVP'd</h1> */}
+
+          <svg viewBox='-2 -2 204 16' className='w-3/4 mx-auto mt-10 mb-8' preserveAspectRatio='none' overflow='visible'>
+            <path d='M0 6 Q8.3 0 16.7 6 T33.3 6 T50 6 T66.7 6 T83.3 6 T100 6 T116.7 6 T133.3 6 T150 6 T166.7 6 T183.3 6 T200 6' fill='none' stroke='var(--color-blue)' strokeWidth='3' strokeLinecap='round' />
+          </svg>
+
+          {/* Attendance question — first thing after greeting */}
+          {pairedPartner ? (
+            <div className='mb-6 max-inner text-center'>
+              <h1 className=' text-primary! text-3xl! pb-2'>Can you make it?</h1>
+              <div className='flex flex-col md:flex-row items-center gap-2 mt-3'>
+                <span
+                  className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
+                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); }}
+                >
+                  We'll both be there!
+                </span>
+                <span
+                  className={`attendance-pill ${attending === 'solo' ? 'attendance-pill-selected' : ''}`}
+                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); }}
+                >
+                  Just me this time
+                </span>
+                <span
+                  className={`attendance-pill attendance-pill-decline ${attending === 'none' ? 'attendance-pill-selected' : ''}`}
+                  onClick={() => setAttending('none')}
+                >
+                  We can't make it
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className='mb-6 max-inner text-center'>
+              <h1 className=' text-primary! text-3xl! pb-2'>Can you make it?</h1>
+              <div className='flex justify-center gap-3 mt-3'>
+                <span
+                  className={`attendance-pill ${attending === 'yes' ? 'attendance-pill-selected' : ''}`}
+                  onClick={() => setAttending('yes')}
+                >
+                  Yes!
+                </span>
+                <span
+                  className={`attendance-pill attendance-pill-decline ${attending === 'no' ? 'attendance-pill-selected' : ''}`}
+                  onClick={() => setAttending('no')}
+                >
+                  I can't make it
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Decline path — short form with optional message */}
+          {isDeclining && (
+
+              <div className='animate-in max-inner'>
+                <div className='mb-6'>
+                  <p className=''>That's okay! We appreciate you letting us know, and we hope to celebrate with you another time. 💕</p>
+              </div>
+              <div className='mb-6'>
+                <textarea
+                  id='message'
+                  name='message'
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows='3'
+                  placeholder='Any parting words? (optional)'
+                />
+              </div>
+              <button type='submit' disabled={isSubmitting}>
+                {isSubmitting ? 'Sending...' : 'Send RSVP'}
+              </button>
+            </div>
+          )}
+
+          {/* Attending path — rest of the form */}
+          {attendanceAnswered && !isDeclining && (
+            <>
           <div className='mb-6 max-inner'>
             <input
               type='email'
@@ -419,19 +669,32 @@ export function RsvpForm() {
             />
           </div>
 
-          <div className='mb-6 max-inner'>
-            <label>Plus one?</label>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('plusOne') ? 'flash-invalid' : ''}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
-                Yes
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
-                <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
-                No
-              </label>
+          {/* Plus one section — manual only (paired partners skip this) */}
+          {!pairedPartner && (
+            <div className='mb-6 max-inner'>
+              <label>Plus one?</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('plusOne') ? 'flash-invalid' : ''}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                  <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
+                  Yes
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                  <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
+                  No
+                </label>
+              </div>
             </div>
-          </div>
+          )}
+          {!pairedPartner && formData.plusOne === 'yes' && (
+            <div className='mb-6 max-inner animate-in'>
+              <input
+                type='text'
+                value={plusOneName}
+                onChange={(e) => setPlusOneName(e.target.value)}
+                placeholder="What's their name?"
+              />
+            </div>
+          )}
 
 
 
@@ -502,18 +765,18 @@ export function RsvpForm() {
             <div className={fieldState.dietaryFields.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
               {getPartySize() > 1 && formData.hasDietary === 'yes' && (
                 <div className='mb-6'>
-                  <label htmlFor='dietaryCount'>How many people in your party have dietary restrictions?</label>
-                  <input
-                    type='number'
-                    id='dietaryCount'
-                    name='dietaryCount'
-                    value={formData.dietaryCount}
-                    onChange={handleChange}
-                    required
-                    min='1'
-                    max={getPartySize()}
-                    placeholder='Number of people with restrictions'
-                  />
+                  <label>Who has dietary restrictions?</label>
+                  <div className='meal-options' style={{ marginTop: '0.5rem' }}>
+                    {Array.from({ length: getPartySize() }, (_, i) => (
+                      <span
+                        key={i}
+                        className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
+                        onClick={() => toggleDietaryMember(i)}
+                      >
+                        {getGuestLabel(i)}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -563,6 +826,8 @@ export function RsvpForm() {
           <button type='submit' disabled={isSubmitting}>
             {isSubmitting ? 'Sending...' : 'OH YEEEAH 🎉'}
           </button>
+            </>
+          )}
         </form>
         </>
       )}

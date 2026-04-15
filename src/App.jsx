@@ -37,17 +37,41 @@ function App() {
     onClick: (e) => { e.preventDefault(); setActivePlace(name); },
   });
 
+  // Hero arc config — adjust to reposition curved text
+  // x1/x2: horizontal endpoints, baseY: where arcs start/end
+  // peakY: top of curve (lower = taller arch), midX: horizontal center
+  const arcs = {
+    line1: { x1: 40, x2: 760, baseY: 380, peakY: 30, midX: 400 },
+    line2: { x1: 120, x2: 680, baseY: 380, peakY: 130, midX: 400 },
+  };
+
   return (
     <div className='min-h-screen'>
       <ScrollNav />
       {/* Hero */}
       <section
-        className='relative h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center overflow-x-hidden'
-        style={{ backgroundImage: `url(${image.sparklers})` }}
+        className='relative h-screen flex items-center justify-center overflow-hidden bg-black pl-0! md:pl-0!'
       >
+        <img src={image.sparklers} alt='' className='absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none' />
         <div className='relative z-10 flex items-center justify-center'>
-          <img src={image.bothmarried} alt="We're Getting Married" className='max-h-[70vh] w-[110%] md:w-full max-w-none mb-40 md:mb-0' />
+          <svg viewBox='0 0 800 450' className='ml-3 w-[115vw] md:w-[95vw] max-w-[700px] md:max-w-[800px] mb-40 md:mb-0' style={{ fontFamily: 'var(--font-sanremo-caps)' }}>
+            <defs>
+              <path id='topArc' d={`M ${arcs.line1.x1},${arcs.line1.baseY} Q ${arcs.line1.midX},${arcs.line1.peakY} ${arcs.line1.x2},${arcs.line1.baseY}`} fill='none' />
+              <path id='line2Arc' d={`M ${arcs.line2.x1},${arcs.line2.baseY} Q ${arcs.line2.midX},${arcs.line2.peakY} ${arcs.line2.x2},${arcs.line2.baseY}`} fill='none' />
+            </defs>
+            <text textAnchor='middle' dy='-15' fill='white' fontSize='72' letterSpacing='4'>
+              <textPath href='#topArc' startOffset='50%'>
+                <tspan>Cody </tspan>
+                <tspan fontSize='40'>and</tspan>
+                <tspan> Emily</tspan>
+              </textPath>
+            </text>
+            <text textAnchor='middle' fill='#ff6969' fontSize='42' letterSpacing='5'>
+              <textPath href='#line2Arc' startOffset='50%'>are getting married</textPath>
+            </text>
+          </svg>
         </div>
+        <img src={image.overlay2} alt='' className='absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 max-h-300 w-auto pointer-events-none -ml-8!' />
         <div className='absolute inset-0 bg-text opacity-50'></div>
         <div className='absolute bottom-1/4 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
           <svg
@@ -99,7 +123,7 @@ function App() {
             <h1>times at which we party</h1>
             <p>
               We got you covered for the whole event in one place. Parking is available on-site and signs will guide you where you need to go.</p>
-              <p>Meet us at the<a className='button px-3! py-1!' href='#' {...placeButton('Greenhouse Loft', 'address', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a></p>
+              <p>Meet us at the<a className='button px-3! py-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a></p>
 
 
           </div>
@@ -320,9 +344,10 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
       <section id='registry' className='block theme-red'>
         <div className='block-inner block-split'>
           <div className='block-copy text-center md:text-left'>
-            <h1>registry</h1>
+            <h1>adventure awaits</h1>
             <p>
-              Your presence is the real gift - but for anyone who insists on doing more, we’re letting friends vote on our honeymoon destination. The location with the most support wins!
+              Your presence is the real gift - seriously, there is no obligation or expectation.</p>
+              <p>For anyone who insists on doing more, we’re opening up the vote on our honeymoon destination. The location with the most support wins!
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
           </div>

@@ -16,3 +16,4 @@ export { default as japan2 } from './japan-2.jpg';
 export { default as wine } from './wine.png';
 export { default as strip1 } from './strip1.jpg';
 export { default as strip2 } from './strip2.jpg';
+export { default as overlay2 } from './overlay-2.png';
