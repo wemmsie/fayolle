@@ -234,15 +234,15 @@ section {
 }
 
 .timeline-time {
-  @apply font-sanremo-caps text-lg md:text-2xl text-primary w-20 shrink-0 text-right;
+  @apply font-sanremo-caps text-xl md:text-2xl text-primary w-20 shrink-0 text-right;
 }
 
 .timeline-event {
-  @apply font-sanremo-caps text-lg md:text-2xl text-red block;
+  @apply font-sanremo-caps text-xl md:text-2xl text-red block;
 }
 
 .timeline-detail {
-  @apply text-sm text-primary block opacity-70;
+  @apply text-xl md:text-2xl text-primary block lowercase font-sanremo-script -mt-4;
 }
 
 .wedding-day-img {

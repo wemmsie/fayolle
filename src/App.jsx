@@ -123,7 +123,7 @@ function App() {
             <h1>times at which we party</h1>
             <p>
               We got you covered for the whole event in one place. Parking is available on-site and signs will guide you where you need to go.</p>
-              <p>Meet us at the<a className='button px-3! py-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a></p>
+              <p>Please join us at the<a className='button px-3! py-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>anytime after 3 PM!</p>
 
 
           </div>
@@ -153,7 +153,7 @@ function App() {
               <span className='timeline-time'>7:00</span>
               <div>
                 <span className='timeline-event'>Party</span>
-                <span className='timeline-detail'>Till midnight</span>
+                <span className='timeline-detail'>Till midnight 🕺✨</span>
               </div>
             </div>
           </div>
@@ -346,8 +346,8 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
           <div className='block-copy text-center md:text-left'>
             <h1>adventure awaits</h1>
             <p>
-              Your presence is the real gift - seriously, there is no obligation or expectation.</p>
-              <p>For anyone who insists on doing more, we’re opening up the vote on our honeymoon destination. The location with the most support wins!
+              Your presence is the real gift - seriously, there's no obligation or expectation.</p>
+              <p>For anyone who absolutely insists on doing more, we’re opening up the vote on our honeymoon destination. The location with the most support wins!
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
           </div>
