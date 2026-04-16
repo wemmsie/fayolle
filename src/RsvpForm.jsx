@@ -300,6 +300,16 @@ export function RsvpForm() {
     }
   };
 
+  // Fire-and-forget update to Google Sheet via Apps Script
+  const updateGoogleSheet = (payload) => {
+    const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+    if (!scriptUrl) return;
+    fetch(scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).catch((err) => console.warn('Sheet update failed:', err));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
@@ -324,6 +334,14 @@ export function RsvpForm() {
       };
       emailjs.send(serviceId, templateId, declineParams, publicKey)
         .then(() => {
+          updateGoogleSheet({
+            name: formData.name,
+            rsvp: 'no',
+            meal: '',
+            plusOneName: pairedPartner || '',
+            plusOneRsvp: pairedPartner ? 'no' : '',
+            plusOneMeal: '',
+          });
           setIsFadingOut(true);
           setTimeout(() => {
             setIsDeclined(true);
@@ -380,6 +398,17 @@ export function RsvpForm() {
       .send(serviceId, templateId, templateParams, publicKey)
       .then((response) => {
         console.log('SUCCESS!', response.status, response.text);
+
+        const guestMeal = meals.find(m => m.value === formData.mealChoices[0]);
+        const plusOneMeal = getPartySize() > 1 ? meals.find(m => m.value === formData.mealChoices[1]) : null;
+        updateGoogleSheet({
+          name: formData.name,
+          rsvp: 'yes',
+          meal: guestMeal ? guestMeal.shortTitle : '',
+          plusOneName: getPlusOneName(),
+          plusOneRsvp: getPartySize() > 1 ? 'yes' : '',
+          plusOneMeal: plusOneMeal ? plusOneMeal.shortTitle : '',
+        });
 
         setIsFadingOut(true);
         setTimeout(() => {
