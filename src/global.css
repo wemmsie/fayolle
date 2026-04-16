@@ -61,16 +61,27 @@
   --font-sanremo-script: "Sanremo Script", sans-serif;
   --font-routed: "Routed Gothic", sans-serif;
   
-  /* Custom Font Sizes */
+  /* Custom Font Sizes (mobile-first — desktop overrides below) */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.1rem;
-  --text-xl: 1.8rem;
-  --text-2xl: 2.25rem;
-  --text-3xl: 3.5rem;
-  --text-4xl: 5rem;
-  --text-5xl: 7rem;
+  --text-xl: 1.4rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.5rem;
+  --text-4xl: 3.5rem;
+  --text-5xl: 5rem;
+}
+
+/* Desktop font size overrides */
+@media (min-width: 768px) {
+  :root {
+    --text-xl: 1.8rem;
+    --text-2xl: 2.25rem;
+    --text-3xl: 3.5rem;
+    --text-4xl: 5rem;
+    --text-5xl: 7rem;
+  }
 }
 
 body {
@@ -485,7 +496,7 @@ section {
 /* Form Styles */
 
 form {
-    @apply bg-white rounded-xl px-8 py-10 md:p-10 shadow-none mx-auto max-w-2xl;
+    @apply bg-white rounded-xl px-6 py-10 md:p-10 shadow-none mx-auto max-w-2xl;
     p {
         @apply mb-6 text-text-light/50 text-center;
     }
@@ -974,11 +985,48 @@ button[type="submit"]:hover {
 }
 
 .guest-meal-row {
-  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 p-3 rounded-lg;
+  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-3 rounded-lg;
 }
 
 .guest-name {
   @apply font-semibold text-primary text-sm md:text-base md:min-w-36 shrink-0;
+}
+
+/* RSVP form shared classes */
+.rsvp-panel {
+  @apply text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20;
+}
+
+.not-me-button {
+  @apply absolute -top-10 left-1/2 -translate-x-1/2 z-10 rounded-full
+    bg-white/70 backdrop-blur-sm border-none cursor-pointer
+    opacity-60 hover:opacity-100 transition-all whitespace-nowrap;
+  font-size: 0.75rem !important;
+  padding: 0.25rem 1rem !important;
+}
+
+.back-button {
+  @apply rounded-full border-none cursor-pointer transition-colors;
+  font-size: 0.875rem !important;
+  background: var(--color-gray-200, #e5e7eb) !important;
+  color: var(--color-gray-600, #4b5563) !important;
+  padding: 0.5rem 1.25rem !important;
+}
+
+.back-button:hover {
+  background: var(--color-gray-300, #d1d5db) !important;
+}
+
+.radio-group {
+  @apply flex gap-4 mt-2;
+}
+
+.radio-group-col {
+  @apply flex flex-col gap-2 mt-2;
+}
+
+.radio-label {
+  @apply text-sm md:text-base flex items-center gap-2 font-normal;
 }
 
 /* Attendance pills */

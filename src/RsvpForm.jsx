@@ -439,7 +439,7 @@ export function RsvpForm() {
     <>
       <div ref={formTopRef} />
       {isSubmitted ? (
-        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+        <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
           <p className='mb-4'>We're so excited to celebrate with you.</p>
           <p>
@@ -450,7 +450,7 @@ export function RsvpForm() {
           </p>
         </div>
       ) : isDeclined ? (
-        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+        <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>we'll miss you!</h1>
           <p className='mb-4'>Thanks for letting us know. We totally understand.</p>
           <p>
@@ -461,7 +461,7 @@ export function RsvpForm() {
           </p>
         </div>
       ) : !isUnlocked ? (
-        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+        <div className='rsvp-panel'>
           <h1 className='mb-10 mx-auto'>time to rsvp!</h1>
           <p className='text-base! mb-6'>Enter the password from your invitation to get started.</p>
 
@@ -489,7 +489,7 @@ export function RsvpForm() {
           )}
         </div>
       ) : !isVerified ? (
-        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+        <div className='rsvp-panel'>
           <h1 className='mb-10 mx-auto'>time to rsvp!</h1>
 
           {nameSuggestions.length > 0 ? (
@@ -504,7 +504,7 @@ export function RsvpForm() {
               </div>
               <button
                 type='button'
-                className='mt-6 text-sm! bg-gray-200! text-gray-600! hover:bg-gray-300! rounded-full! px-5! py-2! border-none! cursor-pointer transition-colors group'
+                className='back-button mt-6 group'
                 onClick={() => { setNameSuggestions([]); setNameInput(''); setShowNotOnList(false); }}
               >
                 <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
@@ -524,7 +524,7 @@ export function RsvpForm() {
               </p>
               <button
                 type='button'
-                className='mt-2 text-sm! bg-gray-200! text-gray-600! hover:bg-gray-300! rounded-full! px-5! py-2! border-none! cursor-pointer transition-colors group'
+                className='back-button mt-2 group'
                 onClick={() => { setShowNotOnList(false); setNameInput(''); }}
               >
                 <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
@@ -551,30 +551,40 @@ export function RsvpForm() {
           )}
         </div>
       ) : alreadyRsvpd && !editingRsvp ? (
-        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
-          <h1 className='text-center text-4xl! mb-4!'>
-            {alreadyRsvpd === 'yes' ? 'you\'re all set!' : 'we got your note'}
-          </h1>
-          <p className='leading-10! mb-6!'>
-            {alreadyRsvpd === 'yes'
-              ? `Looks like you've already RSVP'd - we can't wait to see you there!`
-              : `We have you down as not attending. We'll miss you!`}
-          </p>
-          <p className='text-base! mb-6!'>
-            Need to make changes?
-          </p>
-          <span
-            className='attendance-pill'
-            onClick={() => setEditingRsvp(true)}
+        <>
+          <button
+            type='button'
+            className='not-me-button group'
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
-            Update my RSVP
-          </span>
-        </div>
+            <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+            Not {verifiedName.split(' ')[0]}?
+          </button>
+          <div className='rsvp-panel'>
+            <h1 className='text-center mb-4!'>
+              {alreadyRsvpd === 'yes' ? 'you\'re all set!' : 'we got your note'}
+            </h1>
+            <p className='leading-10! mb-6!'>
+              {alreadyRsvpd === 'yes'
+                ? `Looks like you've already RSVP'd - we can't wait to see you there!`
+                : `We have you down as not attending. We'll miss you!`}
+            </p>
+            {/* <p className='text-base! mb-6!'>
+              Need to make changes?
+            </p> */}
+            <span
+              className='attendance-pill'
+              onClick={() => setEditingRsvp(true)}
+            >
+              Change my RSVP
+            </span>
+          </div>
+        </>
       ) : (
         <>
           <button
             type='button'
-            className='absolute -top-10 left-1/2 -translate-x-1/2 z-10 text-xs! px-4! py-1.5! rounded-full! bg-white/70! backdrop-blur-sm border-none! cursor-pointer opacity-60 hover:opacity-100 transition-all whitespace-nowrap group'
+            className='not-me-button group'
             onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
@@ -582,8 +592,8 @@ export function RsvpForm() {
           </button>
           <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
           {/* <h1 className='text-center text-3xl! pt-15'>👋</h1> */}
-          <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto  text-primary!'>hey</h1>
-          <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
+          <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto text-primary!'>hey</h1>
+          <h1 className='text-center text-3xl! md:text-5xl! pt-0! mb-2! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
@@ -597,7 +607,7 @@ export function RsvpForm() {
           {/* Attendance question — first thing after greeting */}
           {pairedPartner ? (
             <div className='mb-6 max-inner text-center'>
-              <h1 className=' text-primary! text-3xl! pb-2'>Can you make it?</h1>
+              <h1 className=' text-primary! text-2xl! md:text-3xl! pb-2'>Can you make it?</h1>
               <div className='flex flex-col md:flex-row items-center gap-2 mt-3'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
@@ -681,12 +691,12 @@ export function RsvpForm() {
           {!pairedPartner && (
             <div className='mb-6 max-inner'>
               <label>Plus one?</label>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }} className={invalidFields.includes('plusOne') ? 'flash-invalid' : ''}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+              <div className={`radio-group ${invalidFields.includes('plusOne') ? 'flash-invalid' : ''}`}>
+                <label className='radio-label'>
                   <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
                   Yes
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                <label className='radio-label'>
                   <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
                   No
                 </label>
@@ -749,19 +759,16 @@ export function RsvpForm() {
           {partyComplete && (
             <div className='mb-6 animate-in max-inner'>
               <label>Anything we should know about food?</label>
-              <div
-                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}
-                className={invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}
-              >
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+              <div className={`radio-group-col ${invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}`}>
+                <label className='radio-label'>
                   <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
                   Nope, the menu looks great!
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                <label className='radio-label'>
                   <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
                   Yes, there are some dietary restrictions
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                <label className='radio-label'>
                   <input type='radio' name='hasDietary' value='help' checked={formData.hasDietary === 'help'} onChange={handleChange} />
                   None of these options work - help us out!
                 </label>
@@ -807,12 +814,12 @@ export function RsvpForm() {
           {formData.hasDietary !== '' && (
             <div className='mb-6 animate-in max-inner'>
               <label>We're hosting a casual welcome party the night before - no pressure, but would you like to join?</label>
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+              <div className='radio-group flex-col md:flex-row'>
+                <label className='radio-label'>
                   <input type='radio' name='welcomeParty' value='yes' checked={formData.welcomeParty === 'yes'} onChange={handleChange} />
                   Count me in!
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 'normal' }}>
+                <label className='radio-label'>
                   <input type='radio' name='welcomeParty' value='no' checked={formData.welcomeParty === 'no'} onChange={handleChange} />
                   I'll skip this one
                 </label>

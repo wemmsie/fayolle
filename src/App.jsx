@@ -76,7 +76,7 @@ function App() {
       >
         <img src={image.sparklers} alt='' className='absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none' />
         <div className='relative z-10 flex items-center justify-center'>
-          <svg viewBox='0 0 800 450' className='ml-3 w-[115vw] md:w-[95vw] max-w-[700px] md:max-w-[800px] mb-40 md:mb-0' style={{ fontFamily: 'var(--font-sanremo-caps)' }}>
+          <svg viewBox='0 0 800 450' className='ml-5 w-[115vw] md:w-[95vw] max-w-[700px] md:max-w-[800px] mb-40 md:mb-0' style={{ fontFamily: 'var(--font-sanremo-caps)' }}>
             <defs>
               <path id='topArc' d={`M ${arcs.line1.x1},${arcs.line1.baseY} Q ${arcs.line1.midX},${arcs.line1.peakY} ${arcs.line1.x2},${arcs.line1.baseY}`} fill='none' />
               <path id='line2Arc' d={`M ${arcs.line2.x1},${arcs.line2.baseY} Q ${arcs.line2.midX},${arcs.line2.peakY} ${arcs.line2.x2},${arcs.line2.baseY}`} fill='none' />
