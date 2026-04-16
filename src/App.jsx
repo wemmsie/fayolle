@@ -24,23 +24,31 @@ function App() {
   const funkyPhotos = isMobile ? [...funkyDesktop, ...funkyGalleryOnly] : funkyGalleryOnly;
   const tooltipRef = useRef(null);
 
+  const positionTip = useCallback((el, x, y) => {
+    const pad = 8;
+    const offset = 20;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    let left = x - w / 2;
+    let top = y + offset;
+    if (left < pad) left = pad;
+    if (left + w > window.innerWidth - pad) left = window.innerWidth - pad - w;
+    if (top + h > window.innerHeight - pad) top = y - offset - h;
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }, []);
+
   const handleMouseEnter = useCallback((e) => {
     const tip = e.currentTarget.dataset.tip;
     const tag = e.currentTarget.dataset.tag;
     if (!tip) return;
     setTooltip({ visible: true, text: tip, tag });
-    if (tooltipRef.current) {
-      tooltipRef.current.style.left = e.clientX + 'px';
-      tooltipRef.current.style.top = e.clientY + 'px';
-    }
-  }, []);
+    if (tooltipRef.current) positionTip(tooltipRef.current, e.clientX, e.clientY);
+  }, [positionTip]);
 
   const handleMouseMove = useCallback((e) => {
-    if (tooltipRef.current) {
-      tooltipRef.current.style.left = e.clientX + 'px';
-      tooltipRef.current.style.top = e.clientY + 'px';
-    }
-  }, []);
+    if (tooltipRef.current) positionTip(tooltipRef.current, e.clientX, e.clientY);
+  }, [positionTip]);
 
   const handleMouseLeave = useCallback(() => {
     setTooltip(t => ({ ...t, visible: false }));
@@ -142,7 +150,7 @@ function App() {
       <section id='schedule' className='block theme-cream wedding-day'>
         <div className='block-inner'>
           <div className='text-center mb-10 pl-2 md:pl-0'>
-            <h1>times at which we party</h1>
+            <h1>when we party</h1>
             <p>
               We got you covered for the whole event in one place. Parking is available on-site and signs will guide you where you need to go.</p>
               <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
@@ -257,7 +265,7 @@ function App() {
       {/* Things to Do */}
       <section id='todo' className='block theme-cream to-do'>
         <div className='block-inner text-center pl-2 md:pl-0'>
-          <h1 className=''>things to do</h1>
+          <h1 className=''>what to do</h1>
           <p>
             Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations! Check out our list for a few of our favorite places around the city.
           </p>
@@ -280,16 +288,18 @@ function App() {
                 { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
                 { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: 'Girl & The Goat' },
                 { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
-                { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
+                // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
                 { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
               ],
               drink: [
-                { name: 'Little Victories Coffee', tag: 'drink', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
-                { name: 'Truce Chicago', tag: 'drink', tip: 'Specialty coffee & pastries', label: 'Truce' },
-                { name: 'Lazybird Chicago', tag: 'drink', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
-                { name: 'Pilot Project Brewing', tag: 'drink', tip: 'Local craft beer taproom', label: 'Pilot Project' },
-                { name: 'Easy Does It Bar', tag: 'drink', tip: 'Laid-back neighborhood bar', label: 'Easy Does It' },
-                { name: 'Welcome Back Lounge', tag: 'drink', tip: 'Retro cocktail lounge', label: 'Welcome Back Lounge' },
+                { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
+                { name: 'Truce Chicago', tag: 'drinks', tip: 'Specialty coffee & pastries', label: 'Truce' },
+                { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
+                { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
+                { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: 'Easy Does It' },
+                { name: 'Welcome Back Lounge', tag: 'drinks & eats', tip: 'Retro cocktail lounge with great bites', label: 'Welcome Back Lounge' },
+                { name: 'Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn & Tavern' },
+
               ],
             };
             const PlaceList = ({ items }) => items.map(p => (
@@ -415,7 +425,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
       {tooltip.visible && (
         <div
           ref={tooltipRef}
-          className={`tip tip-${tooltip.tag}`}
+          className={`tip tip-${tooltip.tag.replace(/[^a-z0-9-]/gi, '-')}`}
         >
           <span className='tip-tag'>{tooltip.tag}</span>
           <span className='tip-desc'>{tooltip.text}</span>
