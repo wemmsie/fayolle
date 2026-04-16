@@ -1,34 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-// Google Maps bootstrap loader — sets up google.maps.importLibrary (runs once)
-((g) => {
-  var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary",
-    q = "__ib__", m = document, b = window; b = b[c] || (b[c] = {});
-  var d = b.maps || (b.maps = {}), r = new Set, e = new URLSearchParams,
-    u = () => h || (h = new Promise(async (f, n) => {
-      await (a = m.createElement("script"));
-      e.set("libraries", [...r] + "");
-      for (k in g) e.set(k.replace(/[A-Z]/g, t => "_" + t[0].toLowerCase()), g[k]);
-      e.set("callback", c + ".maps." + q);
-      a.src = `https://maps.${c}apis.com/maps/api/js?` + e;
-      d[q] = f; a.onerror = () => h = n(Error(p + " could not load."));
-      a.nonce = m.querySelector("script[nonce]")?.nonce || "";
-      m.head.append(a);
-    }));
-  d[l] ? console.warn(p + " only loads once. Ignoring:", g)
-    : d[l] = (f, ...n) => r.add(f) && u().then(() => d[l](f, ...n));
-})({ key: API_KEY, v: "weekly" });
-
-// Cache persists across modal open/close for the entire session
-const placeCache = new Map();
+import { useEffect, useRef } from 'react';
+import placesData from './places-data.json';
 
 export function PlaceModal({ place, onClose }) {
   const backdropRef = useRef(null);
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const data = placesData[place] || null;
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -42,50 +17,11 @@ export function PlaceModal({ place, onClose }) {
     };
   }, [onClose]);
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    // Return cached result immediately if available
-    if (placeCache.has(place)) {
-      setData(placeCache.get(place));
-      setLoading(false);
-      return;
-    }
-
-    (async () => {
-      try {
-        const { Place } = await google.maps.importLibrary('places');
-        const { places } = await Place.searchByText({
-          textQuery: place + ', Chicago',
-          fields: ['displayName', 'formattedAddress', 'rating', 'userRatingCount',
-                   'photos', 'websiteURI', 'googleMapsURI'],
-          maxResultCount: 1,
-        });
-        if (cancelled) return;
-        const p = places?.[0];
-        if (!p) { setError('Place not found'); setLoading(false); return; }
-        // reservable isn't supported in searchByText — fetch it separately
-        try { await p.fetchFields({ fields: ['reservable'] }); } catch (_) {}
-        placeCache.set(place, p);
-        setData(p);
-        setLoading(false);
-      } catch (e) {
-        if (!cancelled) { setError(e.message); setLoading(false); }
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [place]);
-
   const handleBackdropClick = (e) => {
     if (e.target === backdropRef.current) onClose();
   };
 
-  const photoUrl = data?.photos?.[0]
-    ? data.photos[0].getURI({ maxHeight: 600 })
-    : null;
+  const photoUrl = data?.photoUrl || null;
 
   const stars = (rating) => {
     const full = Math.floor(rating);
@@ -101,8 +37,7 @@ export function PlaceModal({ place, onClose }) {
       <div className='modal-content'>
         <button className='modal-close' onClick={onClose} aria-label='Close'>&times;</button>
 
-        {loading && <div className='modal-loading'>Loading…</div>}
-        {error && <div className='modal-error'>{error}</div>}
+        {!data && <div className='modal-error'>Place not found</div>}
 
         {data && (
           <>

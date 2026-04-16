@@ -1,0 +1,222 @@
+{
+  "Greenhouse Loft": {
+    "displayName": "Greenhouse Loft",
+    "formattedAddress": "2545 W Diversey Ave, Chicago, IL 60647, USA",
+    "rating": 4.8,
+    "userRatingCount": 245,
+    "photoUrl": "/place-photos/greenhouse-loft.jpg",
+    "websiteURI": "http://greenhouseloft.com/?utm_source=local&utm_medium=organic&utm_campaign=gmb",
+    "googleMapsURI": "https://maps.google.com/?cid=12624545061611246257&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Lakefront Trail": {
+    "displayName": "Lakefront Trail",
+    "formattedAddress": "Lakefront Trl, Chicago, IL, USA",
+    "rating": null,
+    "userRatingCount": null,
+    "photoUrl": "/place-photos/lakefront-trail.jpg",
+    "websiteURI": null,
+    "googleMapsURI": "https://maps.google.com/?q=Lakefront+Trl,+Chicago,+IL,+USA&ftid=0x880fd4aab17f7633:0x3262a7c6ca625def&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Architectural Boat Tour": {
+    "displayName": "Chicago River Boat Architecture Tours",
+    "formattedAddress": "465 N McClurg Ct, Chicago, IL 60611, USA",
+    "rating": 4.8,
+    "userRatingCount": 3156,
+    "photoUrl": "/place-photos/architectural-boat-tour.jpg",
+    "websiteURI": "http://www.architecturetourchicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=14776392502071918976&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Garfield Park Conservatory": {
+    "displayName": "Garfield Park Conservatory",
+    "formattedAddress": "300 N Central Park Ave, Chicago, IL 60624, USA",
+    "rating": 4.8,
+    "userRatingCount": 10387,
+    "photoUrl": "/place-photos/garfield-park-conservatory.jpg",
+    "websiteURI": "https://garfieldconservatory.org/",
+    "googleMapsURI": "https://maps.google.com/?cid=15141511529935438762&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Art Institute of Chicago": {
+    "displayName": "The Art Institute of Chicago",
+    "formattedAddress": "111 S Michigan Ave, Chicago, IL 60603, USA",
+    "rating": 4.8,
+    "userRatingCount": 37664,
+    "photoUrl": "/place-photos/art-institute-of-chicago.jpg",
+    "websiteURI": "https://www.artic.edu/",
+    "googleMapsURI": "https://maps.google.com/?cid=5199955304902742238&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Chicago Cultural Center": {
+    "displayName": "Chicago Cultural Center",
+    "formattedAddress": "78 E Washington St, Chicago, IL 60602, USA",
+    "rating": 4.7,
+    "userRatingCount": 5879,
+    "photoUrl": "/place-photos/chicago-cultural-center.jpg",
+    "websiteURI": "https://www.chicago.gov/city/en/depts/dca/supp_info/chicago_culturalcenter.html",
+    "googleMapsURI": "https://maps.google.com/?cid=3661040312719634495&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Peggy Notebaert Nature Museum": {
+    "displayName": "Peggy Notebaert Nature Museum",
+    "formattedAddress": "2430 N Cannon Dr, Chicago, IL 60614, USA",
+    "rating": 4.7,
+    "userRatingCount": 2243,
+    "photoUrl": "/place-photos/peggy-notebaert-nature-museum.jpg",
+    "websiteURI": "http://www.naturemuseum.org/",
+    "googleMapsURI": "https://maps.google.com/?cid=17609343840620941274&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Osaka Garden at Jackson Park": {
+    "displayName": "Osaka Garden",
+    "formattedAddress": "6300 S Cornell Ave, Chicago, IL 60637, USA",
+    "rating": 4.7,
+    "userRatingCount": 1237,
+    "photoUrl": "/place-photos/osaka-garden-at-jackson-park.jpg",
+    "websiteURI": "https://www.chicagoparkdistrict.com/parks-facilities/japanese-garden",
+    "googleMapsURI": "https://maps.google.com/?cid=18274800886968574734&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Cozy Corner Restaurant": {
+    "displayName": "Cozy Corner Restaurant and Pancake House",
+    "formattedAddress": "2294 N Milwaukee Ave, Chicago, IL 60647, USA",
+    "rating": 4.5,
+    "userRatingCount": 3070,
+    "photoUrl": "/place-photos/cozy-corner-restaurant.jpg",
+    "websiteURI": "http://www.cozycornerrestaurant.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=3239313343175113992&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Bang Bang Pie & Biscuits": {
+    "displayName": "Bang Bang Pie & Biscuits",
+    "formattedAddress": "2051 N California Ave, Chicago, IL 60647, USA",
+    "rating": 4.6,
+    "userRatingCount": 1752,
+    "photoUrl": "/place-photos/bang-bang-pie-biscuits.jpg",
+    "websiteURI": "http://bangbangpie.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=17633763176999009009&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Loaf Lounge": {
+    "displayName": "Loaf Lounge",
+    "formattedAddress": "2934 N Milwaukee Ave Suite E, Chicago, IL 60618, USA",
+    "rating": 4.6,
+    "userRatingCount": 459,
+    "photoUrl": "/place-photos/loaf-lounge.jpg",
+    "websiteURI": "https://www.loafloungechicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=18306922684031008361&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Lula Cafe": {
+    "displayName": "Lula Cafe",
+    "formattedAddress": "2537 N Kedzie Blvd, Chicago, IL 60647, USA",
+    "rating": 4.7,
+    "userRatingCount": 3544,
+    "photoUrl": "/place-photos/lula-cafe.jpg",
+    "websiteURI": "http://lulacafe.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=15700686508302885506&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  },
+  "Girl & The Goat": {
+    "displayName": "Girl & The Goat",
+    "formattedAddress": "809 W Randolph St, Chicago, IL 60607, USA",
+    "rating": 4.7,
+    "userRatingCount": 7699,
+    "photoUrl": "/place-photos/girl-the-goat.jpg",
+    "websiteURI": "http://www.girlandthegoat.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=10460675286346267218&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  },
+  "Akahoshi Ramen": {
+    "displayName": "Akahoshi Ramen",
+    "formattedAddress": "2340 N California Ave Suite B, Chicago, IL 60647, USA",
+    "rating": 4.4,
+    "userRatingCount": 583,
+    "photoUrl": "/place-photos/akahoshi-ramen.jpg",
+    "websiteURI": "https://akahoshiramen.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=2157346840695116099&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  },
+  "Dove's Luncheonette": {
+    "displayName": "Dove's Luncheonette",
+    "formattedAddress": "1545 N Damen Ave, Chicago, IL 60622, USA",
+    "rating": 4.7,
+    "userRatingCount": 1590,
+    "photoUrl": "/place-photos/dove-s-luncheonette.jpg",
+    "websiteURI": "http://www.doveschicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=1581553859973385122&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  },
+  "Gretel": {
+    "displayName": "Gretel",
+    "formattedAddress": "2833 W Armitage Ave, Chicago, IL 60647, USA",
+    "rating": 4.6,
+    "userRatingCount": 893,
+    "photoUrl": "/place-photos/gretel.jpg",
+    "websiteURI": "http://www.gretelchicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=11282064937939619700&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Little Victories Coffee": {
+    "displayName": "Little Victories",
+    "formattedAddress": "1725 W Division St, Chicago, IL 60622, USA",
+    "rating": 3.9,
+    "userRatingCount": 463,
+    "photoUrl": "/place-photos/little-victories-coffee.jpg",
+    "websiteURI": "http://happydrinkingplace.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=12519063737341741602&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Truce Chicago": {
+    "displayName": "TRUCE",
+    "formattedAddress": "1935 N Damen Ave, Chicago, IL 60647, USA",
+    "rating": 4.9,
+    "userRatingCount": 216,
+    "photoUrl": "/place-photos/truce-chicago.jpg",
+    "websiteURI": "http://www.trucechicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=3786172974334230063&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Lazybird Chicago": {
+    "displayName": "Lazy Bird",
+    "formattedAddress": "200 N Green St, Chicago, IL 60607, USA",
+    "rating": 4.5,
+    "userRatingCount": 521,
+    "photoUrl": "/place-photos/lazybird-chicago.jpg",
+    "websiteURI": "http://lazybirdchicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=14285403774793159909&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Pilot Project Brewing": {
+    "displayName": "Pilot Project Brewing - Logan Square",
+    "formattedAddress": "2140 N Milwaukee Ave, Chicago, IL 60647, USA",
+    "rating": 4.7,
+    "userRatingCount": 498,
+    "photoUrl": "/place-photos/pilot-project-brewing.jpg",
+    "websiteURI": "https://www.pilotprojectbrewing.com/logansquaretastingroom",
+    "googleMapsURI": "https://maps.google.com/?cid=6121316300236150106&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  },
+  "Easy Does It Bar": {
+    "displayName": "Easy Does It",
+    "formattedAddress": "2354 N Milwaukee Ave, Chicago, IL 60647, USA",
+    "rating": 4.6,
+    "userRatingCount": 197,
+    "photoUrl": "/place-photos/easy-does-it-bar.jpg",
+    "websiteURI": "http://easydoes.it/",
+    "googleMapsURI": "https://maps.google.com/?cid=10091833110527335114&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": false
+  },
+  "Welcome Back Lounge": {
+    "displayName": "The Welcome Back Lounge",
+    "formattedAddress": "2423 N Milwaukee Ave, Chicago, IL 60647, USA",
+    "rating": 4.7,
+    "userRatingCount": 337,
+    "photoUrl": "/place-photos/welcome-back-lounge.png",
+    "websiteURI": "http://welcomebackchicago.com/",
+    "googleMapsURI": "https://maps.google.com/?cid=16222313066984493981&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgBIAA",
+    "reservable": true
+  }
+}

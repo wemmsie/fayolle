@@ -12,13 +12,34 @@ function App() {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', tag: '', x: 0, y: 0 });
   const [activePlace, setActivePlace] = useState(null);
   const [activeTab, setActiveTab] = useState('do');
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
+  const funkyDesktop = [image.funky2, image.funky3, image.funky5, image.funky6, image.funky7, image.funky8];
+  const funkyGalleryOnly = [
+    image.funky10, image.funky11, image.funky12, image.funky13, image.funky14,
+    image.funky15, image.funky16, image.funky17, image.funky18,
+  ];
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const funkyPhotos = isMobile ? [...funkyDesktop, ...funkyGalleryOnly] : funkyGalleryOnly;
   const tooltipRef = useRef(null);
 
-  const handleMouseMove = useCallback((e) => {
+  const handleMouseEnter = useCallback((e) => {
     const tip = e.currentTarget.dataset.tip;
     const tag = e.currentTarget.dataset.tag;
     if (!tip) return;
-    setTooltip({ visible: true, text: tip, tag, x: e.clientX, y: e.clientY });
+    setTooltip({ visible: true, text: tip, tag });
+    if (tooltipRef.current) {
+      tooltipRef.current.style.left = e.clientX + 'px';
+      tooltipRef.current.style.top = e.clientY + 'px';
+    }
+  }, []);
+
+  const handleMouseMove = useCallback((e) => {
+    if (tooltipRef.current) {
+      tooltipRef.current.style.left = e.clientX + 'px';
+      tooltipRef.current.style.top = e.clientY + 'px';
+    }
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -28,13 +49,14 @@ function App() {
   const tipProps = (tag, tip) => ({
     'data-tag': tag,
     'data-tip': tip,
+    onMouseEnter: handleMouseEnter,
     onMouseMove: handleMouseMove,
     onMouseLeave: handleMouseLeave,
   });
 
   const placeButton = (name, tag, tip) => ({
     ...tipProps(tag, tip),
-    onClick: (e) => { e.preventDefault(); setActivePlace(name); },
+    onClick: (e) => { e.preventDefault(); setTooltip(t => ({ ...t, visible: false })); setActivePlace(name); },
   });
 
   // Hero arc config — adjust to reposition curved text
@@ -99,7 +121,7 @@ function App() {
             <Polaroid photo={image.emilyparis} className='polaroid-spread-2' />
             <Polaroid photo={image.codycafe} className='polaroid-spread-3' />
           </div>
-          <div className='text-center mt-10 max-w-2xl mx-auto'>
+          <div className='text-center mt-10 max-w-2xl mx-auto pl-2 md:pl-0'>
             <h1>let's do this thing</h1>
             <p>
               We heard that getting married was the perfect opportunity to throw a big party with all of our favorite people...
@@ -119,11 +141,15 @@ function App() {
       {/* Wedding Day */}
       <section id='schedule' className='block theme-cream wedding-day'>
         <div className='block-inner'>
-          <div className='text-center mb-10'>
+          <div className='text-center mb-10 pl-2 md:pl-0'>
             <h1>times at which we party</h1>
             <p>
               We got you covered for the whole event in one place. Parking is available on-site and signs will guide you where you need to go.</p>
-              <p>Please join us at the<a className='button px-3! py-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>anytime after 3 PM!</p>
+              <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
+                <p className="m-0!">Please join us at the</p>
+                <a className='button px-3! py-1! leading-5 md:leading-8' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
+                <p className="m-0!">anytime after 3 PM!</p>
+              </div>
 
 
           </div>
@@ -157,16 +183,42 @@ function App() {
               </div>
             </div>
           </div>
-          <img src={image.wine} alt='' className='wedding-day-img' />
+          {/* <img src={image.wine} alt='' className='wedding-day-img' /> */}
+        </div>
+      </section>
+
+      {/* Outfit Inspiration */}
+      <section id='outfit' className='block theme-cream overflow-x-clip pl-8! overflow-y-visible!'>
+        <div className='block-inner text-center relative'>
+          {/* Scattered collage — left side */}
+          <div className='funky-img funky-left-1' onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}><img src={image.funky2} alt='' /></div>
+          <div className='funky-img funky-left-2' onClick={() => { setGalleryIndex(2); setGalleryOpen(true); }}><img src={image.funky5} alt='' /></div>
+          <div className='funky-img funky-left-3' onClick={() => { setGalleryIndex(5); setGalleryOpen(true); }}><img src={image.funky8} alt='' /></div>
+
+          {/* Scattered collage — right side */}
+          <div className='funky-img funky-right-1' onClick={() => { setGalleryIndex(1); setGalleryOpen(true); }}><img src={image.funky3} alt='' /></div>
+          <div className='funky-img funky-right-2' onClick={() => { setGalleryIndex(3); setGalleryOpen(true); }}><img src={image.funky6} alt='' /></div>
+          <div className='funky-img funky-right-3' onClick={() => { setGalleryIndex(4); setGalleryOpen(true); }}><img src={image.funky7} alt='' /></div>
+
+          <div className='relative z-10 max-w-lg mx-auto bg-blue rounded-2xl px-8 py-10'>
+            <h1 className='text-white!'>what to wear</h1>
+            <p>
+              Think <b>funky cocktail</b> - Harry Styles at a garden party meets your coolest aunt at a disco. Bold colors, wild prints, and shoes you can actually dance in.
+            </p>
+            <p>
+              Most importantly, be comfortable. The ceremony and cocktail hour are shaded outdoors, then the evening moves inside. So dress for a warm Chicago summer day (<span className='font-bold text-[#4a8ab5]'>↓65°</span> <span className='font-bold text-[#d54444]'>82°F↑</span>) and bring a layer if you run cold!
+            </p>
+            <button className='button mt-4' onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}>See More Inspo</button>
+          </div>
         </div>
       </section>
 
       {/* Accommodations */}
       <section id='stay' className='block theme-pink'>
-        <div className='block-inner text-center'>
+        <div className='block-inner text-center pl-2 md:pl-0'>
           <h1>where to stay</h1>
           <p>
-            We've got a hitched code for <a href='https://booking.thehoxton.com/en-us/availability?_gl=1*1c1cf6w*_gcl_au*MTg2ODA4OTA0OS4xNzc1OTMwNTMyLjE5NzE0MjQ3MzUuMTc3NTkzMDU4OS4xNzc1OTMwNTg5*_ga*MjQ2Njc2ODA3LjE3NzU5MzA1MzI.*_ga_F7XM2Q5ZRS*czE3NzU5MzA1MzIkbzEkZzEkdDE3NzU5MzA1OTAkajIkbDAkaDc3MDE4MzY3OQ..&checkin=2026-08-07&checkout=2026-08-09&hotelCode=hoxton.chicago-chicago&modifySearch=false&rateCode=HITCHED826&rooms%5B0%5D.adults=2&rooms%5B0%5D.children=0&rooms-total=1'>10% off at the Hoxton Hotel</a> and more local suggestions. We recommend booking early, as hotels in the area tend to fill up quickly in August. If you have any questions or need help finding accommodations, please don't hesitate to reach out!
+            We've got a hitched code for <a href='https://booking.thehoxton.com/en-us/availability?_gl=1*1c1cf6w*_gcl_au*MTg2ODA4OTA0OS4xNzc1OTMwNTMyLjE5NzE0MjQ3MzUuMTc3NTkzMDU4OS4xNzc1OTMwNTg5*_ga*MjQ2Njc2ODA3LjE3NzU5MzA1MzI.*_ga_F7XM2Q5ZRS*czE3NzU5MzA1MzIkbzEkZzEkdDE3NzU5MzA1OTAkajIkbDAkaDc3MDE4MzY3OQ..&checkin=2026-08-07&checkout=2026-08-09&hotelCode=hoxton.chicago-chicago&modifySearch=false&rateCode=HITCHED826&rooms%5B0%5D.adults=2&rooms%5B0%5D.children=0&rooms-total=1'>10% off at the Hoxton Hotel</a> as well as a few other local suggestions. We recommend booking early, as hotels in the area tend to fill up quickly in August. If you have any questions or need help finding accommodations, please don't hesitate to reach out!
           </p>
           <div className='flex flex-col md:flex-row gap-6 md:gap-10 justify-center mt-8'>
             <div className='flex-1'>
@@ -195,7 +247,7 @@ function App() {
               <p>
                 More options in the neighborhood at filterable price ranges
               </p>
-              <a target="_blank" href='https://www.booking.com/searchresults.html?label=gen173nr-1FCAEoggI46AdIM1gEaLsBiAEBmAEJuAEHyAEM2AEB6AEB-AECiAIBqAIEuAKWjZCMBs&aid=304142&ss=Chicago+IL+60614&checkin_year=2026&checkin_month=8&checkin_monthday=7&checkout_year=2026&checkout_month=8&checkout_monthday=9&group_adults=2&no_rooms=1&group_children=0&chal_t=1776205212898&force_referer=http%3A%2F%2Flocalhost%3A5173%2F&nflt=price%3DUSD-min-400-1' className='button'>Book Here</a>
+              <a target="_blank" href='https://www.booking.com/searchresults.html?ss=Bucktown&ssne=Bucktown&ssne_untouched=Bucktown&label=gen173nr-1FCAEoggI46AdIM1gEaLsBiAEBmAEJuAEHyAEM2AEB6AEB-AECiAIBqAIEuAKWjZCMBs&aid=304142&lang=en-us&sb=1&src_elem=sb&src=searchresults&dest_id=11114&dest_type=district&checkin=2026-08-07&checkout=2026-08-09&group_adults=2&no_rooms=1&group_children=0' className='button'>Book Here</a>
             </div>
 
           </div>
@@ -204,89 +256,68 @@ function App() {
 
       {/* Things to Do */}
       <section id='todo' className='block theme-cream to-do'>
-        <div className='block-inner text-center'>
-          <h1>things to do</h1>
+        <div className='block-inner text-center pl-2 md:pl-0'>
+          <h1 className=''>things to do</h1>
           <p>
-            Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations! Check out our list for some of our favorite spots around the city, and feel free to reach out if you want any more ideas.
+            Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations! Check out our list for a few of our favorite places around the city.
           </p>
 
-          {/* Mobile: tappable tabs */}
-          <div className='md:hidden mt-8'>
-            <div className='todo-tabs'>
-              <button className={`todo-tab ${activeTab === 'do' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('do')}>Do</button>
-              <button className={`todo-tab ${activeTab === 'eat' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('eat')}>Eat</button>
-              <button className={`todo-tab ${activeTab === 'drink' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('drink')}>Drink</button>
-            </div>
-            <div className='todo-tab-content'>
-              {activeTab === 'do' && (
-                <div className='tab'>
-                  <a className='button' href='#' {...placeButton('Lakefront Trail', 'park', 'Scenic 18-mile path along Lake Michigan')}>Lakefront Trail</a>
-                  <a className='button' href='#' {...placeButton('Architectural Boat Tour', 'activity', 'See the skyline from the river')}>Architectural Boat Tour</a>
-                  <a className='button' href='#' {...placeButton('Garfield Park Conservatory', 'park', 'Free indoor botanical garden')}>Garfield Park Conservatory</a>
-                  <a className='button' href='#' {...placeButton('Art Institute of Chicago', 'museum', 'World-class art collection')}>Art Institute Chicago</a>
-                  <a className='button' href='#' {...placeButton('Chicago Cultural Center', 'museum', 'Historic landmark with art exhibits')}>Chicago Cultural Center</a>
-                  <a className='button' href='#' {...placeButton('Peggy Notebaert Nature Museum', 'museum', 'Interactive exhibits and daily 2pm butterfly release')}>Peggy Notebaert Nature Museum</a>
-                  <a className='button' href='#' {...placeButton('Japanese Garden at Jackson Park', 'park', 'Beautiful Japanese garden in the city')}>Japanese Garden</a>
+          {(() => {
+            const places = {
+              do: [
+                { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
+                { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: 'Architectural Boat Tour' },
+                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: 'Garfield Park Conservatory' },
+                { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: 'Art Institute Chicago' },
+                { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
+                { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
+                { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
+              ],
+              eat: [
+                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: 'Cozy Corner' },
+                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee', label: 'Bang Bang Pie & Biscuits' },
+                { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
+                { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
+                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: 'Girl & The Goat' },
+                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
+                { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
+                { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
+              ],
+              drink: [
+                { name: 'Little Victories Coffee', tag: 'drink', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
+                { name: 'Truce Chicago', tag: 'drink', tip: 'Specialty coffee & pastries', label: 'Truce' },
+                { name: 'Lazybird Chicago', tag: 'drink', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
+                { name: 'Pilot Project Brewing', tag: 'drink', tip: 'Local craft beer taproom', label: 'Pilot Project' },
+                { name: 'Easy Does It Bar', tag: 'drink', tip: 'Laid-back neighborhood bar', label: 'Easy Does It' },
+                { name: 'Welcome Back Lounge', tag: 'drink', tip: 'Retro cocktail lounge', label: 'Welcome Back Lounge' },
+              ],
+            };
+            const PlaceList = ({ items }) => items.map(p => (
+              <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+            ));
+            return (<>
+              {/* Mobile: tappable tabs */}
+              <div className='md:hidden mt-8'>
+                <div className='todo-tabs'>
+                  <button className={`todo-tab ${activeTab === 'do' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('do')}>Do</button>
+                  <button className={`todo-tab ${activeTab === 'eat' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('eat')}>Eat</button>
+                  <button className={`todo-tab ${activeTab === 'drink' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('drink')}>Drink</button>
                 </div>
-              )}
-              {activeTab === 'eat' && (
-                <div className='tab'>
-                  <a className='button' href='#' {...placeButton('Cozy Corner Restaurant', 'brunch', 'Southern comfort food')}>Cozy Corner</a>
-                  <a className='button' href='#' {...placeButton('Bang Bang Pie & Biscuits', 'brunch', 'Savory pies, biscuits & coffee')}>Bang Bang Pie & Biscuits</a>
-                  <a className='button' href='#' {...placeButton('Loaf Lounge', 'brunch', 'Fresh bread, deli, killer egg sandwiches')}>Loaf Lounge</a>
-                  <a className='button' href='#' {...placeButton('Lula Cafe', 'all day', 'Funky, inventive, farm-to-table')}>Lula Cafe</a>
-                  <a className='button' href='#' {...placeButton('Girl & The Goat', 'all day', 'Bold, world-famous, inventive plates')}>Girl & The Goat</a>
-                  <a className='button' href='#' {...placeButton('Akahoshi Ramen', 'dinner', 'Rich Japanese ramen')}>Akahoshi Ramen</a>
-                  <a className='button' href='#' {...placeButton("Dove's Luncheonette", 'brunch', 'Charming Tex-Mex diner vibes')}>Dove's Luncheonette</a>
-                  <a className='button' href='#' {...placeButton('Gretel', 'all day', 'Modern & casual European fare')}>Gretel</a>
+                <div className='todo-tab-content'>
+                  {activeTab === 'do' && <div className='tab'><PlaceList items={places.do} /></div>}
+                  {activeTab === 'eat' && <div className='tab'><PlaceList items={places.eat} /></div>}
+                  {activeTab === 'drink' && <div className='tab'><PlaceList items={places.drink} /></div>}
                 </div>
-              )}
-              {activeTab === 'drink' && (
-                <div className='tab'>
-                  <a className='button' href='#' {...placeButton('Little Victories Coffee', 'drink', 'Cozy coffee & natural wine')}>Little Victories</a>
-                  <a className='button' href='#' {...placeButton('Truce Chicago', 'drink', 'Specialty coffee & pastries')}>Truce</a>
-                  <a className='button' href='#' {...placeButton('Lazybird Chicago', 'drink', 'Speakeasy-style cocktails')}>Lazybird</a>
-                  <a className='button' href='#' {...placeButton('Pilot Project Brewing', 'drink', 'Local craft beer taproom')}>Pilot Project</a>
-                  <a className='button' href='#' {...placeButton('Easy Does It Bar', 'drink', 'Laid-back neighborhood bar')}>Easy Does It</a>
-                  <a className='button' href='#' {...placeButton('Welcome Back Lounge', 'drink', 'Retro cocktail lounge')}>Welcome Back Lounge</a>
-                </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Desktop: three columns */}
-          <div className='hidden md:flex gap-4 justify-between mt-8'>
-            <div className='tab'>
-              <h2>Do</h2>
-              <a className='button' href='#' {...placeButton('Lakefront Trail', 'park', 'Scenic 18-mile path along Lake Michigan')}>Lakefront Trail</a>
-              <a className='button' href='#' {...placeButton('Architectural Boat Tour', 'activity', 'See the skyline from the river')}>Architectural Boat Tour</a>
-              <a className='button' href='#' {...placeButton('Garfield Park Conservatory', 'park', 'Free indoor botanical garden')}>Garfield Park Conservatory</a>
-              <a className='button' href='#' {...placeButton('Art Institute of Chicago', 'museum', 'World-class art collection')}>Art Institute Chicago</a>
-              <a className='button' href='#' {...placeButton('Chicago Cultural Center', 'museum', 'Historic landmark with art exhibits')}>Chicago Cultural Center</a>
-              <a className='button' href='#' {...placeButton('Peggy Notebaert Nature Museum', 'museum', 'Interactive exhibits and daily 2pm butterfly release')}>Peggy Notebaert Nature Museum</a>
-              <a className='button' href='#' {...placeButton('Japanese Garden at Jackson Park', 'park', 'Beautiful Japanese garden in the city')}>Japanese Garden</a>
-            </div>
-            <div className='tab'>
-              <h2>Eat</h2>
-              <a className='button' href='#' {...placeButton('Cozy Corner Restaurant', 'brunch', 'Southern comfort food')}>Cozy Corner</a>
-              <a className='button' href='#' {...placeButton('Bang Bang Pie & Biscuits', 'brunch', 'Savory pies, biscuits & coffee')}>Bang Bang Pie & Biscuits</a>
-              <a className='button' href='#' {...placeButton('Loaf Lounge', 'brunch', 'Fresh bread, deli, killer egg sandwiches')}>Loaf Lounge</a>
-              <a className='button' href='#' {...placeButton('Lula Cafe', 'all day', 'Funky, inventive, farm-to-table')}>Lula Cafe</a>
-              <a className='button' href='#' {...placeButton('Girl & The Goat', 'all day', 'Bold, world-famous, inventive plates')}>Girl & The Goat</a>
-              <a className='button' href='#' {...placeButton('Akahoshi Ramen', 'dinner', 'Rich Japanese ramen')}>Akahoshi Ramen</a>
-              <a className='button' href='#' {...placeButton("Dove's Luncheonette", 'brunch', 'Charming Tex-Mex diner vibes')}>Dove's Luncheonette</a>
-              <a className='button' href='#' {...placeButton('Gretel', 'all day', 'Modern & casual European fare')}>Gretel</a>
-            </div>
-            <div className='tab'>
-              <h2>Drink</h2>
-              <a className='button' href='#' {...placeButton('Little Victories Coffee', 'drink', 'Cozy coffee & natural wine')}>Little Victories</a>
-              <a className='button' href='#' {...placeButton('Truce Chicago', 'drink', 'Specialty coffee & pastries')}>Truce</a>
-              <a className='button' href='#' {...placeButton('Lazybird Chicago', 'drink', 'Speakeasy-style cocktails')}>Lazybird</a>
-              <a className='button' href='#' {...placeButton('Pilot Project Brewing', 'drink', 'Local craft beer taproom')}>Pilot Project</a>
-              <a className='button' href='#' {...placeButton('Easy Does It Bar', 'drink', 'Laid-back neighborhood bar')}>Easy Does It</a>
-              <a className='button' href='#' {...placeButton('Welcome Back Lounge', 'drink', 'Retro cocktail lounge')}>Welcome Back Lounge</a>
-            </div>
-          </div>
+              {/* Desktop: three columns */}
+              <div className='hidden md:flex gap-4 justify-between mt-8'>
+                <div className='tab'><h2>Do</h2><PlaceList items={places.do} /></div>
+                <div className='tab'><h2>Eat</h2><PlaceList items={places.eat} /></div>
+                <div className='tab'><h2>Drink</h2><PlaceList items={places.drink} /></div>
+              </div>
+            </>);
+          })()}
         </div>
       </section>
 
@@ -299,7 +330,7 @@ function App() {
         </div>
       </section>
 
-            {/* Our Story */}
+      {/* Our Story */}
       <section id='story' className='block theme-cream'>
         <div className='block-inner block-split'>
           <div className='block-media md:w-2/5!'>
@@ -316,8 +347,8 @@ function App() {
               />
             </div>
           </div>
-          <div className='block-copy text-center md:text-left md:w-3/5!'>
-            <h1>our story</h1>
+          <div className='block-copy text-left pl-5 md:p-0 md:w-3/5!'>
+            <h1 className='md:pl-2'>our story</h1>
             <p>
               In this modern age of love, one often finds themselves woefully lost in the world of dating apps. While many of these stories end in disaster, Cody and Emily are proof that people can actually find love online.
 </p>
@@ -343,7 +374,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
       {/* Registry */}
       <section id='registry' className='block theme-red'>
         <div className='block-inner block-split'>
-          <div className='block-copy text-center md:text-left'>
+          <div className='block-copy text-center md:text-left pl-2 md:pl-0'>
             <h1>adventure awaits</h1>
             <p>
               Your presence is the real gift - seriously, there's no obligation or expectation.</p>
@@ -385,7 +416,6 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
         <div
           ref={tooltipRef}
           className={`tip tip-${tooltip.tag}`}
-          style={{ left: tooltip.x, top: tooltip.y }}
         >
           <span className='tip-tag'>{tooltip.tag}</span>
           <span className='tip-desc'>{tooltip.text}</span>
@@ -394,6 +424,37 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
 
       {activePlace && (
         <PlaceModal place={activePlace} onClose={() => setActivePlace(null)} />
+      )}
+
+      {galleryOpen && (
+        <div className='gallery-backdrop' onClick={() => setGalleryOpen(false)}>
+          <div className='gallery-modal' onClick={e => e.stopPropagation()}
+            onTouchStart={e => { e.currentTarget.dataset.touchX = e.touches[0].clientX; }}
+            onTouchEnd={e => {
+              const dx = e.changedTouches[0].clientX - Number(e.currentTarget.dataset.touchX);
+              if (dx < -50) setGalleryIndex(i => (i + 1) % funkyPhotos.length);
+              if (dx > 50) setGalleryIndex(i => (i - 1 + funkyPhotos.length) % funkyPhotos.length);
+            }}
+          >
+            <button className='gallery-close' onClick={() => setGalleryOpen(false)}>
+              <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' className='w-5 h-5'><path d='M18 6L6 18M6 6l12 12'/></svg>
+            </button>
+            <div className='gallery-img-wrap'>
+              <img src={funkyPhotos[galleryIndex]} alt='' />
+            </div>
+            <div className='gallery-nav'>
+              <button
+                className='gallery-arrow'
+                onClick={() => setGalleryIndex(i => (i - 1 + funkyPhotos.length) % funkyPhotos.length)}
+              ><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-6 h-6'><path d='M15 18l-6-6 6-6'/></svg></button>
+              <span className='gallery-count'>{galleryIndex + 1} / {funkyPhotos.length}</span>
+              <button
+                className='gallery-arrow'
+                onClick={() => setGalleryIndex(i => (i + 1) % funkyPhotos.length)}
+              ><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-6 h-6'><path d='M9 18l6-6-6-6'/></svg></button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

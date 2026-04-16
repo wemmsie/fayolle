@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const sections = [
     { id: 'details', emoji: '💃', label: 'Details' },
     { id: 'schedule', emoji: '⏰', label: 'Schedule' },
+    { id: 'outfit', emoji: '🦩', label: 'Outfit' },
     { id: 'stay', emoji: '🏨', label: 'Stay' },
     { id: 'todo', emoji: '🗺', label: 'To Do' },
     { id: 'rsvp', emoji: '💌', label: 'RSVP' },

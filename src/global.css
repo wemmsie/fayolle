@@ -145,7 +145,7 @@ section {
   @apply bg-blue;
   h1, h2 { @apply text-cream; }
   p, a:not(.button) { @apply text-primary; }
-  .button { @apply text-cream bg-primary/40 hover:bg-primary hover:text-cream; }
+  .button { @apply text-primary bg-white/30 hover:bg-white/50 hover:text-primary; }
   .form-container h1 { @apply text-red; }
   .form-container h2 { @apply text-primary; }
   .form-container p { @apply text-primary; }
@@ -247,6 +247,125 @@ section {
 
 .wedding-day-img {
   @apply absolute bottom-0 right-4 md:right-[10%] w-20 md:w-40 pointer-events-none;
+}
+
+/* Funky outfit collage */
+.funky-img {
+  @apply absolute pointer-events-none hidden md:block;
+  width: 160px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+.funky-img img {
+  @apply w-full h-full object-cover;
+  display: block;
+}
+.funky-placeholder {
+  background: #f0e0d0;
+  border: 3px dashed rgba(0,0,0,0.12);
+  height: 200px;
+}
+
+/* Left side — staggered, spread on y, closer to center */
+.funky-left-1 { top: -10%; left: -8%; transform: rotate(-8deg); width: 150px; }
+.funky-left-2 { top: 35%; left: -14%; transform: rotate(5deg); width: 140px; }
+.funky-left-3 { top: 80%; left: -6%; transform: rotate(-12deg); width: 160px; }
+
+/* Right side — staggered, spread on y, closer to center */
+.funky-right-1 { top: -12%; right: -10%; transform: rotate(10deg); width: 155px; }
+.funky-right-2 { top: 32%; right: -16%; transform: rotate(-6deg); width: 145px; }
+.funky-right-3 { top: 75%; right: -8%; transform: rotate(8deg); width: 160px; }
+
+@media (min-width: 1024px) {
+  .funky-left-1 { left: -4%; width: 180px; }
+  .funky-left-2 { left: -10%; width: 170px; }
+  .funky-left-3 { left: -2%; width: 190px; }
+  .funky-right-1 { right: -6%; width: 185px; }
+  .funky-right-2 { right: -12%; width: 170px; }
+  .funky-right-3 { right: -4%; width: 195px; }
+}
+
+@media (min-width: 1280px) {
+  .funky-left-1 { left: 0%; width: 200px; }
+  .funky-left-2 { left: -6%; width: 190px; }
+  .funky-left-3 { left: 2%; width: 210px; }
+  .funky-right-1 { right: -2%; width: 205px; }
+  .funky-right-2 { right: -8%; width: 190px; }
+  .funky-right-3 { right: 0%; width: 215px; }
+}
+
+/* Gallery modal */
+.gallery-backdrop {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(4px);
+}
+.gallery-modal {
+  @apply relative flex flex-col items-center w-full max-w-sm mx-4;
+}
+.gallery-close {
+  @apply absolute top-3 right-3 text-white w-9 h-9 flex items-center justify-center rounded-full z-10 cursor-pointer;
+  background: rgba(0,0,0,0.55);
+  transition: background 0.2s, color 0.2s;
+}
+.gallery-close:hover {
+  @apply text-white;
+  background: rgba(0,0,0,0.6);
+}
+.gallery-img-wrap {
+  @apply w-full rounded-lg overflow-hidden;
+  height: 65vh;
+  max-height: 500px;
+}
+.gallery-img-wrap img {
+  @apply w-full h-full block;
+  object-fit: cover;
+}
+.gallery-nav {
+  @apply flex items-center justify-center gap-6 mt-4;
+}
+.gallery-arrow {
+  @apply text-white text-4xl w-12 h-12 flex items-center justify-center rounded-full cursor-pointer;
+  background: rgba(255,255,255,0.15);
+  transition: background 0.2s, transform 0.2s;
+}
+.gallery-arrow:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.08);
+}
+.gallery-arrow:disabled {
+  @apply opacity-30;
+}
+.gallery-count {
+  @apply text-white/70 text-sm tracking-wider;
+  font-family: var(--font-gothic);
+}
+
+/* Desktop gallery */
+@media (min-width: 768px) {
+  .gallery-modal {
+    @apply max-w-xl mx-8;
+  }
+  .gallery-img-wrap {
+    height: 70vh;
+    max-height: 650px;
+  }
+  .gallery-close {
+    top: -2.5rem;
+    right: 0;
+    background: transparent;
+  }
+}
+
+/* Clickable collage on desktop */
+.funky-img {
+  cursor: pointer;
+}
+.funky-img:hover img {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
 }
 
 /* Photo pile indicators */
@@ -452,8 +571,9 @@ button[type="submit"]:hover {
 }
 
 .button {
-    @apply inline-flex items-center gap-2 px-8 py-2 m-2 rounded-full text-primary bg-primary/20 hover:bg-primary hover:text-white font-medium text-base transition-all transform
+    @apply inline-flex items-center gap-2 px-8 py-2 m-2 rounded-full text-primary bg-primary/20 hover:bg-primary hover:text-white font-medium text-base
     cursor-pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .to-do .button {
@@ -470,8 +590,9 @@ button[type="submit"]:hover {
 
 .todo-tab {
   @apply px-6 py-2.5 rounded-full font-sanremo-caps text-base tracking-wider
-    border-2 border-primary/20 cursor-pointer transition-all duration-200
+    border-2 border-primary/20 cursor-pointer duration-200
     bg-transparent text-primary;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 .todo-tab:hover {
@@ -559,8 +680,8 @@ button[type="submit"]:hover {
 }
 
 .scroll-nav-item {
-  @apply flex items-center cursor-pointer border-none rounded-full
-    transition-all duration-200 text-left bg-white/60 opacity-70 bg-blend-lighten shadow-sm;
+  @apply flex items-center cursor-pointer border-none rounded-full tracking-tight!
+    transition-all duration-200 text-left bg-white/80 opacity-90 bg-blend-lighten shadow-sm;
   padding: 0.4rem;
   gap: 0;
 }
@@ -626,7 +747,7 @@ button[type="submit"]:hover {
 
 .modal-close {
   @apply absolute top-3 right-4 z-10 text-2xl pb-1 leading-none text-text-light cursor-pointer bg-white/60 rounded-full w-10 h-10 flex items-center justify-center border-none;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .modal-close:hover {
@@ -634,7 +755,8 @@ button[type="submit"]:hover {
 }
 
 .modal-directions {
-  @apply block text-center py-3 text-primary font-medium text-sm border-t border-primary/10 transition-all;
+  @apply block text-center py-3 text-primary font-medium text-sm border-t border-primary/10;
+  transition: background-color 0.15s ease;
 }
 
 .modal-directions:hover {

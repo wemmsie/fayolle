@@ -5,7 +5,7 @@ import Fuse from 'fuse.js';
 // Google Sheet published CSV URL for live guest+partner data
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
 
-// Parse CSV rows into { name, partner } objects (handles quoted fields)
+// Parse CSV rows into { name, partner, rsvp } objects (handles quoted fields)
 function parseGuestCSV(csv) {
   const rows = csv.trim().split('\n');
   const guests = [];
@@ -14,8 +14,9 @@ function parseGuestCSV(csv) {
     if (!cols || cols.length < 2) continue;
     const name = cols[0].replace(/"/g, '').trim();
     const partner = cols[1].replace(/"/g, '').trim();
+    const rsvp = cols[2] ? cols[2].replace(/"/g, '').trim().toLowerCase() : '';
     if (!name) continue;
-    guests.push({ name, partner: partner || null });
+    guests.push({ name, partner: partner || null, rsvp: rsvp || null });
   }
   return guests;
 }
@@ -24,9 +25,11 @@ function parseGuestCSV(csv) {
 function buildGuestMaps(guestData) {
   const names = [];
   const partnerMap = new Map(); // name (lowercase) -> partner name
+  const rsvpMap = new Map(); // name (lowercase) -> 'yes' | 'no' | null
 
-  for (const { name, partner } of guestData) {
+  for (const { name, partner, rsvp } of guestData) {
     names.push(name);
+    if (rsvp) rsvpMap.set(name.toLowerCase(), rsvp);
     if (partner) {
       partnerMap.set(name.toLowerCase(), partner);
       // Add partner as a guest too (so they can RSVP from either side)
@@ -34,11 +37,13 @@ function buildGuestMaps(guestData) {
         names.push(partner);
       }
       partnerMap.set(partner.toLowerCase(), name);
+      // Partner inherits the same RSVP status
+      if (rsvp) rsvpMap.set(partner.toLowerCase(), rsvp);
     }
   }
   // Dedupe names
   const uniqueNames = [...new Set(names)];
-  return { names: uniqueNames, partnerMap };
+  return { names: uniqueNames, partnerMap, rsvpMap };
 }
 
 const meals = [
@@ -58,6 +63,7 @@ export function RsvpForm() {
   // Guest data loaded from Google Sheet (with fallback to static CSV)
   const [guestList, setGuestList] = useState([]);
   const [partnerMap, setPartnerMap] = useState(new Map());
+  const [rsvpMap, setRsvpMap] = useState(new Map());
   const [guestDataLoaded, setGuestDataLoaded] = useState(false);
 
   // Fetch guest data from Google Sheet on mount
@@ -67,9 +73,10 @@ export function RsvpForm() {
       .then(csv => {
         const guestData = parseGuestCSV(csv);
         if (guestData.length > 0) {
-          const { names, partnerMap: pMap } = buildGuestMaps(guestData);
+          const { names, partnerMap: pMap, rsvpMap: rMap } = buildGuestMaps(guestData);
           setGuestList(names);
           setPartnerMap(pMap);
+          setRsvpMap(rMap);
         }
         setGuestDataLoaded(true);
       })
@@ -93,6 +100,8 @@ export function RsvpForm() {
   const [attending, setAttending] = useState(''); // paired: 'both'|'solo'|'none', unpaired: 'yes'|'no'
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [showNotOnList, setShowNotOnList] = useState(false);
+  const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
+  const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
 
   const [formData, setFormData] = useState({
     name: DEV_MODE ? 'Dev User' : '',
@@ -149,6 +158,9 @@ export function RsvpForm() {
     setFormData((prev) => ({ ...prev, name }));
     const partner = partnerMap.get(name.toLowerCase()) || null;
     setPairedPartner(partner);
+    const existingRsvp = rsvpMap.get(name.toLowerCase()) || null;
+    setAlreadyRsvpd(existingRsvp);
+    setEditingRsvp(false);
     setIsVerified(true);
     setNameSuggestions([]);
     setShowNotOnList(false);
@@ -158,7 +170,7 @@ export function RsvpForm() {
     e.preventDefault();
     const trimmedName = nameInput.trim();
 
-    // Check for exact match (case-insensitive)
+    // Check for exact full name match (case-insensitive)
     const exactMatch = guestList.find((guest) => guest.toLowerCase() === trimmedName.toLowerCase());
 
     if (exactMatch) {
@@ -166,11 +178,11 @@ export function RsvpForm() {
       return;
     }
 
-    // Check for first-name matches (exact first name or first name starts with input)
+    // Check for exact first name match only — no partial/prefix matching
     const input = trimmedName.toLowerCase();
     const firstNameMatches = guestList.filter(guest => {
       const firstName = guest.split(' ')[0].toLowerCase();
-      return firstName === input || firstName.startsWith(input);
+      return firstName === input;
     });
 
     if (firstNameMatches.length === 1) {
@@ -184,33 +196,9 @@ export function RsvpForm() {
       return;
     }
 
-    // Fall back to fuzzy matching
-    const results = fuse.current.search(trimmedName);
-
-    if (results.length > 0) {
-      // If the top result is a very close match (score < 0.15), skip suggestions
-      if (results[0].score < 0.15) {
-        verifyGuest(results[0].item);
-        return;
-      }
-
-      const filtered = results.filter(r => r.score < 0.25);
-
-      if (filtered.length === 1) {
-        verifyGuest(filtered[0].item);
-        return;
-      }
-
-      if (filtered.length > 0) {
-        setNameSuggestions(filtered.slice(0, 3).map(r => r.item));
-      } else {
-        setNameSuggestions([]);
-        setShowNotOnList(true);
-      }
-    } else {
-      setNameSuggestions([]);
-      setShowNotOnList(true);
-    }
+    // No exact match — show not found
+    setNameSuggestions([]);
+    setShowNotOnList(true);
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -562,12 +550,32 @@ export function RsvpForm() {
             </>
           )}
         </div>
+      ) : alreadyRsvpd && !editingRsvp ? (
+        <div className='text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20'>
+          <h1 className='text-center text-4xl! mb-4!'>
+            {alreadyRsvpd === 'yes' ? 'you\'re all set!' : 'we got your note'}
+          </h1>
+          <p className='leading-10! mb-6!'>
+            {alreadyRsvpd === 'yes'
+              ? `Looks like you've already RSVP'd - we can't wait to see you there!`
+              : `We have you down as not attending. We'll miss you!`}
+          </p>
+          <p className='text-base! mb-6!'>
+            Need to make changes?
+          </p>
+          <span
+            className='attendance-pill'
+            onClick={() => setEditingRsvp(true)}
+          >
+            Update my RSVP
+          </span>
+        </div>
       ) : (
         <>
           <button
             type='button'
             className='absolute -top-10 left-1/2 -translate-x-1/2 z-10 text-xs! px-4! py-1.5! rounded-full! bg-white/70! backdrop-blur-sm border-none! cursor-pointer opacity-60 hover:opacity-100 transition-all whitespace-nowrap group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -575,7 +583,7 @@ export function RsvpForm() {
           <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
           {/* <h1 className='text-center text-3xl! pt-15'>👋</h1> */}
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto  text-primary!'>hey</h1>
-          <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-10! mx-auto lowercase leading-12! md:leading-10!'>{verifiedName}!</h1>
+          <h1 className='text-center text-4xl! md:text-5xl! mb-8! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
