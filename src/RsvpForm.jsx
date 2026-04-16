@@ -2,6 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import emailjs from '@emailjs/browser'
 import Fuse from 'fuse.js';
 
+// Scroll so the #rsvp section lands a comfortable distance from the top
+function scrollToRsvp(behavior = 'smooth') {
+  const el = document.getElementById('rsvp');
+  if (!el) return;
+  const offset = window.innerWidth >= 768 ? window.innerHeight * 0.15 : 24;
+  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({ top, behavior });
+}
+
 // Google Sheet published CSV URL for live guest+partner data
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
 
@@ -120,6 +129,17 @@ export function RsvpForm() {
   const [isDeclined, setIsDeclined] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [invalidFields, setInvalidFields] = useState([]);
+
+  // Remove parent section padding when showing confirmation panels
+  useEffect(() => {
+    const section = document.getElementById('rsvp');
+    if (!section) return;
+    if (isSubmitted || isDeclined) {
+      section.classList.add('!py-0');
+    } else {
+      section.classList.remove('!py-0');
+    }
+  }, [isSubmitted, isDeclined]);
 
   // Track visibility and animation state for conditional fields
   const [fieldState, setFieldState] = useState({
@@ -303,11 +323,13 @@ export function RsvpForm() {
   // Fire-and-forget update to Google Sheet via Apps Script
   const updateGoogleSheet = (payload) => {
     const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
-    if (!scriptUrl) return;
-    fetch(scriptUrl, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }).catch((err) => console.warn('Sheet update failed:', err));
+    if (!scriptUrl) { console.warn('VITE_GOOGLE_SCRIPT_URL is not set'); return; }
+    console.log('Updating Google Sheet:', payload);
+    const url = `${scriptUrl}?data=${encodeURIComponent(JSON.stringify(payload))}`;
+    fetch(url)
+      .then((res) => res.text())
+      .then((text) => console.log('Sheet update response:', text))
+      .catch((err) => console.warn('Sheet update failed:', err));
   };
 
   const handleSubmit = (e) => {
@@ -336,16 +358,21 @@ export function RsvpForm() {
         .then(() => {
           updateGoogleSheet({
             name: formData.name,
-            rsvp: 'no',
+            rsvp: 'No',
             meal: '',
             plusOneName: pairedPartner || '',
-            plusOneRsvp: pairedPartner ? 'no' : '',
+            plusOneRsvp: pairedPartner ? 'No' : '',
             plusOneMeal: '',
+            welcomeParty: false,
+            email: formData.email || '',
+            dietaryNames: '',
+            dietaryNotes: '',
+            message: formData.message || '',
           });
           setIsFadingOut(true);
           setTimeout(() => {
             setIsDeclined(true);
-            formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+            scrollToRsvp();
             setIsFadingOut(false);
           }, 400);
         })
@@ -403,17 +430,24 @@ export function RsvpForm() {
         const plusOneMeal = getPartySize() > 1 ? meals.find(m => m.value === formData.mealChoices[1]) : null;
         updateGoogleSheet({
           name: formData.name,
-          rsvp: 'yes',
+          rsvp: 'Yes',
           meal: guestMeal ? guestMeal.shortTitle : '',
           plusOneName: getPlusOneName(),
-          plusOneRsvp: getPartySize() > 1 ? 'yes' : '',
+          plusOneRsvp: getPartySize() > 1 ? 'Yes' : '',
           plusOneMeal: plusOneMeal ? plusOneMeal.shortTitle : '',
+          welcomeParty: formData.welcomeParty === 'yes',
+          email: formData.email || '',
+          dietaryNames: dietaryMembers.length > 0
+            ? dietaryMembers.map(i => getGuestLabel(i)).join(', ')
+            : '',
+          dietaryNotes: formData.dietaryDetails || '',
+          message: formData.message || '',
         });
 
         setIsFadingOut(true);
         setTimeout(() => {
           setIsSubmitted(true);
-          formTopRef.current?.scrollIntoView({ behavior: 'smooth' });
+          scrollToRsvp();
           setIsFadingOut(false);
           // Reset form
           setFormData({
@@ -431,16 +465,10 @@ export function RsvpForm() {
             dietaryFields: { visible: false, animating: false },
           });
           prevValues.current = { hasDietary: '' };
-          // Reset name verification
-          setIsVerified(false);
-          setNameInput('');
-          setVerifiedName('');
-          setPairedPartner(null);
+          // Reset form selections (keep name/partner for "Update my RSVP")
           setPlusOneName('');
           setAttending('');
           setDietaryMembers([]);
-          setNameSuggestions([]);
-          setShowNotOnList(false);
         }, 400);
       })
       .catch((error) => {
@@ -468,26 +496,44 @@ export function RsvpForm() {
     <>
       <div ref={formTopRef} />
       {isSubmitted ? (
+        <div className='min-h-screen flex items-center justify-center'>
         <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
-          <p className='mb-4'>We're so excited to celebrate with you.</p>
-          <p>
-            If you have any questions or need to change or adjust your RSVP, no hard feelings. Just send us an email at{' '}
+          <h2 className='mb-4!'>We're so excited to celebrate with you 🎉</h2>
+          <p className='mb-6!'>Need to make changes?</p>
+          <span
+            className='attendance-pill'
+            onClick={() => { setIsSubmitted(false); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+          >
+            Update my RSVP
+          </span>
+          <p className='mt-6!'>
+            For anything else, drop us a line at{' '}
             <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
               wedding@fayolle.com
             </a>
           </p>
         </div>
+        </div>
       ) : isDeclined ? (
+        <div className='min-h-screen flex items-center justify-center'>
         <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>we'll miss you!</h1>
-          <p className='mb-4'>Thanks for letting us know. We totally understand.</p>
-          <p>
-            If anything changes, just reach out at{' '}
+          <h2 className='mb-4!'>thanks for letting us know</h2>
+          <p className='mb-6!'>If anything changes, you can always come back!</p>
+          <span
+            className='attendance-pill'
+            onClick={() => { setIsDeclined(false); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+          >
+            Update my RSVP
+          </span>
+          <p className='mt-6!'>
+            Have questions? Reach out at{' '}
             <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
               wedding@fayolle.com
             </a>
           </p>
+        </div>
         </div>
       ) : !isUnlocked ? (
         <div className='rsvp-panel'>
@@ -595,7 +641,7 @@ export function RsvpForm() {
             </h1>
             <p className='leading-10! mb-6!'>
               {alreadyRsvpd === 'yes'
-                ? `Looks like you've already RSVP'd - we can't wait to see you there!`
+                ? `Looks like you've already RSVP'd - see you soon!`
                 : `We have you down as not attending. We'll miss you!`}
             </p>
             {/* <p className='text-base! mb-6!'>

@@ -293,7 +293,7 @@ function App() {
               ],
               drink: [
                 { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
-                { name: 'Truce Chicago', tag: 'drinks', tip: 'Specialty coffee & pastries', label: 'Truce' },
+                { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
                 { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
                 { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
                 { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: 'Easy Does It' },
@@ -425,7 +425,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
       {tooltip.visible && (
         <div
           ref={tooltipRef}
-          className={`tip tip-${tooltip.tag.replace(/[^a-z0-9-]/gi, '-')}`}
+          className={`tip tip-${tooltip.tag.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}`}
         >
           <span className='tip-tag'>{tooltip.tag}</span>
           <span className='tip-desc'>{tooltip.text}</span>

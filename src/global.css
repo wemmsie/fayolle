@@ -655,7 +655,7 @@ button[type="submit"]:hover {
 
 .tip-brunch .tip-tag { @apply bg-yellow/40 text-orange; }
 .tip-dinner .tip-tag { @apply bg-pink text-darkpink; }
-.tip-all .tip-tag { @apply bg-blue/40 text-primary; }
+.tip-all-day .tip-tag { @apply bg-blue/40 text-primary; }
 .tip-park .tip-tag { @apply bg-green-light text-green-dark; }
 .tip-museum .tip-tag { @apply bg-yellow/40 text-orange; }
 .tip-activity .tip-tag { @apply bg-pink text-darkpink; }
