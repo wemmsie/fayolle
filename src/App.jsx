@@ -372,7 +372,7 @@ With Christmas right around the corner, Cody did the only reasonable thing imagi
 Their love felt effortless and only grew from there. Much of 2025 was spent in each other's company. Attending concerts, traveling to new places, petting cats, cozy gaming, and even tattooing each other - all with the biggest grins on their faces.
 </p>
             <p>
-It was only a matter of time before Cody popped the question. In early November 2025, the two took a trip to France for a family wedding in France. You know, where Paris is. I mean come on, Paris? The city of love? Cody seized the moment, finding a romantic, lantern-lit path to drop to one knee.
+It was only a matter of time before Cody popped the question. In early November 2025, the two took a trip to France for a family wedding. You know, where Paris is? I mean come on, Paris?! The city of love? Cody seized the moment, finding a romantic, lantern-lit path to drop to one knee.
 </p>
             <p>
 Emily and Cody could not be more thrilled to officially tie the knot this August in Chicago. Come ready to dance, eat, and celebrate these two lovely dummies.
@@ -388,7 +388,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
             <h1>adventure awaits</h1>
             <p>
               Your presence is the real gift - seriously, there's no obligation or expectation.</p>
-              <p>For anyone who absolutely insists on doing more, we’re opening up the vote on our honeymoon destination. The location with the most support wins!
+              <p>For anyone who absolutely insists on doing more, we're opening up the vote on our honeymoon destination. The location with the most support wins!
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
           </div>
