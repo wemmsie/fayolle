@@ -1103,26 +1103,30 @@ button[type="submit"]:hover {
 
 
 
-.hero-title-1 {
+/* Hero animations are gated behind .fonts-ready on <html> */
+.hero-title-1,
+.hero-title-2,
+.hero-overlay-img,
+.hero-arrow,
+.confetti-container {
   opacity: 0;
+}
+
+.fonts-ready .hero-title-1 {
   animation: heroFadeUp 1s ease-out 0.3s forwards;
 }
 
-.hero-title-2 {
-  opacity: 0;
+.fonts-ready .hero-title-2 {
   animation: heroFadeUp 1s ease-out 1.7s forwards;
 }
 
-.hero-overlay-img {
-  opacity: 0;
+.fonts-ready .hero-overlay-img {
   animation: heroOverlayIn 1s ease-out 0.3s forwards;
 }
 
-.hero-arrow {
-  opacity: 0;
+.fonts-ready .hero-arrow {
   animation: heroFadeUp 0.8s ease-out 2s forwards;
 }
-
 
 .confetti-container {
   position: absolute;
@@ -1136,7 +1140,9 @@ button[type="submit"]:hover {
   pointer-events: none;
   z-index: 1;
   overflow: visible;
-  opacity: 0;
+}
+
+.fonts-ready .confetti-container {
   animation: fadeIn 0.01s ease-out 1.6s forwards;
 }
 
@@ -1163,6 +1169,11 @@ button[type="submit"]:hover {
   height: var(--confetti-size);
   border-radius: 0;
   transform: translateX(-50%);
+  animation-play-state: paused;
+}
+
+.fonts-ready .confetti-piece {
+  animation-play-state: running;
 }
 
 /*  bg       │ trajectory (vw/vh)  │ rotation │ duration offset │ delay offset  */
