@@ -65,7 +65,7 @@ const PLACES = [
   'Pilot Project Brewing',
   'Easy Does It Bar',
   'Welcome Back Lounge',
-  'Leavitt Street Inn & Tavern',
+  'The Leavitt Street Inn & Tavern',
 ];
 
 async function fetchPlace(name) {
