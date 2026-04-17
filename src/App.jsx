@@ -7,6 +7,7 @@ import { PhotoPile } from './PhotoPile'
 import { RsvpForm } from './RsvpForm'
 import { PlaceModal } from './PlaceModal'
 import { ScrollNav } from './ScrollNav'
+import { Squiggle } from './Squiggle'
 
 function App() {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', tag: '', x: 0, y: 0 });
@@ -89,21 +90,24 @@ function App() {
               <path id='topArc' d={`M ${arcs.line1.x1},${arcs.line1.baseY} Q ${arcs.line1.midX},${arcs.line1.peakY} ${arcs.line1.x2},${arcs.line1.baseY}`} fill='none' />
               <path id='line2Arc' d={`M ${arcs.line2.x1},${arcs.line2.baseY} Q ${arcs.line2.midX},${arcs.line2.peakY} ${arcs.line2.x2},${arcs.line2.baseY}`} fill='none' />
             </defs>
-            <text textAnchor='middle' dy='-15' fill='white' fontSize='72' letterSpacing='4'>
+            <text className='hero-title-1' textAnchor='middle' dy='-15' fill='white' fontSize='72' letterSpacing='4'>
               <textPath href='#topArc' startOffset='50%'>
                 <tspan>Cody </tspan>
                 <tspan fontSize='40'>and</tspan>
                 <tspan> Emily</tspan>
               </textPath>
             </text>
-            <text textAnchor='middle' fill='#ff6969' fontSize='42' letterSpacing='5'>
+            <text className='hero-title-2' textAnchor='middle' fill='#ff6969' fontSize='42' letterSpacing='5'>
               <textPath href='#line2Arc' startOffset='50%'>are getting married</textPath>
             </text>
           </svg>
         </div>
-        <img src={image.overlay2} alt='' className='absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 max-h-300 w-auto pointer-events-none -ml-8!' />
-        <div className='absolute inset-0 bg-text opacity-50'></div>
-        <div className='absolute bottom-1/4 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
+        <div className='confetti-container'>
+          {Array.from({ length: 20 }, (_, i) => <div key={i} className='confetti-piece' />)}
+        </div>
+        <img src={image.overlay2} alt='' className='hero-overlay-img absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[120vw] md:w-auto max-h-300 max-w-none pointer-events-none -ml-5! md:-ml-12! z-2' />
+        <div className='absolute inset-0 bg-text opacity-50 z-3'></div>
+        <div className='hero-arrow absolute bottom-1/8 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
           <svg
             className='w-12 h-12 md:w-18 md:h-18 animate-bounce stroke-2 md:stroke-2.5 stroke-white'
             viewBox='0 0 24 24'
@@ -138,9 +142,9 @@ function App() {
               So please do us the honor of joining us in <b>Chicago</b> on <b>August 8th, 2026</b> to celebrate with us beneath an excessive number of disco balls (yes, really) and the ungovernable influence of actually really good espresso martinis.
             </p>
             <p>
-              We've got tips for hotels, things to do, and of course a killer playlist in the works, so get ready for a weekend to remember.</p>
-                          <br/>
-              <p>We hope to see you there!
+              We've got a snazzy menu and a groovy playlist coming together, plus plenty of tips for things to do and places to stay while you're here.</p>
+              <br/>
+              <p>Get ready for one heck of a weekend - hope you can join us!
             </p>
           </div>
         </div>
@@ -267,7 +271,7 @@ function App() {
         <div className='block-inner text-center pl-2 md:pl-0'>
           <h1 className=''>what to do</h1>
           <p>
-            Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations! Check out our list for a few of our favorite places around the city.
+            Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations.
           </p>
 
           {(() => {
@@ -275,28 +279,28 @@ function App() {
               do: [
                 { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
                 { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: 'Architectural Boat Tour' },
-                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: 'Garfield Park Conservatory' },
-                { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: 'Art Institute Chicago' },
+                { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: '⭐️ Art Institute Chicago' },
+                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
                 { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
                 { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
                 { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
               ],
               eat: [
-                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: 'Cozy Corner' },
-                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee', label: 'Bang Bang Pie & Biscuits' },
+                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
+                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee', label: '⭐️ Bang Bang Pie & Biscuits' },
                 { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
                 { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
-                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: 'Girl & The Goat' },
-                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
+                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
                 // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
                 { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
+                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
               ],
               drink: [
                 { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
-                { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
                 { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
+                { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: '⭐️ Easy Does It' },
                 { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
-                { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: 'Easy Does It' },
+                { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
                 { name: 'Welcome Back Lounge', tag: 'drinks & eats', tip: 'Retro cocktail lounge with great bites', label: 'Welcome Back Lounge' },
                 { name: 'Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn & Tavern' },
 
@@ -386,9 +390,14 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
         <div className='block-inner block-split'>
           <div className='block-copy text-center md:text-left pl-2 md:pl-0'>
             <h1>adventure awaits</h1>
-            <p>
-              Your presence is the real gift - seriously, there's no obligation or expectation.</p>
-              <p>For anyone who absolutely insists on doing more, we're opening up the vote on our honeymoon destination. The location with the most support wins!
+            <p>We've skipped the registry - our home (and hearts) are already full. This party is simply about celebrating with the people we love most.</p>
+            <p>Having you here means <b>everything</b> to us.</p>
+            <Squiggle height={12} className='w-1/3 my-4 mx-auto md:mx-0 text-white/40' />
+              <p>
+              As our own gift to each other, we'll be setting off on an extended honeymoon.
+              </p>
+              <p>
+                And for anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our honeymoon. Whichever spot gets the most love will be our destination. 💕
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
           </div>

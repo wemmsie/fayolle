@@ -1089,3 +1089,114 @@ button[type="submit"]:hover {
 .flash-invalid-meal .meal-pill {
   @apply border-2 border-red;
 }
+
+/* Hero entrance animations */
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroOverlayIn {
+  from { opacity: 0; scale: 0.95; }
+  to { opacity: 1; scale: 1; }
+}
+
+
+
+.hero-title-1 {
+  opacity: 0;
+  animation: heroFadeUp 1s ease-out 0.3s forwards;
+}
+
+.hero-title-2 {
+  opacity: 0;
+  animation: heroFadeUp 1s ease-out 1.7s forwards;
+}
+
+.hero-overlay-img {
+  opacity: 0;
+  animation: heroOverlayIn 1s ease-out 0.3s forwards;
+}
+
+.hero-arrow {
+  opacity: 0;
+  animation: heroFadeUp 0.8s ease-out 2s forwards;
+}
+
+
+.confetti-container {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  transform: none;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+  opacity: 0;
+  animation: fadeIn 0.01s ease-out 1.6s forwards;
+}
+
+/*
+ * CONFETTI TIMING — tweak these to adjust the whole burst:
+ *   --confetti-delay:    when the burst starts (after page load)
+ *   --confetti-speed:    base flight duration (each piece varies ±15%)
+ *   --confetti-stagger:  max time spread between first and last piece
+ *   --confetti-size:     base square size of each piece
+ */
+:root {
+  --confetti-delay: 1.5s;
+  --confetti-speed: 2.1s;
+  --confetti-stagger: 0.15s;
+  --confetti-size: 16px;
+}
+
+/* Confetti pieces — all screens */
+.confetti-piece {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: var(--confetti-size);
+  height: var(--confetti-size);
+  border-radius: 0;
+  transform: translateX(-50%);
+}
+
+/*  bg       │ trajectory (vw/vh)  │ rotation │ duration offset │ delay offset  */
+.confetti-piece:nth-child(1)  { background: #ff6969; --tx: -35vw; --ty: -65vh; --r: 720deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.00) forwards; }
+.confetti-piece:nth-child(2)  { background: #f5c8c7; --tx: 30vw;  --ty: -75vh; --r: -540deg; animation: confettiPiece calc(var(--confetti-speed) * 1.05) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.15) forwards; }
+.confetti-piece:nth-child(3)  { background: #BFD3DB; --tx: -20vw; --ty: -55vh; --r: 480deg;  animation: confettiPiece calc(var(--confetti-speed) * 0.95) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.25) forwards; }
+.confetti-piece:nth-child(4)  { background: #f5b54f; --tx: 40vw;  --ty: -68vh; --r: -600deg; animation: confettiPiece calc(var(--confetti-speed) * 1.10) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.40) forwards; }
+.confetti-piece:nth-child(5)  { background: #ff6969; --tx: -45vw; --ty: -48vh; --r: 360deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.10) forwards; }
+.confetti-piece:nth-child(6)  { background: white;   --tx: 12vw;  --ty: -80vh; --r: -720deg; animation: confettiPiece calc(var(--confetti-speed) * 1.15) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.55) forwards; }
+.confetti-piece:nth-child(7)  { background: #bbbd59; --tx: -50vw; --ty: -35vh; --r: 540deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.30) forwards; }
+.confetti-piece:nth-child(8)  { background: #f5c8c7; --tx: 48vw;  --ty: -55vh; --r: -480deg; animation: confettiPiece calc(var(--confetti-speed) * 1.05) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.45) forwards; }
+.confetti-piece:nth-child(9)  { background: #BFD3DB; --tx: -10vw; --ty: -78vh; --r: 600deg;  animation: confettiPiece calc(var(--confetti-speed) * 0.90) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.20) forwards; }
+.confetti-piece:nth-child(10) { background: #f5b54f; --tx: 28vw;  --ty: -42vh; --r: -360deg; animation: confettiPiece calc(var(--confetti-speed) * 1.10) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.60) forwards; }
+.confetti-piece:nth-child(11) { background: white;   --tx: -38vw; --ty: -72vh; --r: 480deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.35) forwards; }
+.confetti-piece:nth-child(12) { background: #ff6969; --tx: 52vw;  --ty: -50vh; --r: -540deg; animation: confettiPiece calc(var(--confetti-speed) * 1.05) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.50) forwards; }
+.confetti-piece:nth-child(13) { background: #bbbd59; --tx: -25vw; --ty: -82vh; --r: 720deg;  animation: confettiPiece calc(var(--confetti-speed) * 0.95) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.05) forwards; }
+.confetti-piece:nth-child(14) { background: #f5c8c7; --tx: 18vw;  --ty: -38vh; --r: -360deg; animation: confettiPiece calc(var(--confetti-speed) * 1.15) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.70) forwards; }
+.confetti-piece:nth-child(15) { background: #BFD3DB; --tx: -55vw; --ty: -60vh; --r: 540deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.65) forwards; }
+.confetti-piece:nth-child(16) { background: #f5b54f; --tx: 42vw;  --ty: -76vh; --r: -600deg; animation: confettiPiece calc(var(--confetti-speed) * 1.05) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.75) forwards; }
+.confetti-piece:nth-child(17) { background: #ff6969; --tx: -42vw; --ty: -58vh; --r: -480deg; animation: confettiPiece calc(var(--confetti-speed) * 0.95) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.80) forwards; }
+.confetti-piece:nth-child(18) { background: #BFD3DB; --tx: 35vw;  --ty: -70vh; --r: 600deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.10) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.85) forwards; }
+.confetti-piece:nth-child(19) { background: #bbbd59; --tx: -15vw; --ty: -84vh; --r: -720deg; animation: confettiPiece calc(var(--confetti-speed) * 1.00) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 0.90) forwards; }
+.confetti-piece:nth-child(20) { background: white;   --tx: 55vw;  --ty: -44vh; --r: 480deg;  animation: confettiPiece calc(var(--confetti-speed) * 1.05) cubic-bezier(0.23,1,0.32,1) calc(var(--confetti-delay) + var(--confetti-stagger) * 1.00) forwards; }
+
+@keyframes confettiPiece {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) rotate(var(--r)) scale(0.4);
+    opacity: 0;
+  }
+}
