@@ -514,9 +514,8 @@ select,
 textarea {
     @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-base md:text-lg text-center bg-transparent focus:bg-transparent;
 }
-
 textarea {
-  @apply text-left;
+  @apply leading-5 text-sm md:text-base text-left;
 }
 
 input[type="text"]:focus,
@@ -537,6 +536,11 @@ textarea {
 }
 textarea:focus {
     @apply bg-blue/20!;
+}
+
+/* Forms nested inside .rsvp-panel — strip the default form chrome */
+.rsvp-inner-form {
+  @apply bg-transparent p-0 shadow-none rounded-none;
 }
 
 /* Custom Radio Button Styles */
@@ -576,9 +580,16 @@ button[type="submit"] {
     box-shadow: 0px 0px 0 0 black;
 }
 
-button[type="submit"]:hover {
-    @apply -translate-0.5;
-    box-shadow: 4px 5px 0 0 var(--color-radio);
+@media (hover: hover) {
+  button[type="submit"]:hover {
+      @apply -translate-0.5;
+      box-shadow: 4px 5px 0 0 var(--color-radio);
+  }
+}
+
+button[type="submit"]:active {
+    @apply scale-95;
+    box-shadow: 0px 0px 0 0 black;
 }
 
 .button {
@@ -926,7 +937,7 @@ button[type="submit"]:hover {
 }
 
 .suggestion-button {
-  @apply inline-block px-6 py-3 m-2 rounded-full bg-primary text-white font-medium text-lg border-2 border-primary transition-all transform
+  @apply inline-block px-6 py-3 m-1 rounded-full bg-primary text-white font-medium text-lg border-2 border-primary transition-all transform
   cursor-pointer;
 }
 
@@ -985,7 +996,7 @@ button[type="submit"]:hover {
 }
 
 .guest-meal-row {
-  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-3 rounded-lg;
+  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-1 rounded-lg;
 }
 
 .guest-name {
@@ -994,7 +1005,7 @@ button[type="submit"]:hover {
 
 /* RSVP form shared classes */
 .rsvp-panel {
-  @apply text-center pt-20 py-10 bg-white rounded-lg px-8 md:p-20;
+  @apply text-center bg-white rounded-xl px-6 py-10 md:p-10 shadow-none mx-auto max-w-2xl;
 }
 
 .not-me-button {
@@ -1065,21 +1076,21 @@ button[type="submit"]:hover {
 }
 
 .meal-pill {
-  @apply px-4 py-2 rounded-full text-xs md:text-sm cursor-pointer
-    transition-all duration-200 text-text-light font-medium;
+  @apply px-4 py-1.5 rounded-full text-xs md:text-sm cursor-pointer
+    transition-all duration-200 text-text-light font-medium border-2 border-transparent;
   background: #eef2ff;
 }
 
 .meal-pill:hover {
-  background: #dde4ff;
+  @apply text-primary bg-red/40;
 }
 
 .meal-pill-selected {
-  @apply bg-primary text-white;
+  @apply text-primary/80 bg-red/30 border-transparent;
 }
 
 .meal-pill-selected:hover {
-  @apply bg-primary;
+  @apply text-primary;
 }
 
 .flash-invalid-meal {
@@ -1090,6 +1101,249 @@ button[type="submit"]:hover {
   @apply border-2 border-red;
 }
 
+/* ═══ RSVP Wizard Step Navigation ═══ */
+.step-nav-row {
+  @apply flex flex-col md:flex-row md:items-center mb-8;
+  position: relative;
+}
+
+.step-back-inline {
+  @apply flex items-center rounded-full border-none cursor-pointer
+    transition-all duration-200 bg-transparent self-start mb-2 md:mb-0 md:absolute md:left-0;
+  font-size: 0.7rem !important;
+  color: var(--color-primary);
+  opacity: 0.4;
+  padding: 0.3rem 0.6rem !important;
+  white-space: nowrap;
+}
+
+.step-back-inline:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.step-nav {
+  @apply flex justify-center gap-3 md:gap-8 w-full;
+}
+
+.step-nav-item {
+  @apply flex flex-col items-center gap-1 bg-transparent border-none cursor-default
+    opacity-35 transition-all duration-300 p-0;
+  font-size: inherit;
+}
+
+.step-nav-item:not(:disabled) {
+  @apply cursor-pointer;
+}
+
+.step-nav-done {
+  @apply opacity-65;
+}
+
+.step-nav-done:hover {
+  @apply opacity-100;
+}
+
+.step-nav-active {
+  @apply opacity-100;
+}
+
+.step-nav-circle {
+  @apply w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center
+    text-xs font-semibold border-2 border-primary/15 text-primary/40 transition-all duration-300;
+}
+
+.step-nav-active .step-nav-circle {
+  @apply bg-primary text-white border-primary;
+}
+
+.step-nav-done .step-nav-circle {
+  @apply bg-primary/10 text-primary border-primary/30;
+}
+
+.step-nav-label {
+  @apply text-[0.65rem] md:text-xs font-medium text-text-light tracking-wide;
+}
+
+.step-nav-active .step-nav-label {
+  @apply text-primary font-semibold;
+}
+
+/* ═══ Step Panels ═══ */
+@keyframes stepSlideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-panel {
+  animation: stepSlideIn 0.3s ease-out forwards;
+  h1 {
+    @apply text-4xl! md:text-3xl! mb-1;
+  }
+}
+
+/* ═══ Step Buttons (back + continue) ═══ */
+.step-buttons {
+  @apply flex flex-col items-center gap-3 mt-6;
+}
+
+/* Continue button — always rendered, disabled/faded until ready */
+.step-continue-btn {
+  @apply block mx-auto px-8 py-3 rounded-full text-sm md:text-base font-medium
+    border-2 border-primary/15 cursor-not-allowed select-none
+    transition-all;
+  background: transparent;
+  color: var(--color-primary);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.step-continue-btn.step-continue-ready {
+  @apply cursor-pointer border-primary bg-white text-primary;
+  opacity: 1;
+  pointer-events: auto;
+  box-shadow: 0px 0px 0 0 black;
+  animation: btnFadeIn 0.2s ease-out forwards;
+}
+
+@media (hover: hover) {
+  .step-continue-btn.step-continue-ready:hover {
+    @apply -translate-y-0.5;
+    box-shadow: 4px 5px 0 0 var(--color-radio);
+  }
+}
+
+.step-continue-btn.step-continue-ready:active {
+  @apply scale-95 translate-y-0;
+  box-shadow: 0px 0px 0 0 black;
+}
+
+/* Submit button special treatment */
+.step-submit-btn {
+  @apply text-base md:text-lg px-10 py-2 relative;
+  overflow: visible;
+  z-index: 1;
+}
+
+.step-buttons {
+  overflow: visible;
+  position: relative;
+}
+
+/* Sparkle burst on submit hover — sits behind the button */
+.sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  animation: sparkle-burst 0.85s ease-out forwards;
+}
+
+@keyframes sparkle-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(
+      calc(-50% + var(--sx)),
+      calc(-50% + var(--sy))
+    ) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes btnFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ═══ Compact Menu (Step 2) ═══ */
+.menu-compact {
+  @apply flex flex-col gap-2;
+}
+
+.menu-compact-item {
+  @apply rounded-lg px-4 py-2.5 md:py-3;
+  background: rgba(255,255,255,0.15);
+  border-left: 3px solid transparent;
+}
+
+.menu-compact-item.meal-red { border-left-color: var(--color-red); }
+.menu-compact-item.meal-yellow { border-left-color: var(--color-yellow); }
+.menu-compact-item.meal-orange { border-left-color: var(--color-orange); }
+
+.menu-compact-title {
+  @apply block font-semibold text-primary text-sm md:text-base;
+}
+
+.menu-compact-tag {
+  @apply ml-2 text-[0.6rem] md:text-xs font-semibold uppercase tracking-wider opacity-50 align-middle;
+}
+
+.menu-compact-desc {
+  @apply block text-text-light text-xs leading-snug mt-0.5;
+}
+
+/* ═══ Meal Color Theming for Pills ═══ */
+.meal-pill.meal-red { background: rgba(255,105,105,0.1); color: var(--color-red); }
+.meal-pill.meal-red:hover { background: rgba(255,105,105,0.2); }
+.meal-pill.meal-red.meal-pill-selected { background: var(--color-red); color: white; }
+
+.meal-pill.meal-yellow { background: rgba(245,181,79,0.12); color: #b8860b; }
+.meal-pill.meal-yellow:hover { background: rgba(245,181,79,0.22); }
+.meal-pill.meal-yellow.meal-pill-selected { background: var(--color-yellow); color: white; }
+
+.meal-pill.meal-orange { background: rgba(184,150,108,0.12); color: var(--color-orange); }
+.meal-pill.meal-orange:hover { background: rgba(184,150,108,0.22); }
+.meal-pill.meal-orange.meal-pill-selected { background: var(--color-orange); color: white; }
+
+/* ═══ RSVP Summary ═══ */
+.rsvp-summary {
+  @apply rounded-xl overflow-hidden;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(2,65,89,0.08);
+}
+
+.rsvp-summary-row {
+  @apply flex gap-4 px-4 md:px-5 py-2.5 md:py-3 items-center;
+  border-bottom: 1px solid rgba(2,65,89,0.04);
+}
+
+.rsvp-summary-row:last-child {
+  border-bottom: none;
+}
+
+.rsvp-summary-label {
+  @apply text-[0.65rem] md:text-xs font-semibold uppercase tracking-wider shrink-0 text-right;
+  width: 2.5rem;
+  min-width: 2.5rem;
+  color: var(--color-primary);
+  opacity: 0.45;
+}
+
+.rsvp-summary-value {
+  @apply text-sm md:text-base text-text;
+}
+
+.rsvp-summary-dietary {
+  @apply absolute -top-0.5 -right-1 text-[0.8rem] leading-none;
+}
+
+/* Summary meal chip — color-coded */
+.summary-meal-chip {
+  @apply inline-block px-3 py-0.5 rounded-full text-xs font-medium;
+}
+
+.summary-meal-chip.meal-red { background: rgba(255,105,105,0.15); color: var(--color-red); }
+.summary-meal-chip.meal-yellow { background: rgba(255 179 57 / 0.15); color: #b8860b; }
+.summary-meal-chip.meal-orange { background: rgba(229 132 80 / 0.15); color:  #AD4906; }
 /* Hero entrance animations */
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translateY(18px); }

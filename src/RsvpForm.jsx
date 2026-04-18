@@ -2,13 +2,60 @@ import { useState, useEffect, useRef } from 'react'
 import emailjs from '@emailjs/browser'
 import Fuse from 'fuse.js';
 
-// Scroll so the #rsvp section lands a comfortable distance from the top
+// Scroll so the #rsvp section top aligns with the viewport top
 function scrollToRsvp(behavior = 'smooth') {
   const el = document.getElementById('rsvp');
   if (!el) return;
-  const offset = window.innerWidth >= 768 ? window.innerHeight * 0.15 : 24;
-  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  const top = el.getBoundingClientRect().top + window.scrollY;
   window.scrollTo({ top, behavior });
+}
+
+// Sparkle burst on submit-button hover — particles spawn behind, from the button edges
+const SPARKLE_COLORS = ['#ff6969', '#f5b54f', '#BFD3DB', '#f5c8c7', '#bbbd59', 'white'];
+function spawnSparkles(e) {
+  // Skip on touch devices (no real hover)
+  if (!window.matchMedia('(hover: hover)').matches) return;
+  const btn = e.currentTarget;
+  const wrap = btn.parentElement; // .step-buttons
+  const br = btn.getBoundingClientRect();
+  const wr = wrap.getBoundingClientRect();
+  // button center relative to wrapper
+  const cx = br.left - wr.left + br.width / 2;
+  const cy = br.top - wr.top + br.height / 2;
+  const hw = br.width / 2;
+  const hh = br.height / 2;
+
+  for (let i = 0; i < 18; i++) {
+    const s = document.createElement('span');
+    s.className = 'sparkle';
+    // pick a random point along the button's perimeter
+    const perim = 2 * (br.width + br.height);
+    let p = Math.random() * perim;
+    let ox, oy;
+    if (p < br.width) {                     // top edge
+      ox = -hw + p; oy = -hh;
+    } else if ((p -= br.width) < br.height) { // right edge
+      ox = hw; oy = -hh + p;
+    } else if ((p -= br.height) < br.width) { // bottom edge
+      ox = hw - p; oy = hh;
+    } else {                                 // left edge
+      p -= br.width; ox = -hw; oy = hh - p;
+    }
+    // burst outward from that edge point
+    const angle = Math.atan2(oy, ox) + (Math.random() - 0.5) * 0.6;
+    const dist = 35 + Math.random() * 50;
+    s.style.setProperty('--sx', `${Math.cos(angle) * dist}px`);
+    s.style.setProperty('--sy', `${Math.sin(angle) * dist}px`);
+    s.style.left = `${cx + ox}px`;
+    s.style.top = `${cy + oy}px`;
+    s.style.background = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+    s.style.animationDelay = `${Math.random() * 0.15}s`;
+    const size = 5 + Math.random() * 5;
+    s.style.width = `${size}px`;
+    s.style.height = `${size}px`;
+    wrap.appendChild(s);
+    s.addEventListener('animationend', () => s.remove());
+  }
 }
 
 // Google Sheet published CSV URL for live guest+partner data
@@ -56,9 +103,9 @@ function buildGuestMaps(guestData) {
 }
 
 const meals = [
-  { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', desc: 'Mashed potatoes, asparagus, crispy leeks and a rich red wine demi-glaze' },
-  { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', desc: 'Roasted garlic potatoes, charred seasonal vegetables, pan jus' },
-  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', desc: 'Roasted seasonal vegetables, charred cauliflower, wilted baby kale, brown butter sauce, crispy sage' },
+  { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', color: 'meal-red', desc: 'Mashed potatoes, asparagus, crispy leeks and a rich red wine demi-glaze' },
+  { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', color: 'meal-yellow', desc: 'Roasted garlic potatoes, charred seasonal vegetables, pan jus' },
+  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-orange', desc: 'Roasted seasonal vegetables, charred cauliflower, wilted baby kale, brown butter sauce, crispy sage' },
 ];
 
 // Toggle to false to test the real RSVP flow in dev
@@ -111,6 +158,7 @@ export function RsvpForm() {
   const [showNotOnList, setShowNotOnList] = useState(false);
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
   const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
+  const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=meals, 3=details, 4=review
 
   const [formData, setFormData] = useState({
     name: DEV_MODE ? 'Dev User' : '',
@@ -148,8 +196,6 @@ export function RsvpForm() {
 
   const prevValues = useRef({ hasDietary: '' });
   const animationTimers = useRef({});
-  const menuDisplayRef = useRef(null);
-  const menuTitleRef = useRef(null);
   const formTopRef = useRef(null);
 
   // Fuzzy search configuration — rebuilds when guestList updates
@@ -262,34 +308,15 @@ export function RsvpForm() {
     return 1;
   };
 
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   // Whether the attendance question has been answered
   const attendanceAnswered = attending !== '';
   // Whether guest is declining entirely
   const isDeclining = attending === 'none' || attending === 'no';
   // Party is "complete" when we know the final headcount (and they're coming)
   const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
-
-  useEffect(() => {
-    const display = menuDisplayRef.current;
-    const title = menuTitleRef.current;
-    if (!display || !title) return;
-
-    const resize = () => {
-      const h = display.offsetHeight;
-      let lo = 8, hi = 200;
-      while (hi - lo > 0.5) {
-        const mid = (lo + hi) / 2;
-        title.style.fontSize = mid + 'px';
-        if (title.scrollWidth > h) hi = mid;
-        else lo = mid;
-      }
-      title.style.fontSize = lo + 'px';
-    };
-
-    const observer = new ResizeObserver(resize);
-    observer.observe(display);
-    return () => observer.disconnect();
-  }, [partyComplete]);
+  const allMealsSelected = getPartySize() > 0 && Array.from({ length: getPartySize() }, (_, i) => formData.mealChoices[i]).every(Boolean);
 
   const getGuestLabel = (index) => {
     if (index === 0) return verifiedName;
@@ -297,11 +324,11 @@ export function RsvpForm() {
     return plusOneName || 'Your plus one';
   };
 
-  // The resolved plus-one name for email (partner name, manual name, or 'None')
+  // The resolved plus-one name for email (partner name, manual name, or empty)
   const getPlusOneName = () => {
     if (pairedPartner && attending === 'both') return pairedPartner;
     if (!pairedPartner && formData.plusOne === 'yes') return plusOneName || 'Unnamed plus one';
-    return 'None';
+    return '';
   };
 
   const toggleDietaryMember = (index) => {
@@ -406,7 +433,7 @@ export function RsvpForm() {
       to_email: 'emily@thisjones.com',
       from_name: formData.name,
       from_email: formData.email,
-      plus_one: getPlusOneName(),
+      plus_one: getPlusOneName() || 'N/A',
       party_size: getPartySize(),
       has_dietary: formData.hasDietary === 'help' ? 'Needs alternative meal' : formData.hasDietary,
       dietary_count: dietaryMembers.length > 0
@@ -450,9 +477,9 @@ export function RsvpForm() {
           scrollToRsvp();
           setIsFadingOut(false);
           // Reset form
-          setFormData({
-            name: '',
-            email: '',
+          setFormData(prev => ({
+            name: prev.name,
+            email: prev.email,
             plusOne: '',
             hasDietary: '',
             dietaryCount: '',
@@ -460,7 +487,7 @@ export function RsvpForm() {
             mealChoices: {},
             welcomeParty: '',
             message: '',
-          });
+          }));
           setFieldState({
             dietaryFields: { visible: false, animating: false },
           });
@@ -469,6 +496,7 @@ export function RsvpForm() {
           setPlusOneName('');
           setAttending('');
           setDietaryMembers([]);
+          setStep(0);
         }, 400);
       })
       .catch((error) => {
@@ -496,17 +524,17 @@ export function RsvpForm() {
     <>
       <div ref={formTopRef} />
       {isSubmitted ? (
-        <div className='min-h-screen flex items-center justify-center'>
         <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
-          <h2 className='mb-4!'>We're so excited to celebrate with you 🎉</h2>
-          <p className='mb-6!'>Need to make changes?</p>
-          <span
-            className='attendance-pill'
-            onClick={() => { setIsSubmitted(false); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+          <h2 className='mb-10!'>We're so excited to celebrate with you 🎉</h2>
+          {/* <p className='mb-6!'>Need to make changes?</p> */}
+          <button
+            type='button'
+            className='step-continue-btn step-continue-ready'
+            onClick={() => { setIsSubmitted(false); setStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
-            Update my RSVP
-          </span>
+            Change my RSVP
+          </button>
           <p className='mt-6!'>
             For anything else, drop us a line at{' '}
             <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
@@ -514,19 +542,18 @@ export function RsvpForm() {
             </a>
           </p>
         </div>
-        </div>
       ) : isDeclined ? (
-        <div className='min-h-screen flex items-center justify-center'>
         <div className='rsvp-panel'>
           <h1 className='text-center text-5xl!'>we'll miss you!</h1>
           <h2 className='mb-4!'>thanks for letting us know</h2>
           <p className='mb-6!'>If anything changes, you can always come back!</p>
-          <span
-            className='attendance-pill'
-            onClick={() => { setIsDeclined(false); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+          <button
+            type='button'
+            className='step-continue-btn step-continue-ready'
+            onClick={() => { setIsDeclined(false); setStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Update my RSVP
-          </span>
+          </button>
           <p className='mt-6!'>
             Have questions? Reach out at{' '}
             <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
@@ -534,21 +561,20 @@ export function RsvpForm() {
             </a>
           </p>
         </div>
-        </div>
       ) : !isUnlocked ? (
         <div className='rsvp-panel'>
           <h1 className='mb-10 mx-auto'>time to rsvp!</h1>
           <p className='text-base! mb-6'>Enter the password from your invitation to get started.</p>
 
-          <form onSubmit={handlePasswordCheck}>
+          <form onSubmit={handlePasswordCheck} className='rsvp-inner-form'>
             <div className='mb-6'>
               <input
                 type='text'
                 value={passwordInput}
                 onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                onClick={() => requestAnimationFrame(() => scrollToRsvp())}
                 placeholder='Enter password'
                 required
-                autoFocus
                 autoComplete='off'
               />
             </div>
@@ -570,7 +596,7 @@ export function RsvpForm() {
           {nameSuggestions.length > 0 ? (
             <>
               <p className='text-base! mb-6'>Did you mean one of these?</p>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+              <div className='flex flex-col items-center gap-2'>
                 {nameSuggestions.map((suggestion, index) => (
                   <button key={index} type='button' className='suggestion-button' onClick={() => handleSuggestionClick(suggestion)}>
                     {suggestion}
@@ -588,7 +614,7 @@ export function RsvpForm() {
             </>
           ) : showNotOnList ? (
             <>
-              <p className='mb-2' style={{ color: '#ef4444' }}>
+              <p className='mb-2 text-red'>
                 Hmm, we couldn't find that name on our guest list.
               </p>
               <p className='text-base! mb-6'>
@@ -609,15 +635,15 @@ export function RsvpForm() {
           ) : (
             <>
               <p className='text-base! mb-6'>First things first...</p>
-              <form onSubmit={handleNameCheck}>
+              <form onSubmit={handleNameCheck} className='rsvp-inner-form'>
                 <div className='mb-6'>
                   <input
                     type='text'
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
+                    onClick={() => requestAnimationFrame(() => scrollToRsvp())}
                     placeholder="What's your name?"
                     required
-                    autoFocus
                   />
                 </div>
                 <button type='submit'>Check guest list</button>
@@ -630,7 +656,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -647,12 +673,13 @@ export function RsvpForm() {
             {/* <p className='text-base! mb-6!'>
               Need to make changes?
             </p> */}
-            <span
-              className='attendance-pill'
+            <button
+              type='button'
+              className='step-continue-btn step-continue-ready'
               onClick={() => setEditingRsvp(true)}
             >
               Change my RSVP
-            </span>
+            </button>
           </div>
         </>
       ) : (
@@ -660,39 +687,39 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
           </button>
           <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
-          {/* <h1 className='text-center text-3xl! pt-15'>👋</h1> */}
+
+          {/* ═══ STEP 0: Greeting + Attendance ═══ */}
+          {step === 0 && (
+            <>
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto text-primary!'>hey</h1>
           <h1 className='text-center text-3xl! md:text-5xl! pt-0! mb-2! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
 
-          {/* <h1 className='font-sanremo-caps! text-center text-lg! pb-10 mx-auto text-primary! tracking-wider'>Let's get you RSVP'd</h1> */}
-
           <svg viewBox='-2 -2 204 16' className='w-3/4 mx-auto mt-10 mb-8' preserveAspectRatio='none' overflow='visible'>
             <path d='M0 6 Q8.3 0 16.7 6 T33.3 6 T50 6 T66.7 6 T83.3 6 T100 6 T116.7 6 T133.3 6 T150 6 T166.7 6 T183.3 6 T200 6' fill='none' stroke='var(--color-blue)' strokeWidth='3' strokeLinecap='round' />
           </svg>
 
-          {/* Attendance question — first thing after greeting */}
           {pairedPartner ? (
             <div className='mb-6 max-inner text-center'>
               <h1 className=' text-primary! text-2xl! md:text-3xl! pb-2'>Can you make it?</h1>
               <div className='flex flex-col md:flex-row items-center gap-2 mt-3'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); }}
+                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}
                 >
                   We'll both be there!
                 </span>
                 <span
                   className={`attendance-pill ${attending === 'solo' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); }}
+                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}
                 >
                   Just me this time
                 </span>
@@ -724,12 +751,11 @@ export function RsvpForm() {
             </div>
           )}
 
-          {/* Decline path — short form with optional message */}
+          {/* Decline path */}
           {isDeclining && (
-
               <div className='animate-in max-inner'>
                 <div className='mb-6'>
-                  <p className=''>That's okay! We appreciate you letting us know, and we hope to celebrate with you another time. 💕</p>
+                  <p>That's okay! We appreciate you letting us know, and we hope to celebrate with you another time. 💕</p>
               </div>
               <div className='mb-6'>
                 <textarea
@@ -737,7 +763,7 @@ export function RsvpForm() {
                   name='message'
                   value={formData.message}
                   onChange={handleChange}
-                  rows='3'
+                  rows='2'
                   placeholder='Any parting words? (optional)'
                 />
               </div>
@@ -747,177 +773,307 @@ export function RsvpForm() {
             </div>
           )}
 
-          {/* Attending path — rest of the form */}
-          {attendanceAnswered && !isDeclining && (
-            <>
-          <div className='mb-6 max-inner'>
-            <input
-              type='email'
-              id='email'
-              name='email'
-              value={formData.email}
-              onChange={handleChange}
-              required
-              placeholder='your.email@example.com'
-            />
-          </div>
-
-          {/* Plus one section — manual only (paired partners skip this) */}
-          {!pairedPartner && (
-            <div className='mb-6 max-inner'>
-              <label>Plus one?</label>
-              <div className={`radio-group ${invalidFields.includes('plusOne') ? 'flash-invalid' : ''}`}>
-                <label className='radio-label'>
-                  <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
-                  Yes
-                </label>
-                <label className='radio-label'>
-                  <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
-                  No
-                </label>
-              </div>
-            </div>
-          )}
-          {!pairedPartner && formData.plusOne === 'yes' && (
-            <div className='mb-6 max-inner animate-in'>
-              <input
-                type='text'
-                value={plusOneName}
-                onChange={(e) => setPlusOneName(e.target.value)}
-                placeholder="What's their name?"
-              />
-            </div>
-          )}
-
-
-
-          {partyComplete && (
-            <div className='mb-8 animate-in max-inner'>
-              <div className='menu'>
-                <div className='the-menu'>
-                  <h2 className='menu-title' ref={menuTitleRef}>the menu</h2>
-                </div>
-                <div className='menu-display' ref={menuDisplayRef}>
-                  {meals.map((meal) => (
-                    <div key={meal.value} className='menu-item-card flex-1'>
-                      <span className='menu-item-title-row flex'>
-                        <span className='menu-item-title'>{meal.title}</span>
-                        {meal.tag && <><span className='menu-item-dots flex-1 text-ellipsis' /><span className='menu-item-tag'>{meal.tag}</span></>}
-                      </span>
-                      <span className='menu-item-desc'>{meal.desc}</span>
-                    </div>
-                  ))}
+          {/* Non-paired: plus one on step 0 */}
+          {attending === 'yes' && !pairedPartner && (
+            <div className='animate-in max-inner mt-6'>
+              <div className='mb-6'>
+                <label>Plus one?</label>
+                <div className={`radio-group ${invalidFields.includes('plusOne') ? 'flash-invalid' : ''}`}>
+                  <label className='radio-label'>
+                    <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
+                    Yes
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
+                    No
+                  </label>
                 </div>
               </div>
+              {formData.plusOne === 'yes' && (
+                <div className='mb-6 animate-in overflow-visible!'>
+                  <input
+                    type='text'
+                    value={plusOneName}
+                    onChange={(e) => setPlusOneName(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setStep(1); requestAnimationFrame(() => scrollToRsvp()); } }}
+                    placeholder="What's their name?"
+                  />
+                </div>
+              )}
+              {formData.plusOne !== '' && (
+                <button type='button' className='mb-1 step-continue-btn step-continue-ready mt-4' onClick={() => { setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}>
+                  Continue
+                </button>
+              )}
+            </div>
+          )}
+            </>
+          )}
 
-              <div className='guest-meals max-inner'>
-                {Array.from({ length: getPartySize() }, (_, i) => (
-                  <div key={i} className={`guest-meal-row ${invalidFields.includes(`meal_${i}`) ? 'flash-invalid-meal' : ''}`}>
-                    <span className='guest-name'>{getGuestLabel(i)}</span>
-                    <div className='meal-options'>
-                      {meals.map((meal) => (
-                        <span
-                          key={meal.value}
-                          className={`meal-pill ${formData.mealChoices[i] === meal.value ? 'meal-pill-selected' : ''}`}
-                          onClick={() => handleMealChange(i, meal.value)}
-                        >
-                          {meal.shortTitle}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+          {/* ═══ STEP NAV (visible steps 1-4) ═══ */}
+          {step >= 1 && (
+            <div className='step-nav-row'>
+              <button type='button' className='step-back-inline group' onClick={() => { setStep(step - 1); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <svg className='inline w-3.5 h-3.5 mr-1 -mt-px transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+                {step === 1 ? 'Start' : step === 2 ? 'Email' : step === 3 ? 'Meals' : step === 4 ? 'Dietary' : 'Details'}
+              </button>
+              <div className='step-nav'>
+                {[
+                  { label: 'Email', num: 1 },
+                  { label: 'Meals', num: 2 },
+                  { label: 'Dietary', num: 3 },
+                  { label: 'Details', num: 4 },
+                  { label: 'Review', num: 5 },
+                ].map((s) => (
+                  <button
+                    key={s.num}
+                    type='button'
+                    className={`step-nav-item ${step === s.num ? 'step-nav-active' : ''} ${step > s.num ? 'step-nav-done' : ''}`}
+                    onClick={() => { if (s.num < step) { setStep(s.num); requestAnimationFrame(() => scrollToRsvp()); } }}
+                    disabled={s.num > step}
+                  >
+                    <span className='step-nav-circle'>
+                      {step > s.num ? (
+                        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-3 h-3'><path d='M20 6L9 17l-5-5'/></svg>
+                      ) : s.num}
+                    </span>
+                    <span className='step-nav-label'>{s.label}</span>
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          {partyComplete && (
-            <div className='mb-6 animate-in max-inner'>
-              <label>Anything we should know about food?</label>
-              <div className={`radio-group-col ${invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}`}>
-                <label className='radio-label'>
-                  <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
-                  Nope, the menu looks great!
-                </label>
-                <label className='radio-label'>
-                  <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
-                  Yes, there are some dietary restrictions
-                </label>
-                <label className='radio-label'>
-                  <input type='radio' name='hasDietary' value='help' checked={formData.hasDietary === 'help'} onChange={handleChange} />
-                  None of these options work - help us out!
-                </label>
+          {/* ═══ STEP 1: Email ═══ */}
+          {step === 1 && (
+            <div className='step-panel text-center'>
+              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>We'll need your email</h1>
+              <p className='text-center mb-6 text-sm! md:text-lg!'>To keep track of your RSVP and follow up on possible questions!</p>
+              <div className='mb-8 max-inner'>
+                <input
+                  type='email'
+                  id='email'
+                  name='email'
+                  value={formData.email}
+                  onChange={handleChange}
+                  onClick={() => requestAnimationFrame(() => scrollToRsvp())}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && isValidEmail(formData.email)) { e.preventDefault(); setStep(2); requestAnimationFrame(() => scrollToRsvp()); } }}
+                  required
+                  placeholder='your.email@example.com'
+                  autoFocus
+                />
+              </div>
+              <div className='step-buttons'>
+  
+                <button type='button' className={`step-continue-btn ${isValidEmail(formData.email) ? 'step-continue-ready' : ''}`} disabled={!isValidEmail(formData.email)} onClick={() => { setStep(2); requestAnimationFrame(() => scrollToRsvp()); }}>
+                  Continue to Meal Selection
+                </button>
               </div>
             </div>
           )}
 
-          {fieldState.dietaryFields.visible && (['yes', 'help'].includes(formData.hasDietary) || fieldState.dietaryFields.animating) && (
-            <div className={fieldState.dietaryFields.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
-              {getPartySize() > 1 && formData.hasDietary === 'yes' && (
-                <div className='mb-6'>
-                  <label>Who has dietary restrictions?</label>
-                  <div className='meal-options' style={{ marginTop: '0.5rem' }}>
-                    {Array.from({ length: getPartySize() }, (_, i) => (
-                      <span
-                        key={i}
-                        className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
-                        onClick={() => toggleDietaryMember(i)}
-                      >
-                        {getGuestLabel(i)}
-                      </span>
-                    ))}
+          {/* ═══ STEP 2: Meal Selection ═══ */}
+          {step === 2 && (
+            <div className='step-panel'>
+              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Meal selection</h1>
+
+              <div className='mb-6 max-inner'>
+                <div className='menu-compact'>
+                  {meals.map((meal) => (
+                    <div key={meal.value} className={`menu-compact-item ${meal.color}`}>
+                      <span className='menu-compact-title'>{meal.title}{meal.tag && <span className='menu-compact-tag'>{meal.tag}</span>}</span>
+                      <span className='menu-compact-desc'>{meal.desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className='guest-meals mt-6'>
+                  {Array.from({ length: getPartySize() }, (_, i) => (
+                    <div key={i} className={`guest-meal-row ${invalidFields.includes(`meal_${i}`) ? 'flash-invalid-meal' : ''}`}>
+                      <span className='guest-name'>{getGuestLabel(i)}</span>
+                      <div className='meal-options'>
+                        {meals.map((meal) => (
+                          <span
+                            key={meal.value}
+                            className={`meal-pill ${meal.color} ${formData.mealChoices[i] === meal.value ? 'meal-pill-selected' : ''}`}
+                            onClick={() => handleMealChange(i, meal.value)}
+                          >
+                            {meal.shortTitle}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className='step-buttons'>
+                <button type='button' className={`step-continue-btn ${allMealsSelected ? 'step-continue-ready' : ''}`} disabled={!allMealsSelected} onClick={() => { setStep(3); requestAnimationFrame(() => scrollToRsvp()); }}>
+                  Continue to Dietary
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 3: Dietary Restrictions ═══ */}
+          {step === 3 && (
+            <div className='step-panel'>
+              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Dietary restrictions</h1>
+
+              <div className='mb-6 max-inner'>
+                <label className='text-center'>Anything we should know about food?</label>
+                <div className={`radio-group-col ${invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}`}>
+                  <label className='radio-label'>
+                    <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
+                    Nope, the menu looks great!
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
+                    Yes, there are some dietary restrictions
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='hasDietary' value='help' checked={formData.hasDietary === 'help'} onChange={handleChange} />
+                    None of these options work - help us out!
+                  </label>
+                </div>
+              </div>
+
+              {fieldState.dietaryFields.visible && (['yes', 'help'].includes(formData.hasDietary) || fieldState.dietaryFields.animating) && (
+                <div className={fieldState.dietaryFields.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
+                  {getPartySize() > 1 && formData.hasDietary === 'yes' && (
+                    <div className='mb-6'>
+                      <label>Who has dietary restrictions?</label>
+                      <div className='meal-options mt-2'>
+                        {Array.from({ length: getPartySize() }, (_, i) => (
+                          <span
+                            key={i}
+                            className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
+                            onClick={() => toggleDietaryMember(i)}
+                          >
+                            {getGuestLabel(i)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className='mb-6'>
+                    <textarea
+                      id='dietaryDetails'
+                      name='dietaryDetails'
+                      value={formData.dietaryDetails}
+                      onChange={handleChange}
+                      required
+                      rows='2'
+                      placeholder={formData.hasDietary === 'help'
+                        ? 'Tell us what you need and we\'ll make sure you\'re taken care of!'
+                        : 'Vegetarian, gluten free, nut allergy? Let us know!'}
+                    />
                   </div>
                 </div>
               )}
 
-              <div className='mb-6'>
+              <div className='step-buttons'>
+                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => { setStep(4); requestAnimationFrame(() => scrollToRsvp()); }}>
+                  Continue to Last Details
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 4: Last Details ═══ */}
+          {step === 4 && (
+            <div className='step-panel'>
+              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Last details</h1>
+
+              <div className='mb-6 max-inner'>
+                <label>We're hosting a casual welcome party the night before - no pressure, but would you like to join?</label>
+                <div className='radio-group flex-col md:flex-row mt-5!'>
+                  <label className='radio-label'>
+                    <input type='radio' name='welcomeParty' value='yes' checked={formData.welcomeParty === 'yes'} onChange={handleChange} />
+                    Count me in!
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='welcomeParty' value='no' checked={formData.welcomeParty === 'no'} onChange={handleChange} />
+                    I'll skip this one
+                  </label>
+                </div>
+              </div>
+
+              <div className='mb-6 max-inner'>
                 <textarea
-                  id='dietaryDetails'
-                  name='dietaryDetails'
-                  value={formData.dietaryDetails}
+                  id='message'
+                  name='message'
+                  value={formData.message}
                   onChange={handleChange}
-                  required
-                  rows='3'
-                  placeholder={formData.hasDietary === 'help'
-                    ? 'Tell us what you need and we\'ll make sure you\'re taken care of!'
-                    : 'Vegetarian, gluten free, nut allergy? Let us know!'}
+                  rows='2'
+                  placeholder='Any special requests or messages for us?'
                 />
               </div>
-            </div>
-          )}
 
-          {formData.hasDietary !== '' && (
-            <div className='mb-6 animate-in max-inner'>
-              <label>We're hosting a casual welcome party the night before - no pressure, but would you like to join?</label>
-              <div className='radio-group flex-col md:flex-row'>
-                <label className='radio-label'>
-                  <input type='radio' name='welcomeParty' value='yes' checked={formData.welcomeParty === 'yes'} onChange={handleChange} />
-                  Count me in!
-                </label>
-                <label className='radio-label'>
-                  <input type='radio' name='welcomeParty' value='no' checked={formData.welcomeParty === 'no'} onChange={handleChange} />
-                  I'll skip this one
-                </label>
+              <div className='step-buttons'>
+                <button type='button' className='step-continue-btn step-continue-ready' onClick={() => { setStep(5); requestAnimationFrame(() => scrollToRsvp()); }}>
+                  Continue to Review
+                </button>
               </div>
             </div>
           )}
 
-          <div className='mb-6 max-inner'>
-            <textarea
-              id='message'
-              name='message'
-              value={formData.message}
-              onChange={handleChange}
-              rows='5'
-              placeholder='Any special requests or messages for us?'
-            />
-          </div>
+          {/* ═══ STEP 5: Summary / Review ═══ */}
+          {step === 5 && (
+            <div className='step-panel'>
+              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-4'>Review your rsvp</h1>
 
-          <button type='submit' disabled={isSubmitting}>
-            {isSubmitting ? 'Sending...' : 'OH YEEEAH 🎉'}
-          </button>
-            </>
+              <div className='rsvp-summary max-inner'>
+                <div className='rsvp-summary-row'>
+                  <span className='rsvp-summary-label'>Name</span>
+                  <span className='rsvp-summary-value'>{verifiedName}{pairedPartner && attending === 'both' ? ` & ${pairedPartner}` : ''}</span>
+                </div>
+                <div className='rsvp-summary-row'>
+                  <span className='rsvp-summary-label'>Email</span>
+                  <span className='rsvp-summary-value'>{formData.email}</span>
+                </div>
+                {Array.from({ length: getPartySize() }, (_, i) => {
+                  const choice = meals.find(m => m.value === formData.mealChoices[i]);
+                  return (
+                    <div key={i} className='rsvp-summary-row'>
+                      <span className='rsvp-summary-label'>{i === 0 ? 'Meal' : ''}</span>
+                      <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
+                        <span>{getGuestLabel(i)}</span>
+                        {choice && (
+                          <span className='relative'>
+                            <span className={`summary-meal-chip ${choice.color}`}>{choice.shortTitle}</span>
+                            {dietaryMembers.includes(i) && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+                {formData.hasDietary !== 'no' && formData.dietaryDetails && (
+                  <div className='rsvp-summary-row'>
+                    <span className='rsvp-summary-label'>Dietary</span>
+                    <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
+                  </div>
+                )}
+                {formData.welcomeParty && (
+                  <div className='rsvp-summary-row'>
+                    <span className='rsvp-summary-label'>Party</span>
+                    <span className='rsvp-summary-value'>{formData.welcomeParty === 'yes' ? 'Count me in!' : 'Skipping this one'}</span>
+                  </div>
+                )}
+              </div>
+
+              <p className='text-center mt-5! mb-4 text-sm!'>Does everything look good?</p>
+
+              <div className='step-buttons justify-center'>
+                <button type='submit' className='step-continue-btn step-continue-ready step-submit-btn' disabled={isSubmitting} onMouseEnter={spawnSparkles}>
+                  {isSubmitting ? 'SENDING...' : 'OH YEAH!'}
+                </button>
+              </div>
+            </div>
           )}
+
         </form>
         </>
       )}

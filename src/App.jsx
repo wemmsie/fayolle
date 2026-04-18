@@ -1,6 +1,6 @@
 import './global.css'
 import * as image from './images';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 
 import { Polaroid } from './Polaroid'
 import { PhotoPile } from './PhotoPile'
@@ -55,7 +55,14 @@ function App() {
     setTooltip(t => ({ ...t, visible: false }));
   }, []);
 
-  const tipProps = (tag, tip) => ({
+  // Hide tooltip on scroll so it doesn't get stuck
+  useEffect(() => {
+    const hide = () => setTooltip(t => t.visible ? { ...t, visible: false } : t);
+    window.addEventListener('scroll', hide, { passive: true });
+    return () => window.removeEventListener('scroll', hide);
+  }, []);
+
+  const tipProps = (tag, tip) => isMobile ? {} : ({
     'data-tag': tag,
     'data-tip': tip,
     onMouseEnter: handleMouseEnter,
@@ -336,9 +343,9 @@ function App() {
       </section>
 
       {/* RSVP */}
-      <section id='rsvp' className='block theme-blue pl-6! md:pl-22!'>
-        <div className='block-inner'>
-          <div className='form-container relative max-w-2xl mx-auto'>
+      <section id='rsvp' className='theme-blue pl-6! md:pl-22! px-6! md:px-10! pt-[12vh]! md:pt-[15vh] pb-16' style={{ minHeight: '100vh' }}>
+        <div className='block-inner w-full'>
+          <div className='form-container relative max-w-2xl mx-auto w-full'>
             <RsvpForm />
           </div>
         </div>
