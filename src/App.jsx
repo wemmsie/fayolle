@@ -374,13 +374,13 @@ function App() {
               In this modern age of love, one often finds themselves woefully lost in the world of dating apps. While many of these stories end in disaster, Cody and Emily are proof that people can actually find love online.
 </p>
             <p>
-              It all started in November of 2025 when a few cheeky frog puns quickly leapt into late-night conversations, trading playlists, and countless home-cooked meals. They were inseparable. Ten days later, they threw caution to the wind and exchanged “I love you”s.
+              It all started in November of 2024 when a few cheeky frog puns quickly leapt into late-night conversations, trading playlists, and countless home-cooked meals. They were inseparable. Ten days later, they threw caution to the wind and exchanged “I love you”s.
 </p>
             {/* <p>
 With Christmas right around the corner, Cody did the only reasonable thing imaginable - he invited the girl he met just two weeks prior to drive six hours to Michigan and spend the holiday with his family. To his luck, she graciously accepted. The two lovebirds knew it was a bit insane, but to them, it just made sense. To no one's surprise, Emily quickly won over the Fayolle family with her deft cooking abilities and charm.
 </p> */}
             <p>
-Their love felt effortless and only grew from there. Much of 2025 was spent in each other's company. Attending concerts, traveling to new places, petting cats, cozy gaming, and even tattooing each other - all with the biggest grins on their faces.
+Their love felt effortless and only grew from there. Much of the next year was spent in each other's company. Attending concerts, traveling to new places, petting cats, cozy gaming, and even tattooing each other - all with the biggest grins on their faces.
 </p>
             <p>
 It was only a matter of time before Cody popped the question. In early November 2025, the two took a trip to France for a family wedding. You know, where Paris is? I mean come on, Paris?! The city of love? Cody seized the moment, finding a romantic, lantern-lit path to drop to one knee.
