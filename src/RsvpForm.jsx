@@ -1252,12 +1252,7 @@ export function RsvpForm() {
                     </div>
                   );
                 })}
-                {formData.hasDietary !== 'no' && formData.dietaryDetails && (
-                  <div className='rsvp-summary-row'>
-                    <span className='rsvp-summary-label'>Notes</span>
-                    <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
-                  </div>
-                )}
+
                 {kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0 && (
                   Array.from({ length: formData.kidCount }, (_, i) => {
                     const kidName = (formData.kidNames || [])[i] || `Kid ${i + 1}`;
@@ -1282,6 +1277,12 @@ export function RsvpForm() {
                       </div>
                     );
                   })
+                )}
+                {formData.hasDietary !== 'no' && formData.dietaryDetails && (
+                  <div className='rsvp-summary-row'>
+                    <span className='rsvp-summary-label'>Notes</span>
+                    <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
+                  </div>
                 )}
                 {welcomePartyInvited && formData.welcomeParty && (
                   <div className='rsvp-summary-row'>
