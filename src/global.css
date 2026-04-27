@@ -1125,6 +1125,10 @@ button[type="submit"]:active {
   @apply bg-gray-500 text-white border-gray-500;
 }
 
+.step-title {
+  @apply text-3xl! md:text-3xl!;
+}
+
 .meal-options {
   @apply flex flex-wrap gap-2 flex-1;
 }
@@ -1135,16 +1139,18 @@ button[type="submit"]:active {
   background: #eef2ff;
 }
 
-.meal-pill:hover {
-  @apply text-primary bg-red/40;
-}
-
 .meal-pill-selected {
   @apply text-primary/80 bg-red/30 border-transparent;
 }
 
-.meal-pill-selected:hover {
-  @apply text-primary;
+@media (hover: hover) {
+  .meal-pill:hover {
+    @apply text-primary bg-red/40;
+  }
+
+  .meal-pill-selected:hover {
+    @apply text-primary;
+  }
 }
 
 .flash-invalid-meal {
@@ -1227,9 +1233,6 @@ button[type="submit"]:active {
 
 .step-panel {
   animation: stepSlideIn 0.3s ease-out forwards;
-  h1 {
-    @apply text-4xl! md:text-3xl! mb-1;
-  }
 }
 
 /* ═══ Step Buttons (back + continue) ═══ */
@@ -1353,6 +1356,10 @@ button[type="submit"]:active {
 .meal-pill.meal-orange:hover { background: rgba(184,150,108,0.22); }
 .meal-pill.meal-orange.meal-pill-selected { background: var(--color-orange); color: white; }
 
+.meal-pill.meal-blue { background: rgba(108 161 184 / 0.12); color: var(--color-text-light); }
+.meal-pill.meal-blue:hover { background: rgba(108 138 184 / 0.22); }
+.meal-pill.meal-blue.meal-pill-selected { background: var(--color-text-light); color: white; }
+
 /* ═══ RSVP Summary ═══ */
 .rsvp-summary {
   @apply rounded-xl overflow-hidden;
@@ -1393,6 +1400,7 @@ button[type="submit"]:active {
 .summary-meal-chip.meal-red { background: rgba(255,105,105,0.15); color: var(--color-red); }
 .summary-meal-chip.meal-yellow { background: rgba(255 179 57 / 0.15); color: #b8860b; }
 .summary-meal-chip.meal-orange { background: rgba(229 132 80 / 0.15); color:  #AD4906; }
+.summary-meal-chip.meal-blue { background: rgba(108,161,184,0.15); color: var(--color-text-light); }
 /* Hero entrance animations */
 @keyframes heroFadeUp {
   from { opacity: 0; transform: translateY(18px); }

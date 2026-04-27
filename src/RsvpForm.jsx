@@ -61,7 +61,9 @@ function spawnSparkles(e) {
 // Google Sheet published CSV URL for live guest+partner data
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
 
-// Parse CSV rows into { name, partner, rsvp } objects (handles quoted fields)
+// Parse CSV rows into guest objects (handles quoted fields)
+// Col R (index 17) = welcome party invite flag (TRUE/FALSE)
+// Col S (index 18) = kids allowed flag (TRUE/FALSE)
 function parseGuestCSV(csv) {
   const rows = csv.trim().split('\n');
   const guests = [];
@@ -71,8 +73,10 @@ function parseGuestCSV(csv) {
     const name = cols[0].replace(/"/g, '').trim();
     const partner = cols[1].replace(/"/g, '').trim();
     const rsvp = cols[2] ? cols[2].replace(/"/g, '').trim().toLowerCase() : '';
+    const welcomePartyFlag = cols[3] ? cols[3].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
+    const kidsAllowedFlag = cols[4] ? cols[4].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
     if (!name) continue;
-    guests.push({ name, partner: partner || null, rsvp: rsvp || null });
+    guests.push({ name, partner: partner || null, rsvp: rsvp || null, welcomePartyFlag, kidsAllowedFlag });
   }
   return guests;
 }
@@ -82,10 +86,14 @@ function buildGuestMaps(guestData) {
   const names = [];
   const partnerMap = new Map(); // name (lowercase) -> partner name
   const rsvpMap = new Map(); // name (lowercase) -> 'yes' | 'no' | null
+  const welcomePartyMap = new Map(); // name (lowercase) -> boolean
+  const kidsAllowedMap = new Map(); // name (lowercase) -> boolean
 
-  for (const { name, partner, rsvp } of guestData) {
+  for (const { name, partner, rsvp, welcomePartyFlag, kidsAllowedFlag } of guestData) {
     names.push(name);
     if (rsvp) rsvpMap.set(name.toLowerCase(), rsvp);
+    welcomePartyMap.set(name.toLowerCase(), !!welcomePartyFlag);
+    kidsAllowedMap.set(name.toLowerCase(), !!kidsAllowedFlag);
     if (partner) {
       partnerMap.set(name.toLowerCase(), partner);
       // Add partner as a guest too (so they can RSVP from either side)
@@ -93,13 +101,15 @@ function buildGuestMaps(guestData) {
         names.push(partner);
       }
       partnerMap.set(partner.toLowerCase(), name);
-      // Partner inherits the same RSVP status
+      // Partner inherits the same RSVP status and household flags
       if (rsvp) rsvpMap.set(partner.toLowerCase(), rsvp);
+      welcomePartyMap.set(partner.toLowerCase(), !!welcomePartyFlag);
+      kidsAllowedMap.set(partner.toLowerCase(), !!kidsAllowedFlag);
     }
   }
   // Dedupe names
   const uniqueNames = [...new Set(names)];
-  return { names: uniqueNames, partnerMap, rsvpMap };
+  return { names: uniqueNames, partnerMap, rsvpMap, welcomePartyMap, kidsAllowedMap };
 }
 
 const meals = [
@@ -120,6 +130,8 @@ export function RsvpForm() {
   const [guestList, setGuestList] = useState([]);
   const [partnerMap, setPartnerMap] = useState(new Map());
   const [rsvpMap, setRsvpMap] = useState(new Map());
+  const [welcomePartyMap, setWelcomePartyMap] = useState(new Map());
+  const [kidsAllowedMap, setKidsAllowedMap] = useState(new Map());
   const [guestDataLoaded, setGuestDataLoaded] = useState(false);
 
   // Fetch guest data from Google Sheet on mount
@@ -129,10 +141,12 @@ export function RsvpForm() {
       .then(csv => {
         const guestData = parseGuestCSV(csv);
         if (guestData.length > 0) {
-          const { names, partnerMap: pMap, rsvpMap: rMap } = buildGuestMaps(guestData);
+          const { names, partnerMap: pMap, rsvpMap: rMap, welcomePartyMap: wpMap, kidsAllowedMap: kaMap } = buildGuestMaps(guestData);
           setGuestList(names);
           setPartnerMap(pMap);
           setRsvpMap(rMap);
+          setWelcomePartyMap(wpMap);
+          setKidsAllowedMap(kaMap);
         }
         setGuestDataLoaded(true);
       })
@@ -154,6 +168,8 @@ export function RsvpForm() {
   const [pairedPartner, setPairedPartner] = useState(null); // auto-matched partner from sheet
   const [plusOneName, setPlusOneName] = useState(''); // manually entered plus-one name
   const [attending, setAttending] = useState(''); // paired: 'both'|'solo'|'none', unpaired: 'yes'|'no'
+  const [welcomePartyInvited, setWelcomePartyInvited] = useState(false); // from Col R
+  const [kidsAllowed, setKidsAllowed] = useState(false); // from Col S
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [showNotOnList, setShowNotOnList] = useState(false);
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
@@ -162,8 +178,11 @@ export function RsvpForm() {
   const [maxStep, setMaxStep] = useState(0); // highest step ever reached
 
   const goToStep = (n) => {
-    setStep(n);
-    setMaxStep(prev => Math.max(prev, n));
+    // Skip the kids step (3) when going forward if kids aren't allowed
+    let target = n;
+    if (n === 3 && !kidsAllowed) target = 4;
+    setStep(target);
+    setMaxStep(prev => Math.max(prev, target));
     requestAnimationFrame(() => scrollToRsvp());
   };
 
@@ -175,6 +194,10 @@ export function RsvpForm() {
     dietaryCount: '',
     dietaryDetails: '',
     mealChoices: {},
+    kidsAttending: '',  // 'yes' | 'no' | ''
+    kidCount: 0,
+    kidNames: [],       // array of strings, max 2
+    kidMeals: {},       // { 0: 'shortrib'|'chicken'|'gnocchi'|'', ... }
     welcomeParty: '',
     message: '',
   });
@@ -233,6 +256,8 @@ export function RsvpForm() {
     setPairedPartner(partner);
     const existingRsvp = rsvpMap.get(name.toLowerCase()) || null;
     setAlreadyRsvpd(existingRsvp);
+    setWelcomePartyInvited(welcomePartyMap.get(name.toLowerCase()) || false);
+    setKidsAllowed(kidsAllowedMap.get(name.toLowerCase()) || false);
     setEditingRsvp(false);
     setIsVerified(true);
     setNameSuggestions([]);
@@ -325,16 +350,61 @@ export function RsvpForm() {
   const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
   const allMealsSelected = getPartySize() > 0 && Array.from({ length: getPartySize() }, (_, i) => formData.mealChoices[i]).every(Boolean);
 
-  // Whether each step's data is fully filled
+  // Kids step: complete when kidsAttending answered and (if yes) each kid has a meal selected
+  const kidsStepDone = formData.kidsAttending === 'no' || formData.kidCount > 0;
+
+  // Wizard steps definition (dynamic based on kidsAllowed)
+  // Absolute step numbers: 1=Email, 2=Meals, 3=Kids(optional), 4=Dietary, 5=Details, 6=Review
+  const stepDefs = [
+    { num: 1, label: 'Email' },
+    { num: 2, label: 'Meals' },
+    ...(kidsAllowed ? [{ num: 3, label: 'Kids' }] : []),
+    { num: 4, label: 'Dietary' },
+    { num: 5, label: 'Details' },
+    { num: 6, label: 'Review' },
+  ];
+
+  // Whether each step's data is fully filled (keyed by absolute step number)
   const stepComplete = {
     1: isValidEmail(formData.email),
     2: allMealsSelected,
-    3: formData.hasDietary !== '',
-    4: true, // details step is always optional
-    5: false, // review is never "done" until submitted
+    3: formData.kidsAttending !== '' && kidsStepDone,
+    4: formData.hasDietary !== '',
+    5: !welcomePartyInvited || formData.welcomeParty !== '', // required if invited to welcome party
+    6: false, // review is never "done" until submitted
+  };
+
+  // Kid data handlers
+  const handleKidCountChange = (delta) => {
+    setFormData(prev => {
+      const newCount = Math.max(0, Math.min(2, (prev.kidCount || 0) + delta));
+      const kidNames = Array.from({ length: newCount }, (_, i) => (prev.kidNames || [])[i] || '');
+      const kidMeals = Object.fromEntries(Object.entries(prev.kidMeals || {}).filter(([i]) => +i < newCount));
+      return { ...prev, kidCount: newCount, kidNames, kidMeals };
+    });
+  };
+
+  const handleKidNameChange = (i, value) => {
+    setFormData(prev => {
+      const kidNames = [...(prev.kidNames || [])];
+      kidNames[i] = value;
+      return { ...prev, kidNames };
+    });
+  };
+
+  const handleKidMealChange = (i, value) => {
+    setFormData(prev => ({
+      ...prev,
+      kidMeals: { ...prev.kidMeals, [i]: prev.kidMeals[i] === value ? '' : value }
+    }));
   };
 
   const getGuestLabel = (index) => {
+    const partySize = getPartySize();
+    if (index >= partySize) {
+      const kidIndex = index - partySize;
+      return (formData.kidNames || [])[kidIndex] || `Kid ${kidIndex + 1}`;
+    }
     if (index === 0) return verifiedName;
     if (pairedPartner) return pairedPartner;
     return plusOneName || 'Your plus one';
@@ -408,7 +478,9 @@ export function RsvpForm() {
             plusOneMeal: '',
             welcomeParty: false,
             email: formData.email || '',
-            dietaryNames: '',
+            totalGuestCount: 0,
+            kidCount: 0,
+            kidName1: '', kidName2: '', kidMeal1: '', kidMeal2: '',
             dietaryNotes: '',
             message: formData.message || '',
           });
@@ -460,7 +532,16 @@ export function RsvpForm() {
         const choice = meals.find(m => m.value === formData.mealChoices[i]);
         return getGuestLabel(i) + ': ' + (choice ? choice.title : 'N/A');
       }).join('\n'),
-      welcome_party: formData.welcomeParty || 'No response',
+      kids: kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0
+        ? Array.from({ length: formData.kidCount }, (_, i) => {
+            const kidName = (formData.kidNames || [])[i] || `Kid ${i + 1}`;
+            const mealVal = formData.kidMeals[i];
+            const mealLabel = mealVal === 'other' ? 'Other / dietary needs'
+              : meals.find(m => m.value === mealVal)?.title || 'N/A';
+            return `${kidName}: ${mealLabel}`;
+          }).join('\n')
+        : 'N/A',
+      welcome_party: welcomePartyInvited ? (formData.welcomeParty || 'No response') : 'N/A (not invited)',
       message: formData.message,
     };
 
@@ -471,6 +552,8 @@ export function RsvpForm() {
 
         const guestMeal = meals.find(m => m.value === formData.mealChoices[0]);
         const plusOneMeal = getPartySize() > 1 ? meals.find(m => m.value === formData.mealChoices[1]) : null;
+        const hasKids = kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0;
+        const kidMealLabel = (val) => val === 'other' ? 'Other' : meals.find(m => m.value === val)?.shortTitle || '';
         updateGoogleSheet({
           name: formData.name,
           rsvp: 'Yes',
@@ -478,11 +561,14 @@ export function RsvpForm() {
           plusOneName: getPlusOneName(),
           plusOneRsvp: getPartySize() > 1 ? 'Yes' : '',
           plusOneMeal: plusOneMeal ? plusOneMeal.shortTitle : '',
-          welcomeParty: formData.welcomeParty === 'yes',
+          welcomeParty: welcomePartyInvited ? formData.welcomeParty === 'yes' : false,
           email: formData.email || '',
-          dietaryNames: dietaryMembers.length > 0
-            ? dietaryMembers.map(i => getGuestLabel(i)).join(', ')
-            : '',
+          totalGuestCount: getPartySize() + (hasKids ? formData.kidCount : 0),
+          kidCount: hasKids ? formData.kidCount : 0,
+          kidName1: hasKids ? ((formData.kidNames || [])[0] || '') : '',
+          kidName2: hasKids ? ((formData.kidNames || [])[1] || '') : '',
+          kidMeal1: hasKids ? kidMealLabel(formData.kidMeals[0]) : '',
+          kidMeal2: hasKids ? kidMealLabel(formData.kidMeals[1]) : '',
           dietaryNotes: formData.dietaryDetails || '',
           message: formData.message || '',
         });
@@ -501,6 +587,10 @@ export function RsvpForm() {
             dietaryCount: '',
             dietaryDetails: '',
             mealChoices: {},
+            kidsAttending: '',
+            kidCount: 0,
+            kidNames: [],
+            kidMeals: {},
             welcomeParty: '',
             message: '',
           }));
@@ -547,7 +637,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Change my RSVP
           </button>
@@ -566,7 +656,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Update my RSVP
           </button>
@@ -672,7 +762,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setWelcomePartyInvited(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '' })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -703,7 +793,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setWelcomePartyInvited(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '' })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -714,7 +804,7 @@ export function RsvpForm() {
           {step === 0 && (
             <>
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto text-primary!'>hey</h1>
-          <h1 className='text-center text-3xl! md:text-5xl! pt-0! mb-2! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
+          <h1 className='text-center text-4xl! md:text-5xl! pt-0! mb-2! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
@@ -725,13 +815,13 @@ export function RsvpForm() {
 
           {pairedPartner ? (
             <div className='mb-6 max-inner text-center'>
-              <h1 className=' text-primary! text-2xl! md:text-3xl! pb-2'>Can you make it?</h1>
-              <div className='flex flex-col md:flex-row items-center gap-2 mt-3'>
+              <h1 className='text-primary! step-title! pb-2'>Can you make it?</h1>
+              <div className='flex flex-col md:flex-row items-center gap-2 mt-3 justify-center'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
                   onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); goToStep(1); }}
                 >
-                  We'll both be there!
+                  We'll be there!
                 </span>
                 <span
                   className={`attendance-pill ${attending === 'solo' ? 'attendance-pill-selected' : ''}`}
@@ -826,17 +916,12 @@ export function RsvpForm() {
             </>
           )}
 
-          {/* ═══ STEP NAV (visible steps 1-4) ═══ */}
+          {/* ═══ STEP NAV (visible on steps 1+) ═══ */}
           {step >= 1 && (
             <div className='step-nav-row'>
               <div className='step-nav'>
-                {[
-                  { label: 'Email', num: 1 },
-                  { label: 'Meals', num: 2 },
-                  { label: 'Dietary', num: 3 },
-                  { label: 'Details', num: 4 },
-                  { label: 'Review', num: 5 },
-                ].map((s) => {
+                {stepDefs.map((s, displayIdx) => {
+                  const displayNum = displayIdx + 1;
                   const isDone = step > s.num && stepComplete[s.num];
                   const isAhead = s.num > step && s.num <= maxStep && stepComplete[s.num];
                   const isVisited = s.num <= maxStep && step !== s.num;
@@ -856,7 +941,7 @@ export function RsvpForm() {
                     <span className='step-nav-circle'>
                       {(isDone || isAhead) ? (
                         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-3 h-3'><path d='M20 6L9 17l-5-5'/></svg>
-                      ) : s.num}
+                      ) : displayNum}
                     </span>
                     <span className='step-nav-label'>{s.label}</span>
                   </button>
@@ -869,7 +954,7 @@ export function RsvpForm() {
           {/* ═══ STEP 1: Email ═══ */}
           {step === 1 && (
             <div className='step-panel text-center'>
-              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>We'll need your email</h1>
+              <h1 className='text-primary! step-title text-center pb-2'>We'll need your email</h1>
               <p className='text-center mb-6 text-sm! md:text-lg!'>To keep track of your RSVP and follow up on possible questions!</p>
               <div className='mb-8 max-inner'>
                 <input
@@ -897,7 +982,7 @@ export function RsvpForm() {
           {/* ═══ STEP 2: Meal Selection ═══ */}
           {step === 2 && (
             <div className='step-panel'>
-              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Meal selection</h1>
+              <h1 className='text-primary! step-title text-center pb-2'>Meal selection</h1>
 
               <div className='mb-6 max-inner'>
                 <div className='menu-compact'>
@@ -931,16 +1016,103 @@ export function RsvpForm() {
 
               <div className='step-buttons'>
                 <button type='button' className={`step-continue-btn ${allMealsSelected ? 'step-continue-ready' : ''}`} disabled={!allMealsSelected} onClick={() => goToStep(3)}>
-                  Continue to Dietary
+                  Continue
                 </button>
               </div>
             </div>
           )}
 
-          {/* ═══ STEP 3: Dietary Restrictions ═══ */}
+          {/* ═══ STEP 3: Kids ═══ */}
           {step === 3 && (
             <div className='step-panel'>
-              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Dietary restrictions</h1>
+              <h1 className='text-primary! step-title text-center pb-2'>Kids coming along?</h1>
+              <label></label>
+
+              <div className='mb-6 max-inner'>
+                <div className='radio-group mt-3'>
+                  <label className='radio-label'>
+                    <input type='radio' name='kidsAttending' value='yes' checked={formData.kidsAttending === 'yes'} onChange={handleChange} />
+                    Yes!
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='kidsAttending' value='no' checked={formData.kidsAttending === 'no'} onChange={handleChange} />
+                    Not this time
+                  </label>
+                </div>
+              </div>
+
+              {formData.kidsAttending === 'yes' && (
+                <div className='animate-in max-inner'>
+                  {/* Kid count stepper */}
+                  <div className='mb-6'>
+                    <label className='text-center'>How many little ones?</label>
+                    <div className='flex items-center justify-center gap-4 mt-3'>
+                      <button
+                        type='button'
+                        className='w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-30'
+                        onClick={() => handleKidCountChange(-1)}
+                        disabled={formData.kidCount <= 0}
+                      >−</button>
+                      <span className='text-2xl font-bold text-primary w-6 text-center'>{formData.kidCount}</span>
+                      <button
+                        type='button'
+                        className='w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-30'
+                        onClick={() => handleKidCountChange(1)}
+                        disabled={formData.kidCount >= 2}
+                      >+</button>
+                    </div>
+                  </div>
+
+                  {/* Per-kid name + meal */}
+                  {formData.kidCount > 0 && (
+                    <div className='guest-meals mb-4'>
+                      <label className='text-sm! text-center text-primary/60 mb-4'>If no meals are selected, we'll reach out to make sure they're taken care of!</label>
+                      {Array.from({ length: formData.kidCount }, (_, i) => (
+                        <div key={i} className='guest-meal-row'>
+                          <div className='w-auto mb-2'>
+                            <input
+                              type='text'
+                              value={(formData.kidNames || [])[i] || ''}
+                              onChange={(e) => handleKidNameChange(i, e.target.value)}
+                              placeholder={`Kid's name`}
+                              className='text-sm!'
+                            />
+                          </div>
+                          <div className='meal-options mt-1'>
+                            {meals.map((meal) => (
+                              <span
+                                key={meal.value}
+                                className={`meal-pill ${meal.color} ${formData.kidMeals[i] === meal.value ? 'meal-pill-selected' : ''}`}
+                                onClick={() => handleKidMealChange(i, meal.value)}
+                              >
+                                {meal.shortTitle}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className='step-buttons'>
+                <button
+                  type='button'
+                  className={`step-continue-btn ${stepComplete[3] ? 'step-continue-ready' : ''}`}
+                  disabled={!stepComplete[3]}
+                  onClick={() => goToStep(4)}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 4: Dietary Restrictions ═══ */}
+          {step === 4 && (
+            <div className='step-panel'>
+              <h1 className='text-primary! step-title text-center pb-2'>Dietary restrictions</h1>
 
               <div className='mb-6 max-inner'>
                 <label className='text-center'>Anything we should know about food?</label>
@@ -962,22 +1134,26 @@ export function RsvpForm() {
 
               {fieldState.dietaryFields.visible && (['yes', 'help'].includes(formData.hasDietary) || fieldState.dietaryFields.animating) && (
                 <div className={fieldState.dietaryFields.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
-                  {getPartySize() > 1 && formData.hasDietary === 'yes' && (
-                    <div className='mb-6'>
-                      <label>Who has dietary restrictions?</label>
-                      <div className='meal-options mt-2'>
-                        {Array.from({ length: getPartySize() }, (_, i) => (
-                          <span
-                            key={i}
-                            className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
-                            onClick={() => toggleDietaryMember(i)}
-                          >
-                            {getGuestLabel(i)}
-                          </span>
-                        ))}
+                  {(() => {
+                    const kidsHere = kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0;
+                    const totalMembers = getPartySize() + (kidsHere ? formData.kidCount : 0);
+                    return totalMembers > 1 && formData.hasDietary === 'yes' && (
+                      <div className='mb-6'>
+                        <label>Who has dietary restrictions?</label>
+                        <div className='meal-options mt-2'>
+                          {Array.from({ length: totalMembers }, (_, i) => (
+                            <span
+                              key={i}
+                              className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
+                              onClick={() => toggleDietaryMember(i)}
+                            >
+                              {getGuestLabel(i)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <div className='mb-6'>
                     <textarea
@@ -996,19 +1172,21 @@ export function RsvpForm() {
               )}
 
               <div className='step-buttons'>
-                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => goToStep(4)}>
-                  Continue to Last Details
+                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => goToStep(5)}>
+                  Continue
                 </button>
               </div>
             </div>
           )}
 
-          {/* ═══ STEP 4: Last Details ═══ */}
-          {step === 4 && (
+          {/* ═══ STEP 5: Last Details ═══ */}
+          {step === 5 && (
             <div className='step-panel'>
-              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-2'>Last details</h1>
+              <h1 className='text-primary! step-title text-center pb-2'>Last details</h1>
 
               <div className='mb-6 max-inner'>
+                {welcomePartyInvited && (
+                <>
                 <label>We're hosting a casual welcome party the night before - no pressure, but would you like to join?</label>
                 <div className='radio-group flex-col md:flex-row mt-5!'>
                   <label className='radio-label'>
@@ -1020,6 +1198,8 @@ export function RsvpForm() {
                     I'll skip this one
                   </label>
                 </div>
+                </>
+                )}
               </div>
 
               <div className='mb-6 max-inner'>
@@ -1034,17 +1214,17 @@ export function RsvpForm() {
               </div>
 
               <div className='step-buttons'>
-                <button type='button' className='step-continue-btn step-continue-ready' onClick={() => goToStep(5)}>
+                <button type='button' className={`step-continue-btn ${stepComplete[5] ? 'step-continue-ready' : ''}`} disabled={!stepComplete[5]} onClick={() => goToStep(6)}>
                   Continue to Review
                 </button>
               </div>
             </div>
           )}
 
-          {/* ═══ STEP 5: Summary / Review ═══ */}
-          {step === 5 && (
+          {/* ═══ STEP 6: Summary / Review ═══ */}
+          {step === 6 && (
             <div className='step-panel'>
-              <h1 className='text-primary! text-2xl! md:text-3xl! text-center pb-4'>Review your rsvp</h1>
+              <h1 className='text-primary! step-title text-center pb-4'>Review your rsvp</h1>
 
               <div className='rsvp-summary max-inner'>
                 <div className='rsvp-summary-row'>
@@ -1078,7 +1258,32 @@ export function RsvpForm() {
                     <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
                   </div>
                 )}
-                {formData.welcomeParty && (
+                {kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0 && (
+                  Array.from({ length: formData.kidCount }, (_, i) => {
+                    const kidName = (formData.kidNames || [])[i] || `Kid ${i + 1}`;
+                    const kidMealVal = formData.kidMeals[i];
+                    const kidMealChoice = meals.find(m => m.value === kidMealVal);
+                    const dietaryIndex = getPartySize() + i;
+                    const hasRestriction = dietaryMembers.includes(dietaryIndex);
+                    return (
+                      <div key={`kid-${i}`} className='rsvp-summary-row'>
+                        <span className='rsvp-summary-label'>{i === 0 ? 'Kids' : ''}</span>
+                        <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
+                          <span>{kidName}</span>
+                          <span className='relative'>
+                            {kidMealChoice ? (
+                              <span className={`summary-meal-chip ${kidMealChoice.color}`}>{kidMealChoice.shortTitle}</span>
+                            ) : (
+                              <span className='summary-meal-chip meal-blue'>Other</span>
+                            )}
+                            {hasRestriction && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
+                          </span>
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+                {welcomePartyInvited && formData.welcomeParty && (
                   <div className='rsvp-summary-row'>
                     <span className='rsvp-summary-label'>Party</span>
                     <span className='rsvp-summary-value'>{formData.welcomeParty === 'yes' ? 'Count me in!' : 'Skipping this one'}</span>
