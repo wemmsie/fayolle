@@ -904,7 +904,7 @@ export function RsvpForm() {
                     onChange={(e) => setPlusOneName(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setStep(1); requestAnimationFrame(() => scrollToRsvp()); } }}
                     placeholder="What's their name?"
-                    autocomplete="nope"
+                    autocomplete="name"
                   />
                 </div>
               )}
