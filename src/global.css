@@ -831,6 +831,60 @@ button[type="submit"]:active {
   @apply text-center py-12 text-text-light text-sm;
 }
 
+/* Venue Map Modal */
+.venue-map-modal {
+  @apply max-w-md!;
+}
+
+.venue-map-iframe-wrap {
+  @apply relative overflow-hidden;
+  height: 240px;
+}
+
+.venue-map-iframe {
+  @apply w-full border-none;
+  height: 500px;
+  display: block;
+  margin-top: -120px;
+}
+
+.venue-map-placeholder {
+  @apply w-full h-24 flex items-center justify-center text-4xl bg-primary/5;
+}
+
+.venue-map-note {
+  @apply text-sm text-text-light mt-1 mb-3;
+}
+
+.venue-map-locations {
+  @apply flex gap-3;
+}
+
+.venue-map-card {
+  @apply flex items-center gap-3 rounded-xl border border-primary/15 px-3 py-2.5 text-left no-underline!;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.venue-map-card:hover {
+  @apply bg-primary/5 border-primary/30;
+}
+
+.venue-map-icon {
+  @apply text-xl shrink-0;
+}
+
+.venue-map-card-name {
+  @apply block text-sm font-semibold text-text leading-snug;
+}
+
+.venue-map-card-addr {
+  @apply block text-xs text-text-light leading-snug mt-0.5;
+}
+
+.venue-map-card-note {
+  @apply text-xs font-medium text-blue mt-1;
+}
+
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.95) translateY(10px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
@@ -1103,25 +1157,11 @@ button[type="submit"]:active {
 
 /* ═══ RSVP Wizard Step Navigation ═══ */
 .step-nav-row {
-  @apply flex flex-col md:flex-row md:items-center mb-8;
+  @apply flex justify-center mb-8;
   position: relative;
 }
 
-.step-back-inline {
-  @apply flex items-center rounded-full border-none cursor-pointer
-    transition-all duration-200 bg-transparent self-start mb-2 md:mb-0 md:absolute md:left-0;
-  font-size: 0.7rem !important;
-  color: var(--color-primary);
-  opacity: 0.4;
-  padding: 0.3rem 0.6rem !important;
-  white-space: nowrap;
-}
-
-.step-back-inline:hover {
-  opacity: 0.85;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
+/* step-back-inline removed */
 
 .step-nav {
   @apply flex justify-center gap-3 md:gap-8 w-full;
@@ -1159,7 +1199,16 @@ button[type="submit"]:active {
 }
 
 .step-nav-done .step-nav-circle {
-  @apply bg-primary/10 text-primary border-primary/30;
+  @apply bg-sky text-primary border-blue-dark/40;
+}
+
+/* Steps ahead of current but already filled — paler version of done */
+.step-nav-ahead .step-nav-circle {
+  @apply bg-sky/40 text-primary/50 border-blue/60;
+}
+
+.step-nav-ahead {
+  @apply opacity-60;
 }
 
 .step-nav-label {
@@ -1288,7 +1337,7 @@ button[type="submit"]:active {
 }
 
 .menu-compact-desc {
-  @apply block text-text-light text-xs leading-snug mt-0.5;
+  @apply block text-text-light text-xs md:text-sm leading-snug mt-0.5;
 }
 
 /* ═══ Meal Color Theming for Pills ═══ */

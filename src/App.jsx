@@ -6,6 +6,7 @@ import { Polaroid } from './Polaroid'
 import { PhotoPile } from './PhotoPile'
 import { RsvpForm } from './RsvpForm'
 import { PlaceModal } from './PlaceModal'
+import { VenueMapModal } from './VenueMapModal'
 import { ScrollNav } from './ScrollNav'
 import { Squiggle } from './Squiggle'
 
@@ -15,6 +16,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('do');
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [venueMapOpen, setVenueMapOpen] = useState(false);
 
   const funkyDesktop = [image.funky2, image.funky3, image.funky5, image.funky6, image.funky7, image.funky8];
   const funkyGalleryOnly = [
@@ -163,10 +165,10 @@ function App() {
           <div className='text-center mb-10 pl-2 md:pl-0'>
             <h1>when we party</h1>
             <p>
-              We got you covered for the whole event in one place. Parking is available on-site and signs will guide you where you need to go.</p>
+              We got you covered for the whole event in one place. <a className='button px-3! py-0! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>Parking</a> is available next door and signs will guide you where you need to go.</p>
               <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
                 <p className="m-0!">Please join us at the</p>
-                <a className='button px-3! py-1! leading-5 md:leading-8' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
+                <a className='button px-3! py-0! leading-5 md:leading-8 mx-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
                 <p className="m-0!">anytime after 3 PM!</p>
               </div>
 
@@ -294,7 +296,7 @@ function App() {
               ],
               eat: [
                 { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
-                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee', label: '⭐️ Bang Bang Pie & Biscuits' },
+                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee with a stellar patio', label: '⭐️ Bang Bang Pie & Biscuits' },
                 { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
                 { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
                 { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
@@ -443,9 +445,13 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
           ref={tooltipRef}
           className={`tip tip-${tooltip.tag.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}`}
         >
-          <span className='tip-tag'>{tooltip.tag}</span>
+          {tooltip.tag && <span className='tip-tag'>{tooltip.tag}</span>}
           <span className='tip-desc'>{tooltip.text}</span>
         </div>
+      )}
+
+      {venueMapOpen && (
+        <VenueMapModal onClose={() => setVenueMapOpen(false)} />
       )}
 
       {activePlace && (

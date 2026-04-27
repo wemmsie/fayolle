@@ -159,6 +159,13 @@ export function RsvpForm() {
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
   const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
   const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=meals, 3=details, 4=review
+  const [maxStep, setMaxStep] = useState(0); // highest step ever reached
+
+  const goToStep = (n) => {
+    setStep(n);
+    setMaxStep(prev => Math.max(prev, n));
+    requestAnimationFrame(() => scrollToRsvp());
+  };
 
   const [formData, setFormData] = useState({
     name: DEV_MODE ? 'Dev User' : '',
@@ -317,6 +324,15 @@ export function RsvpForm() {
   // Party is "complete" when we know the final headcount (and they're coming)
   const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
   const allMealsSelected = getPartySize() > 0 && Array.from({ length: getPartySize() }, (_, i) => formData.mealChoices[i]).every(Boolean);
+
+  // Whether each step's data is fully filled
+  const stepComplete = {
+    1: isValidEmail(formData.email),
+    2: allMealsSelected,
+    3: formData.hasDietary !== '',
+    4: true, // details step is always optional
+    5: false, // review is never "done" until submitted
+  };
 
   const getGuestLabel = (index) => {
     if (index === 0) return verifiedName;
@@ -531,7 +547,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsSubmitted(false); setStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Change my RSVP
           </button>
@@ -550,7 +566,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsDeclined(false); setStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Update my RSVP
           </button>
@@ -656,7 +672,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -687,7 +703,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {} })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName.split(' ')[0]}?
@@ -713,13 +729,13 @@ export function RsvpForm() {
               <div className='flex flex-col md:flex-row items-center gap-2 mt-3'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}
+                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); goToStep(1); }}
                 >
                   We'll both be there!
                 </span>
                 <span
                   className={`attendance-pill ${attending === 'solo' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}
+                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); goToStep(1); }}
                 >
                   Just me this time
                 </span>
@@ -801,7 +817,7 @@ export function RsvpForm() {
                 </div>
               )}
               {formData.plusOne !== '' && (
-                <button type='button' className='mb-1 step-continue-btn step-continue-ready mt-4' onClick={() => { setStep(1); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <button type='button' className='mb-1 step-continue-btn step-continue-ready mt-4' onClick={() => goToStep(1)}>
                   Continue
                 </button>
               )}
@@ -813,10 +829,6 @@ export function RsvpForm() {
           {/* ═══ STEP NAV (visible steps 1-4) ═══ */}
           {step >= 1 && (
             <div className='step-nav-row'>
-              <button type='button' className='step-back-inline group' onClick={() => { setStep(step - 1); requestAnimationFrame(() => scrollToRsvp()); }}>
-                <svg className='inline w-3.5 h-3.5 mr-1 -mt-px transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
-                {step === 1 ? 'Start' : step === 2 ? 'Email' : step === 3 ? 'Meals' : step === 4 ? 'Dietary' : 'Details'}
-              </button>
               <div className='step-nav'>
                 {[
                   { label: 'Email', num: 1 },
@@ -824,22 +836,32 @@ export function RsvpForm() {
                   { label: 'Dietary', num: 3 },
                   { label: 'Details', num: 4 },
                   { label: 'Review', num: 5 },
-                ].map((s) => (
+                ].map((s) => {
+                  const isDone = step > s.num && stepComplete[s.num];
+                  const isAhead = s.num > step && s.num <= maxStep && stepComplete[s.num];
+                  const isVisited = s.num <= maxStep && step !== s.num;
+                  return (
                   <button
                     key={s.num}
                     type='button'
-                    className={`step-nav-item ${step === s.num ? 'step-nav-active' : ''} ${step > s.num ? 'step-nav-done' : ''}`}
-                    onClick={() => { if (s.num < step) { setStep(s.num); requestAnimationFrame(() => scrollToRsvp()); } }}
-                    disabled={s.num > step}
+                    className={`step-nav-item ${
+                      step === s.num ? 'step-nav-active' :
+                      isDone ? 'step-nav-done' :
+                      isAhead ? 'step-nav-ahead' :
+                      isVisited ? 'step-nav-done' : ''
+                    }`}
+                    onClick={() => { if (s.num <= maxStep) { setStep(s.num); requestAnimationFrame(() => scrollToRsvp()); } }}
+                    disabled={s.num > maxStep}
                   >
                     <span className='step-nav-circle'>
-                      {step > s.num ? (
+                      {(isDone || isAhead) ? (
                         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-3 h-3'><path d='M20 6L9 17l-5-5'/></svg>
                       ) : s.num}
                     </span>
                     <span className='step-nav-label'>{s.label}</span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -865,7 +887,7 @@ export function RsvpForm() {
               </div>
               <div className='step-buttons'>
   
-                <button type='button' className={`step-continue-btn ${isValidEmail(formData.email) ? 'step-continue-ready' : ''}`} disabled={!isValidEmail(formData.email)} onClick={() => { setStep(2); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <button type='button' className={`step-continue-btn ${isValidEmail(formData.email) ? 'step-continue-ready' : ''}`} disabled={!isValidEmail(formData.email)} onClick={() => goToStep(2)}>
                   Continue to Meal Selection
                 </button>
               </div>
@@ -908,7 +930,7 @@ export function RsvpForm() {
               </div>
 
               <div className='step-buttons'>
-                <button type='button' className={`step-continue-btn ${allMealsSelected ? 'step-continue-ready' : ''}`} disabled={!allMealsSelected} onClick={() => { setStep(3); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <button type='button' className={`step-continue-btn ${allMealsSelected ? 'step-continue-ready' : ''}`} disabled={!allMealsSelected} onClick={() => goToStep(3)}>
                   Continue to Dietary
                 </button>
               </div>
@@ -974,7 +996,7 @@ export function RsvpForm() {
               )}
 
               <div className='step-buttons'>
-                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => { setStep(4); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => goToStep(4)}>
                   Continue to Last Details
                 </button>
               </div>
@@ -1012,7 +1034,7 @@ export function RsvpForm() {
               </div>
 
               <div className='step-buttons'>
-                <button type='button' className='step-continue-btn step-continue-ready' onClick={() => { setStep(5); requestAnimationFrame(() => scrollToRsvp()); }}>
+                <button type='button' className='step-continue-btn step-continue-ready' onClick={() => goToStep(5)}>
                   Continue to Review
                 </button>
               </div>
@@ -1052,7 +1074,7 @@ export function RsvpForm() {
                 })}
                 {formData.hasDietary !== 'no' && formData.dietaryDetails && (
                   <div className='rsvp-summary-row'>
-                    <span className='rsvp-summary-label'>Dietary</span>
+                    <span className='rsvp-summary-label'>Notes</span>
                     <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
                   </div>
                 )}

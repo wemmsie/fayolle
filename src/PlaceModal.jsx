@@ -37,7 +37,19 @@ export function PlaceModal({ place, onClose }) {
       <div className='modal-content'>
         <button className='modal-close' onClick={onClose} aria-label='Close'>&times;</button>
 
-        {!data && <div className='modal-error'>Place not found</div>}
+        {!data && (
+          <>
+            <div className='modal-photo-placeholder'>
+              <span>📍</span>
+            </div>
+            <div className='modal-body'>
+              <h2 className='modal-name'>{place}</h2>
+            </div>
+            <a className='modal-directions' href={mapsLink} target='_blank' rel='noopener noreferrer'>
+              Open in Google Maps &rarr;
+            </a>
+          </>
+        )}
 
         {data && (
           <>
