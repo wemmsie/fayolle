@@ -815,7 +815,7 @@ export function RsvpForm() {
 
           {pairedPartner ? (
             <div className='mb-6 max-inner text-center'>
-              <h1 className='text-primary! step-title! pb-2'>Can you make it?</h1>
+              <h1 className='text-primary! step-title pb-2'>Can you make it?</h1>
               <div className='flex flex-col md:flex-row items-center gap-2 mt-3 justify-center'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
