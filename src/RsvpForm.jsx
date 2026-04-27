@@ -749,6 +749,7 @@ export function RsvpForm() {
                     onChange={(e) => setNameInput(e.target.value)}
                     onClick={() => requestAnimationFrame(() => scrollToRsvp())}
                     placeholder="What's your name?"
+                    autocomplete="name"
                     required
                   />
                 </div>
@@ -882,8 +883,8 @@ export function RsvpForm() {
           {/* Non-paired: plus one on step 0 */}
           {attending === 'yes' && !pairedPartner && (
             <div className='animate-in max-inner mt-6'>
-              <div className='mb-6'>
-                <label>Plus one?</label>
+              <div className='mb-6 flex justify-center flex-wrap'>
+                <label className='w-full text-center'>Plus one?</label>
                 <div className={`radio-group ${invalidFields.includes('plusOne') ? 'flash-invalid' : ''}`}>
                   <label className='radio-label'>
                     <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
