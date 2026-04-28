@@ -115,7 +115,7 @@ function buildGuestMaps(guestData) {
 const meals = [
   { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', color: 'meal-red', desc: 'Mashed potatoes, asparagus, crispy leeks and a rich red wine demi-glaze' },
   { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', color: 'meal-yellow', desc: 'Roasted garlic potatoes, charred seasonal vegetables, pan jus' },
-  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-orange', desc: 'Roasted seasonal vegetables, charred cauliflower, wilted baby kale, brown butter sauce, crispy sage' },
+  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-green', desc: 'Roasted seasonal vegetables, charred cauliflower, wilted baby kale, brown butter sauce, crispy sage' },
 ];
 
 // Toggle to false to test the real RSVP flow in dev
@@ -1031,7 +1031,7 @@ export function RsvpForm() {
               <label></label>
 
               <div className='mb-6 max-inner'>
-                <div className='radio-group mt-3'>
+                <div className='radio-group mt-3 flex justify-center'>
                   <label className='radio-label'>
                     <input type='radio' name='kidsAttending' value='yes' checked={formData.kidsAttending === 'yes'} onChange={handleChange} />
                     Yes!
@@ -1047,7 +1047,7 @@ export function RsvpForm() {
                 <div className='animate-in max-inner'>
                   {/* Kid count stepper */}
                   <div className='mb-6'>
-                    <label className='text-center'>How many little ones?</label>
+                    <label className='text-center'>How many?</label>
                     <div className='flex items-center justify-center gap-4 mt-3'>
                       <button
                         type='button'
@@ -1146,7 +1146,7 @@ export function RsvpForm() {
                           {Array.from({ length: totalMembers }, (_, i) => (
                             <span
                               key={i}
-                              className={`meal-pill ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
+                              className={`meal-pill meal-alert ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
                               onClick={() => toggleDietaryMember(i)}
                             >
                               {getGuestLabel(i)}
@@ -1294,11 +1294,11 @@ export function RsvpForm() {
                 )}
               </div>
 
-              <p className='text-center mt-5! mb-4 text-sm!'>Does everything look good?</p>
+              <p className='text-center mt-5! mb-4 text-base!'>Everything look good?</p>
 
               <div className='step-buttons justify-center'>
                 <button type='submit' className='step-continue-btn step-continue-ready step-submit-btn' disabled={isSubmitting} onMouseEnter={spawnSparkles}>
-                  {isSubmitting ? 'SENDING...' : 'OH YEAH!'}
+                  {isSubmitting ? "SENDING..." : "OH YEAH!"}
                 </button>
               </div>
             </div>

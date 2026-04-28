@@ -1140,12 +1140,12 @@ button[type="submit"]:active {
 }
 
 .meal-pill-selected {
-  @apply text-primary/80 bg-red/30 border-transparent;
+  @apply text-primary bg-red/30;
 }
 
 @media (hover: hover) {
   .meal-pill:hover {
-    @apply text-primary bg-red/40;
+    @apply text-primary bg-red/30;
   }
 
   .meal-pill-selected:hover {
@@ -1329,7 +1329,7 @@ button[type="submit"]:active {
 
 .menu-compact-item.meal-red { border-left-color: var(--color-red); }
 .menu-compact-item.meal-yellow { border-left-color: var(--color-yellow); }
-.menu-compact-item.meal-orange { border-left-color: var(--color-orange); }
+.menu-compact-item.meal-green { border-left-color: var(--color-green); }
 
 .menu-compact-title {
   @apply block font-semibold text-primary text-sm md:text-base;
@@ -1346,19 +1346,25 @@ button[type="submit"]:active {
 /* ═══ Meal Color Theming for Pills ═══ */
 .meal-pill.meal-red { background: rgba(255,105,105,0.1); color: var(--color-red); }
 .meal-pill.meal-red:hover { background: rgba(255,105,105,0.2); }
-.meal-pill.meal-red.meal-pill-selected { background: var(--color-red); color: white; }
+.meal-pill.meal-red.meal-pill-selected { background: var(--color-red); color: white;}
 
 .meal-pill.meal-yellow { background: rgba(245,181,79,0.12); color: #b8860b; }
 .meal-pill.meal-yellow:hover { background: rgba(245,181,79,0.22); }
 .meal-pill.meal-yellow.meal-pill-selected { background: var(--color-yellow); color: white; }
 
-.meal-pill.meal-orange { background: rgba(184,150,108,0.12); color: var(--color-orange); }
-.meal-pill.meal-orange:hover { background: rgba(184,150,108,0.22); }
-.meal-pill.meal-orange.meal-pill-selected { background: var(--color-orange); color: white; }
+.meal-pill.meal-green { background: rgba(125 184 108 / 0.12); color: var(--color-green); }
+.meal-pill.meal-green:hover { background: rgba(136 184 108 / 0.22); }
+.meal-pill.meal-green.meal-pill-selected { background: var(--color-green); color: white; }
 
 .meal-pill.meal-blue { background: rgba(108 161 184 / 0.12); color: var(--color-text-light); }
 .meal-pill.meal-blue:hover { background: rgba(108 138 184 / 0.22); }
 .meal-pill.meal-blue.meal-pill-selected { background: var(--color-text-light); color: white; }
+
+.meal-pill.meal-alert { background: rgba(255,105,105,0.1); color: var(--color-red); }
+.meal-pill.meal-alert:hover { background: rgba(255,105,105,0.2); }
+.meal-pill.meal-alert.meal-pill-selected {
+@apply border-2 border-red! bg-red text-white;
+}
 
 /* ═══ RSVP Summary ═══ */
 .rsvp-summary {
@@ -1399,7 +1405,7 @@ button[type="submit"]:active {
 
 .summary-meal-chip.meal-red { background: rgba(255,105,105,0.15); color: var(--color-red); }
 .summary-meal-chip.meal-yellow { background: rgba(255 179 57 / 0.15); color: #b8860b; }
-.summary-meal-chip.meal-orange { background: rgba(229 132 80 / 0.15); color:  #AD4906; }
+.summary-meal-chip.meal-green { background:  rgba(125 184 108 / 0.12); color:rgb(109 173 6)06; }
 .summary-meal-chip.meal-blue { background: rgba(108,161,184,0.15); color: var(--color-text-light); }
 /* Hero entrance animations */
 @keyframes heroFadeUp {

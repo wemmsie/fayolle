@@ -142,18 +142,15 @@ function App() {
             <Polaroid photo={image.emilyparis} className='polaroid-spread-2' />
             <Polaroid photo={image.codycafe} className='polaroid-spread-3' />
           </div>
-          <div className='text-center mt-10 max-w-2xl mx-auto pl-2 md:pl-0'>
-            <h1>let's do this thing</h1>
+          <div className='text-center mt-10 max-w-3xl mx-auto pl-2 md:pl-0'>
+            <h1 className='pb-5'>let's do this thing</h1>
             <p>
-              We heard that getting married was the perfect opportunity to throw a big party with all of our favorite people...
-            </p>
-            <p>
-              So please do us the honor of joining us in <b>Chicago</b> on <b>August 8th, 2026</b> to celebrate with us beneath an excessive number of disco balls (yes, really) and the ungovernable influence of actually really good espresso martinis.
+              Please join us in <b>Chicago</b> on <b>Saturday August 8th, 2026</b> to celebrate our marriage beneath an excessive number of disco balls (yes, really) and the ungovernable influence of actually really good espresso martinis.
             </p>
             <p>
               We've got a snazzy menu and a groovy playlist coming together, plus plenty of tips for things to do and places to stay while you're here.</p>
               <br/>
-              <p>Get ready for one heck of a weekend - hope you can join us!
+              <p>Get ready for one heck of a weekend - hope to see you there!
             </p>
           </div>
         </div>
