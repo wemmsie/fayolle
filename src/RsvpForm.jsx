@@ -16,7 +16,7 @@ function spawnSparkles(e) {
   // Skip on touch devices (no real hover)
   if (!window.matchMedia('(hover: hover)').matches) return;
   const btn = e.currentTarget;
-  const wrap = btn.parentElement; // .step-buttons
+  const wrap = btn.closest('.rsvp-flow-form') || btn.parentElement;
   const br = btn.getBoundingClientRect();
   const wr = wrap.getBoundingClientRect();
   // button center relative to wrapper
@@ -62,8 +62,9 @@ function spawnSparkles(e) {
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
 
 // Parse CSV rows into guest objects (handles quoted fields)
-// Col R (index 17) = welcome party invite flag (TRUE/FALSE)
-// Col S (index 18) = kids allowed flag (TRUE/FALSE)
+// Clean Guests: Col D (index 3) = party invite flag (TRUE/FALSE)
+// Clean Guests: Col F (index 5) = dinner invite flag (TRUE/FALSE)
+// Clean Guests: Col E (index 4) = kids allowed flag (TRUE/FALSE)
 function parseGuestCSV(csv) {
   const rows = csv.trim().split('\n');
   const guests = [];
@@ -73,10 +74,11 @@ function parseGuestCSV(csv) {
     const name = cols[0].replace(/"/g, '').trim();
     const partner = cols[1].replace(/"/g, '').trim();
     const rsvp = cols[2] ? cols[2].replace(/"/g, '').trim().toLowerCase() : '';
-    const welcomePartyFlag = cols[3] ? cols[3].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
+    const partyInviteFlag = cols[3] ? cols[3].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
     const kidsAllowedFlag = cols[4] ? cols[4].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
+    const dinnerInviteFlag = cols[5] ? cols[5].replace(/"/g, '').trim().toUpperCase() === 'TRUE' : false;
     if (!name) continue;
-    guests.push({ name, partner: partner || null, rsvp: rsvp || null, welcomePartyFlag, kidsAllowedFlag });
+    guests.push({ name, partner: partner || null, rsvp: rsvp || null, partyInviteFlag, dinnerInviteFlag, kidsAllowedFlag });
   }
   return guests;
 }
@@ -86,13 +88,15 @@ function buildGuestMaps(guestData) {
   const names = [];
   const partnerMap = new Map(); // name (lowercase) -> partner name
   const rsvpMap = new Map(); // name (lowercase) -> 'yes' | 'no' | null
-  const welcomePartyMap = new Map(); // name (lowercase) -> boolean
+  const partyInviteMap = new Map(); // name (lowercase) -> boolean
+  const dinnerInviteMap = new Map(); // name (lowercase) -> boolean
   const kidsAllowedMap = new Map(); // name (lowercase) -> boolean
 
-  for (const { name, partner, rsvp, welcomePartyFlag, kidsAllowedFlag } of guestData) {
+  for (const { name, partner, rsvp, partyInviteFlag, dinnerInviteFlag, kidsAllowedFlag } of guestData) {
     names.push(name);
     if (rsvp) rsvpMap.set(name.toLowerCase(), rsvp);
-    welcomePartyMap.set(name.toLowerCase(), !!welcomePartyFlag);
+    partyInviteMap.set(name.toLowerCase(), !!partyInviteFlag);
+    dinnerInviteMap.set(name.toLowerCase(), !!dinnerInviteFlag);
     kidsAllowedMap.set(name.toLowerCase(), !!kidsAllowedFlag);
     if (partner) {
       partnerMap.set(name.toLowerCase(), partner);
@@ -103,13 +107,14 @@ function buildGuestMaps(guestData) {
       partnerMap.set(partner.toLowerCase(), name);
       // Partner inherits the same RSVP status and household flags
       if (rsvp) rsvpMap.set(partner.toLowerCase(), rsvp);
-      welcomePartyMap.set(partner.toLowerCase(), !!welcomePartyFlag);
+      partyInviteMap.set(partner.toLowerCase(), !!partyInviteFlag);
+      dinnerInviteMap.set(partner.toLowerCase(), !!dinnerInviteFlag);
       kidsAllowedMap.set(partner.toLowerCase(), !!kidsAllowedFlag);
     }
   }
   // Dedupe names
   const uniqueNames = [...new Set(names)];
-  return { names: uniqueNames, partnerMap, rsvpMap, welcomePartyMap, kidsAllowedMap };
+  return { names: uniqueNames, partnerMap, rsvpMap, partyInviteMap, dinnerInviteMap, kidsAllowedMap };
 }
 
 const meals = [
@@ -125,12 +130,13 @@ const DEV_MODE = import.meta.env.DEV && SKIP_RSVP_GATES;
 // Toggle to false to disable the password gate entirely
 const REQUIRE_PASSWORD = false;
 
-export function RsvpForm() {
+export function RsvpForm({ onOpenPlace }) {
   // Guest data loaded from Google Sheet (with fallback to static CSV)
   const [guestList, setGuestList] = useState([]);
   const [partnerMap, setPartnerMap] = useState(new Map());
   const [rsvpMap, setRsvpMap] = useState(new Map());
-  const [welcomePartyMap, setWelcomePartyMap] = useState(new Map());
+  const [partyInviteMap, setPartyInviteMap] = useState(new Map());
+  const [dinnerInviteMap, setDinnerInviteMap] = useState(new Map());
   const [kidsAllowedMap, setKidsAllowedMap] = useState(new Map());
   const [guestDataLoaded, setGuestDataLoaded] = useState(false);
 
@@ -141,11 +147,12 @@ export function RsvpForm() {
       .then(csv => {
         const guestData = parseGuestCSV(csv);
         if (guestData.length > 0) {
-          const { names, partnerMap: pMap, rsvpMap: rMap, welcomePartyMap: wpMap, kidsAllowedMap: kaMap } = buildGuestMaps(guestData);
+          const { names, partnerMap: pMap, rsvpMap: rMap, partyInviteMap: piMap, dinnerInviteMap: diMap, kidsAllowedMap: kaMap } = buildGuestMaps(guestData);
           setGuestList(names);
           setPartnerMap(pMap);
           setRsvpMap(rMap);
-          setWelcomePartyMap(wpMap);
+          setPartyInviteMap(piMap);
+          setDinnerInviteMap(diMap);
           setKidsAllowedMap(kaMap);
         }
         setGuestDataLoaded(true);
@@ -168,7 +175,8 @@ export function RsvpForm() {
   const [pairedPartner, setPairedPartner] = useState(null); // auto-matched partner from sheet
   const [plusOneName, setPlusOneName] = useState(''); // manually entered plus-one name
   const [attending, setAttending] = useState(''); // paired: 'both'|'solo'|'none', unpaired: 'yes'|'no'
-  const [welcomePartyInvited, setWelcomePartyInvited] = useState(false); // from Col R
+  const [partyInviteAvailable, setPartyInviteAvailable] = useState(false); // from Clean Guests Col D
+  const [dinnerInviteAvailable, setDinnerInviteAvailable] = useState(false); // from Clean Guests Col F
   const [kidsAllowed, setKidsAllowed] = useState(false); // from Col S
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [showNotOnList, setShowNotOnList] = useState(false);
@@ -198,7 +206,7 @@ export function RsvpForm() {
     kidCount: 0,
     kidNames: [],       // array of strings, max 2
     kidMeals: {},       // { 0: 'shortrib'|'chicken'|'gnocchi'|'', ... }
-    welcomeParty: '',
+    welcomeEvent: '',   // dinner invite flow: 'both'|'party'|'no'; party-only flow: 'party'|'no'
     message: '',
   });
   const [dietaryMembers, setDietaryMembers] = useState([]); // indices of party members with dietary restrictions
@@ -207,6 +215,8 @@ export function RsvpForm() {
   const [isDeclined, setIsDeclined] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [invalidFields, setInvalidFields] = useState([]);
+  const [isWelcomeEventModalOpen, setIsWelcomeEventModalOpen] = useState(false);
+  const [showFullNameInGreeting, setShowFullNameInGreeting] = useState(true);
 
   // Remove parent section padding when showing confirmation panels
   useEffect(() => {
@@ -227,6 +237,7 @@ export function RsvpForm() {
   const prevValues = useRef({ hasDietary: '' });
   const animationTimers = useRef({});
   const formTopRef = useRef(null);
+  const greetingNameRef = useRef(null);
 
   // Fuzzy search configuration — rebuilds when guestList updates
   const fuse = useRef(null);
@@ -236,6 +247,36 @@ export function RsvpForm() {
       distance: 50,
     });
   }, [guestList]);
+
+  const GREETING_FULL_NAME_MAX_CHARS = 18;
+
+  // Check if greeting name wraps to multiple lines
+  const checkNameWrap = () => {
+    const el = greetingNameRef.current;
+    if (!el) return;
+
+    const nameTooLong = verifiedName.trim().length > GREETING_FULL_NAME_MAX_CHARS;
+
+    let isWrapped = false;
+    const textNode = el.firstChild;
+    if (textNode) {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const rects = Array.from(range.getClientRects());
+      const uniqueLineTops = new Set(rects.map((r) => Math.round(r.top)));
+      isWrapped = uniqueLineTops.size > 1;
+      range.detach?.();
+    }
+
+    setShowFullNameInGreeting(!nameTooLong && !isWrapped);
+  };
+
+  useEffect(() => {
+    checkNameWrap();
+    window.addEventListener('resize', checkNameWrap);
+    document.fonts?.ready?.then(checkNameWrap);
+    return () => window.removeEventListener('resize', checkNameWrap);
+  }, [verifiedName]);
 
   // Handle name verification
   const handlePasswordCheck = (e) => {
@@ -256,7 +297,8 @@ export function RsvpForm() {
     setPairedPartner(partner);
     const existingRsvp = rsvpMap.get(name.toLowerCase()) || null;
     setAlreadyRsvpd(existingRsvp);
-    setWelcomePartyInvited(welcomePartyMap.get(name.toLowerCase()) || false);
+    setPartyInviteAvailable(partyInviteMap.get(name.toLowerCase()) || false);
+    setDinnerInviteAvailable(dinnerInviteMap.get(name.toLowerCase()) || false);
     setKidsAllowed(kidsAllowedMap.get(name.toLowerCase()) || false);
     setEditingRsvp(false);
     setIsVerified(true);
@@ -341,6 +383,47 @@ export function RsvpForm() {
   };
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const hasWelcomeInvite = partyInviteAvailable || dinnerInviteAvailable;
+
+  const getWelcomeEventSheetValue = () => {
+    if (!hasWelcomeInvite) return '';
+    if (dinnerInviteAvailable) {
+      if (formData.welcomeEvent === 'both') return 'Dinner';
+      if (formData.welcomeEvent === 'party') return 'Party';
+      return '';
+    }
+    if (partyInviteAvailable && formData.welcomeEvent === 'party') return 'Party';
+    return '';
+  };
+
+  const getWelcomeEventEmailLabel = () => {
+    if (!hasWelcomeInvite) return 'N/A (not invited)';
+    if (dinnerInviteAvailable) {
+      if (formData.welcomeEvent === 'both') return 'Dinner + Party';
+      if (formData.welcomeEvent === 'party') return 'Party only';
+      if (formData.welcomeEvent === 'no') return 'Declined both dinner and party';
+      return 'No response';
+    }
+    if (partyInviteAvailable) {
+      if (formData.welcomeEvent === 'party') return 'Party only';
+      if (formData.welcomeEvent === 'no') return 'Declined party';
+      return 'No response';
+    }
+    return 'N/A (not invited)';
+  };
+
+  const getWelcomeCardStateClasses = () => {
+    if (formData.welcomeEvent === 'both') {
+      return { dinner: 'welcome-pop-soft', party: 'welcome-pop-soft', divider: 'welcome-divider-pop' };
+    }
+    if (formData.welcomeEvent === 'party') {
+      return { dinner: 'welcome-subtle', party: 'welcome-pop', divider: 'welcome-divider-dim' };
+    }
+    if (formData.welcomeEvent === 'no') {
+      return { dinner: 'welcome-muted', party: 'welcome-muted', divider: 'welcome-divider-dim' };
+    }
+    return { dinner: 'welcome-neutral', party: 'welcome-neutral', divider: 'welcome-divider-neutral' };
+  };
 
   // Whether the attendance question has been answered
   const attendanceAnswered = attending !== '';
@@ -348,7 +431,7 @@ export function RsvpForm() {
   const isDeclining = attending === 'none' || attending === 'no';
   // Party is "complete" when we know the final headcount (and they're coming)
   const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
-  const allMealsSelected = getPartySize() > 0 && Array.from({ length: getPartySize() }, (_, i) => formData.mealChoices[i]).every(Boolean);
+  const mealsStepComplete = getPartySize() > 0;
 
   // Kids step: complete when kidsAttending answered and (if yes) each kid has a meal selected
   const kidsStepDone = formData.kidsAttending === 'no' || formData.kidCount > 0;
@@ -367,12 +450,17 @@ export function RsvpForm() {
   // Whether each step's data is fully filled (keyed by absolute step number)
   const stepComplete = {
     1: isValidEmail(formData.email),
-    2: allMealsSelected,
+    2: mealsStepComplete,
     3: formData.kidsAttending !== '' && kidsStepDone,
     4: formData.hasDietary !== '',
-    5: !welcomePartyInvited || formData.welcomeParty !== '', // required if invited to welcome party
+    5: !hasWelcomeInvite || formData.welcomeEvent !== '', // required if invited to dinner/party
     6: false, // review is never "done" until submitted
   };
+
+  const stepZeroContinueReady = formData.plusOne === 'no'
+    || (formData.plusOne === 'yes' && plusOneName.trim() !== '');
+
+  const verifiedFirstName = verifiedName.trim().split(/\s+/)[0] || verifiedName;
 
   // Kid data handlers
   const handleKidCountChange = (delta) => {
@@ -426,7 +514,7 @@ export function RsvpForm() {
   const handleMealChange = (guestIndex, value) => {
     setFormData(prev => ({
       ...prev,
-      mealChoices: { ...prev.mealChoices, [guestIndex]: value }
+      mealChoices: { ...prev.mealChoices, [guestIndex]: prev.mealChoices[guestIndex] === value ? '' : value }
     }));
     if (invalidFields.includes(`meal_${guestIndex}`)) {
       setInvalidFields(prev => prev.filter(f => f !== `meal_${guestIndex}`));
@@ -435,6 +523,8 @@ export function RsvpForm() {
 
   // Fire-and-forget update to Google Sheet via Apps Script
   const updateGoogleSheet = (payload) => {
+    // Apps Script editor (standalone, source of truth):
+    // https://script.google.com/home/projects/1wYQ8NpI4CClVNYY93dWstn6_6XBFciyowpxzAqFl-OVV6_pxOsIGvdom/edit
     const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
     if (!scriptUrl) { console.warn('VITE_GOOGLE_SCRIPT_URL is not set'); return; }
     console.log('Updating Google Sheet:', payload);
@@ -464,7 +554,8 @@ export function RsvpForm() {
         dietary_count: 'N/A',
         dietary_details: 'N/A',
         meal_choices: 'DECLINED',
-        welcome_party: 'N/A',
+        welcome_party: 'Declined',
+        welcome_event: 'Declined',
         message: formData.message || 'No message',
       };
       emailjs.send(serviceId, templateId, declineParams, publicKey)
@@ -476,7 +567,7 @@ export function RsvpForm() {
             plusOneName: pairedPartner || '',
             plusOneRsvp: pairedPartner ? 'No' : '',
             plusOneMeal: '',
-            welcomeParty: false,
+            welcomeEvent: '',
             email: formData.email || '',
             totalGuestCount: 0,
             kidCount: 0,
@@ -500,11 +591,6 @@ export function RsvpForm() {
     const invalid = [];
     if (!pairedPartner && !formData.plusOne) invalid.push('plusOne');
     if (!formData.hasDietary && partyComplete) invalid.push('hasDietary');
-    const partySize = getPartySize();
-    for (let i = 0; i < partySize; i++) {
-      if (!formData.mealChoices[i]) invalid.push(`meal_${i}`);
-    }
-
     if (invalid.length > 0) {
       setInvalidFields(invalid);
       return;
@@ -530,7 +616,7 @@ export function RsvpForm() {
       dietary_details: formData.dietaryDetails || 'None',
       meal_choices: Array.from({ length: getPartySize() }, (_, i) => {
         const choice = meals.find(m => m.value === formData.mealChoices[i]);
-        return getGuestLabel(i) + ': ' + (choice ? choice.title : 'N/A');
+        return getGuestLabel(i) + ': ' + (choice ? choice.title : 'none selected');
       }).join('\n'),
       kids: kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0
         ? Array.from({ length: formData.kidCount }, (_, i) => {
@@ -541,7 +627,8 @@ export function RsvpForm() {
             return `${kidName}: ${mealLabel}`;
           }).join('\n')
         : 'N/A',
-      welcome_party: welcomePartyInvited ? (formData.welcomeParty || 'No response') : 'N/A (not invited)',
+      welcome_party: getWelcomeEventEmailLabel(),
+      welcome_event: getWelcomeEventEmailLabel(),
       message: formData.message,
     };
 
@@ -561,7 +648,7 @@ export function RsvpForm() {
           plusOneName: getPlusOneName(),
           plusOneRsvp: getPartySize() > 1 ? 'Yes' : '',
           plusOneMeal: plusOneMeal ? plusOneMeal.shortTitle : '',
-          welcomeParty: welcomePartyInvited ? formData.welcomeParty === 'yes' : false,
+          welcomeEvent: getWelcomeEventSheetValue(),
           email: formData.email || '',
           totalGuestCount: getPartySize() + (hasKids ? formData.kidCount : 0),
           kidCount: hasKids ? formData.kidCount : 0,
@@ -591,7 +678,7 @@ export function RsvpForm() {
             kidCount: 0,
             kidNames: [],
             kidMeals: {},
-            welcomeParty: '',
+            welcomeEvent: '',
             message: '',
           }));
           setFieldState({
@@ -630,23 +717,22 @@ export function RsvpForm() {
     <>
       <div ref={formTopRef} />
       {isSubmitted ? (
-        <div className='rsvp-panel'>
+        <div className='rsvp-panel relative'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
-          <h2 className='mb-10!'>We're so excited to celebrate with you 🎉</h2>
+          <p className='mb-2!'>We're so excited to celebrate with you 🎉</p>
+          <p>If you have any questions, drop us a line at{' '}
+            <a href='mailto:wedding@fayolle.com' className='text-red! transition-all hover:underline'>
+              wedding@fayolle.com
+            </a></p>
           {/* <p className='mb-6!'>Need to make changes?</p> */}
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
-            Change my RSVP
+            Change RSVP
           </button>
-          <p className='mt-6!'>
-            For anything else, drop us a line at{' '}
-            <a href='mailto:wedding@fayolle.com' className='text-primary transition-all hover:underline'>
-              wedding@fayolle.com
-            </a>
-          </p>
+          <p className='mt-8!'>Need to change something?</p>
         </div>
       ) : isDeclined ? (
         <div className='rsvp-panel'>
@@ -656,7 +742,7 @@ export function RsvpForm() {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Update my RSVP
           </button>
@@ -741,7 +827,7 @@ export function RsvpForm() {
           ) : (
             <>
               <p className='text-base! mb-6'>First things first...</p>
-              <form onSubmit={handleNameCheck} className='rsvp-inner-form'>
+              <form id='name-check-form' onSubmit={handleNameCheck} className='rsvp-inner-form'>
                 <div className='mb-6'>
                   <input
                     type='text'
@@ -753,8 +839,10 @@ export function RsvpForm() {
                     required
                   />
                 </div>
-                <button type='submit'>Check guest list</button>
               </form>
+              <div className='step-actions justify-center'>
+                <button type='submit' form='name-check-form' className='step-continue-btn step-continue-ready'>Check list</button>
+              </div>
             </>
           )}
         </div>
@@ -763,10 +851,10 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setWelcomePartyInvited(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '' })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setPartyInviteAvailable(false); setDinnerInviteAvailable(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '' })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
-            Not {verifiedName.split(' ')[0]}?
+            Not {verifiedName}?
           </button>
           <div className='rsvp-panel'>
             <h1 className='text-center mb-4!'>
@@ -785,7 +873,7 @@ export function RsvpForm() {
               className='step-continue-btn step-continue-ready'
               onClick={() => setEditingRsvp(true)}
             >
-              Change my RSVP
+              Change RSVP
             </button>
           </div>
         </>
@@ -794,23 +882,23 @@ export function RsvpForm() {
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setWelcomePartyInvited(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeParty: '' })); }}
+            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setPartyInviteAvailable(false); setDinnerInviteAvailable(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '' })); }}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
-            Not {verifiedName.split(' ')[0]}?
+            Not {verifiedName}?
           </button>
-          <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
+          <form onSubmit={handleSubmit} className={`rsvp-flow-form ${isFadingOut ? 'fade-out' : ''}`}>
 
           {/* ═══ STEP 0: Greeting + Attendance ═══ */}
           {step === 0 && (
             <>
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto text-primary!'>hey</h1>
-          <h1 className='text-center text-4xl! md:text-5xl! pt-0! mb-2! md:mb-10! mx-auto lowercase leading-12! md:leading-10! text-red!'>{verifiedName}!</h1>
+          <h1 ref={greetingNameRef} className='text-center text-4xl! md:text-5xl! pt-0! mb-2! md:mb-6! mx-auto lowercase leading-12! md:leading-10! text-red!'>{showFullNameInGreeting ? verifiedName : verifiedFirstName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
 
-          <svg viewBox='-2 -2 204 16' className='w-3/4 mx-auto mt-10 mb-8' preserveAspectRatio='none' overflow='visible'>
+          <svg viewBox='-2 -2 204 16' className='w-3/4 mx-auto mt-5 md:mt-10 mb-3' preserveAspectRatio='none' overflow='visible'>
             <path d='M0 6 Q8.3 0 16.7 6 T33.3 6 T50 6 T66.7 6 T83.3 6 T100 6 T116.7 6 T133.3 6 T150 6 T166.7 6 T183.3 6 T200 6' fill='none' stroke='var(--color-blue)' strokeWidth='3' strokeLinecap='round' />
           </svg>
 
@@ -874,26 +962,32 @@ export function RsvpForm() {
                   placeholder='Any parting words? (optional)'
                 />
               </div>
-              <button type='submit' disabled={isSubmitting}>
+               <div className='step-actions justify-center'>
+              <button type='submit' className='step-continue-btn step-continue-ready' disabled={isSubmitting}>
                 {isSubmitting ? 'Sending...' : 'Send RSVP'}
               </button>
+                </div>
             </div>
           )}
 
           {/* Non-paired: plus one on step 0 */}
           {attending === 'yes' && !pairedPartner && (
             <div className='animate-in max-inner mt-6'>
-              <div className='mb-6 flex justify-center flex-wrap'>
-                <label className='w-full text-center'>Plus one?</label>
-                <div className={`radio-group ${invalidFields.includes('plusOne') ? 'flash-invalid' : ''}`}>
-                  <label className='radio-label'>
-                    <input type='radio' name='plusOne' value='yes' checked={formData.plusOne === 'yes'} onChange={handleChange} />
-                    Yes
-                  </label>
-                  <label className='radio-label'>
-                    <input type='radio' name='plusOne' value='no' checked={formData.plusOne === 'no'} onChange={handleChange} />
-                    No
-                  </label>
+              <div className='mb-6 flex flex-col items-center'>
+                <label className='w-full text-center mb-3'>Plus one?</label>
+                <div className='flex justify-center gap-3'>
+                  <span
+                    className={`attendance-pill ${formData.plusOne === 'yes' ? 'attendance-pill-selected' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, plusOne: 'yes' }))}
+                  >
+                    Plus One
+                  </span>
+                  <span
+                    className={`attendance-pill ${formData.plusOne === 'no' ? 'attendance-pill-selected' : ''}`}
+                    onClick={() => setFormData(prev => ({ ...prev, plusOne: 'no' }))}
+                  >
+                    Just me
+                  </span>
                 </div>
               </div>
               {formData.plusOne === 'yes' && (
@@ -902,17 +996,28 @@ export function RsvpForm() {
                     type='text'
                     value={plusOneName}
                     onChange={(e) => setPlusOneName(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setStep(1); requestAnimationFrame(() => scrollToRsvp()); } }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && stepZeroContinueReady) {
+                        e.preventDefault();
+                        setStep(1);
+                        requestAnimationFrame(() => scrollToRsvp());
+                      }
+                    }}
                     placeholder="What's their name?"
                     autocomplete="name"
                   />
                 </div>
               )}
-              {formData.plusOne !== '' && (
-                <button type='button' className='mb-1 step-continue-btn step-continue-ready mt-4' onClick={() => goToStep(1)}>
+              <div className='step-actions justify-center'>
+                <button
+                  type='button'
+                  className={`mb-1 step-continue-btn mt-4 ${stepZeroContinueReady ? 'step-continue-ready' : ''}`}
+                  disabled={!stepZeroContinueReady}
+                  onClick={() => goToStep(1)}
+                >
                   Continue
                 </button>
-              )}
+                </div>
             </div>
           )}
             </>
@@ -972,10 +1077,10 @@ export function RsvpForm() {
                   autoFocus
                 />
               </div>
-              <div className='step-buttons'>
+              <div className='step-actions'>
   
                 <button type='button' className={`step-continue-btn ${isValidEmail(formData.email) ? 'step-continue-ready' : ''}`} disabled={!isValidEmail(formData.email)} onClick={() => goToStep(2)}>
-                  Continue to Meal Selection
+                  Continue
                 </button>
               </div>
             </div>
@@ -999,7 +1104,7 @@ export function RsvpForm() {
                 <div className='guest-meals mt-6'>
                   {Array.from({ length: getPartySize() }, (_, i) => (
                     <div key={i} className={`guest-meal-row ${invalidFields.includes(`meal_${i}`) ? 'flash-invalid-meal' : ''}`}>
-                      <span className='guest-name'>{getGuestLabel(i)}</span>
+                      <span className='guest-name text-center md:text-left mb-1 md:mb-0'>{getGuestLabel(i)}</span>
                       <div className='meal-options'>
                         {meals.map((meal) => (
                           <span
@@ -1016,8 +1121,8 @@ export function RsvpForm() {
                 </div>
               </div>
 
-              <div className='step-buttons'>
-                <button type='button' className={`step-continue-btn ${allMealsSelected ? 'step-continue-ready' : ''}`} disabled={!allMealsSelected} onClick={() => goToStep(3)}>
+              <div className='step-actions'>
+                <button type='button' className={`step-continue-btn ${mealsStepComplete ? 'step-continue-ready' : ''}`} disabled={!mealsStepComplete} onClick={() => goToStep(3)}>
                   Continue
                 </button>
               </div>
@@ -1027,11 +1132,11 @@ export function RsvpForm() {
           {/* ═══ STEP 3: Kids ═══ */}
           {step === 3 && (
             <div className='step-panel'>
-              <h1 className='text-primary! step-title text-center pb-2'>Kids coming along?</h1>
-              <label></label>
+              <h1 className='text-primary! step-title text-center pb-2'>Kids tagging along?</h1>
+              {/* <label className='text-center pb-2'>Add kids ohere</label> */}
 
               <div className='mb-6 max-inner'>
-                <div className='radio-group mt-3 flex justify-center'>
+                <div className='radio-group mt-3 md:pt-3 flex justify-center'>
                   <label className='radio-label'>
                     <input type='radio' name='kidsAttending' value='yes' checked={formData.kidsAttending === 'yes'} onChange={handleChange} />
                     Yes!
@@ -1051,16 +1156,14 @@ export function RsvpForm() {
                     <div className='flex items-center justify-center gap-4 mt-3'>
                       <button
                         type='button'
-                        className='w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-30'
+                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount <= 0 ? 'opacity-30' : ''}`}
                         onClick={() => handleKidCountChange(-1)}
-                        disabled={formData.kidCount <= 0}
                       >−</button>
                       <span className='text-2xl font-bold text-primary w-6 text-center'>{formData.kidCount}</span>
                       <button
                         type='button'
-                        className='w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors disabled:opacity-30'
+                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount >= 2 ? 'opacity-30' : ''}`}
                         onClick={() => handleKidCountChange(1)}
-                        disabled={formData.kidCount >= 2}
                       >+</button>
                     </div>
                   </div>
@@ -1070,17 +1173,15 @@ export function RsvpForm() {
                     <div className='guest-meals mb-4'>
                       <label className='text-sm! text-center text-primary/60 mb-4'>If no meals are selected, we'll reach out to make sure they're taken care of!</label>
                       {Array.from({ length: formData.kidCount }, (_, i) => (
-                        <div key={i} className='guest-meal-row'>
-                          <div className='w-auto mb-2'>
-                            <input
-                              type='text'
-                              value={(formData.kidNames || [])[i] || ''}
-                              onChange={(e) => handleKidNameChange(i, e.target.value)}
-                              placeholder={`Kid's name`}
-                              className='text-sm!'
-                            />
-                          </div>
-                          <div className='meal-options mt-1'>
+                        <div key={i} className='guest-meal-row md:flex-row items-center'>
+                          <input
+                            type='text'
+                            value={(formData.kidNames || [])[i] || ''}
+                            onChange={(e) => handleKidNameChange(i, e.target.value)}
+                            placeholder={`Name`}
+                            className='text-sm! flex-1 min-w-0'
+                          />
+                          <div className='meal-options md:flex-nowrap shrink-0 justify-end pt-2 md:pt-0'>
                             {meals.map((meal) => (
                               <span
                                 key={meal.value}
@@ -1098,7 +1199,7 @@ export function RsvpForm() {
                 </div>
               )}
 
-              <div className='step-buttons'>
+              <div className='step-actions'>
                 <button
                   type='button'
                   className={`step-continue-btn ${stepComplete[3] ? 'step-continue-ready' : ''}`}
@@ -1117,7 +1218,7 @@ export function RsvpForm() {
               <h1 className='text-primary! step-title text-center pb-2'>Dietary restrictions</h1>
 
               <div className='mb-6 max-inner'>
-                <label className='text-center'>Anything we should know about food?</label>
+                <label className='text-center pb-4'>Anything we should know about your meal?</label>
                 <div className={`radio-group-col ${invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}`}>
                   <label className='radio-label'>
                     <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
@@ -1173,7 +1274,7 @@ export function RsvpForm() {
                 </div>
               )}
 
-              <div className='step-buttons'>
+              <div className='step-actions'>
                 <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => goToStep(5)}>
                   Continue
                 </button>
@@ -1187,19 +1288,69 @@ export function RsvpForm() {
               <h1 className='text-primary! step-title text-center pb-2'>Last details</h1>
 
               <div className='mb-6 max-inner'>
-                {welcomePartyInvited && (
+                {dinnerInviteAvailable && (
                 <>
-                <label>We're hosting a casual welcome party the night before - no pressure, but would you like to join?</label>
-                <div className='radio-group flex-col md:flex-row mt-5!'>
+                {(() => {
+                  const welcomeCardState = getWelcomeCardStateClasses();
+                  return (
+                    <>
+                <label className='text-center pb-2'>If you're able to make it, we'd love it if you joined us on <span className='text-blue-dark inline-block font-sanremo-caps tracking-wider'>Friday, August 7<sup>th</sup></span> at <span className='location-pill font-sanremo-caps tracking-wider' onClick={() => onOpenPlace?.('The Perch Kitchen and Tap')}>The Perch</span> for dinner and a welcome party.</label>
+                <div className='welcome-mini-schedule' aria-label='Welcome event schedule'>
+                  <div className={`welcome-mini-item welcome-dinner ${welcomeCardState.dinner}`}>
+                    <span className='welcome-mini-name'>Dinner</span>
+                    <span className='welcome-mini-time'>5:00 - 7:30 PM</span>
+                  </div>
+                  <div className={`welcome-divider ${welcomeCardState.divider}`}>&</div>
+                  <div className={`welcome-mini-item welcome-party ${welcomeCardState.party}`}>
+                    <span className='welcome-mini-name'>Party</span>
+                    <span className='welcome-mini-time'>7:30 - 10:00 PM</span>
+                  </div>
+                </div>
+                <div className='radio-group flex-col md:flex-col mt-5!'>
                   <label className='radio-label'>
-                    <input type='radio' name='welcomeParty' value='yes' checked={formData.welcomeParty === 'yes'} onChange={handleChange} />
-                    Count me in!
+                    <input type='radio' name='welcomeEvent' value='both' checked={formData.welcomeEvent === 'both'} onChange={handleChange} />
+                    {(getPartySize() + ((kidsAllowed && formData.kidsAttending === 'yes') ? formData.kidCount : 0)) > 1 ? "We'll be there!" : "I'll be there!"}
                   </label>
                   <label className='radio-label'>
-                    <input type='radio' name='welcomeParty' value='no' checked={formData.welcomeParty === 'no'} onChange={handleChange} />
-                    I'll skip this one
+                    <input type='radio' name='welcomeEvent' value='party' checked={formData.welcomeEvent === 'party'} onChange={handleChange} />
+                    Just the party
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='welcomeEvent' value='no' checked={formData.welcomeEvent === 'no'} onChange={handleChange} />
+                    Can't make it to either
                   </label>
                 </div>
+                    </>
+                  );
+                })()}
+                </>
+                )}
+                {!dinnerInviteAvailable && partyInviteAvailable && (
+                <>
+                {(() => {
+                  const welcomeCardState = getWelcomeCardStateClasses();
+                  return (
+                    <>
+                <label className='text-center pb-2'>If you're able to make it, we'd love it if you joined us on <span className='text-blue-dark inline-block font-sanremo-caps tracking-wider'>Friday, August 7th</span> at <span className='location-pill font-sanremo-caps tracking-wider' onClick={() => onOpenPlace?.('The Perch Kitchen and Tap')}>The Perch</span> for a welcome party.</label>
+                <div className='welcome-mini-schedule w-full flex justify-center' aria-label='Welcome event schedule'>
+                  <div className={`welcome-mini-item welcome-party max-w-100 ${welcomeCardState.party}`}>
+                    <span className='welcome-mini-name'>Party</span>
+                    <span className='welcome-mini-time'>7:30 - 10:00 PM</span>
+                  </div>
+                </div>
+                <div className='radio-group flex-col justify-center md:flex-row mt-5!'>
+                  <label className='radio-label'>
+                    <input type='radio' name='welcomeEvent' value='party' checked={formData.welcomeEvent === 'party'} onChange={handleChange} />
+                    {(getPartySize() + ((kidsAllowed && formData.kidsAttending === 'yes') ? formData.kidCount : 0)) > 1 ? "Count us in!" : "Count me in!"}
+                  </label>
+                  <label className='radio-label'>
+                    <input type='radio' name='welcomeEvent' value='no' checked={formData.welcomeEvent === 'no'} onChange={handleChange} />
+                    {(getPartySize() + ((kidsAllowed && formData.kidsAttending === 'yes') ? formData.kidCount : 0)) > 1 ? "We'll skip this one" : "I'll skip this one"}
+                  </label>
+                </div>
+                    </>
+                  );
+                })()}
                 </>
                 )}
               </div>
@@ -1215,9 +1366,9 @@ export function RsvpForm() {
                 />
               </div>
 
-              <div className='step-buttons'>
+              <div className='step-actions'>
                 <button type='button' className={`step-continue-btn ${stepComplete[5] ? 'step-continue-ready' : ''}`} disabled={!stepComplete[5]} onClick={() => goToStep(6)}>
-                  Continue to Review
+                  Review
                 </button>
               </div>
             </div>
@@ -1231,7 +1382,7 @@ export function RsvpForm() {
               <div className='rsvp-summary max-inner'>
                 <div className='rsvp-summary-row'>
                   <span className='rsvp-summary-label'>Name</span>
-                  <span className='rsvp-summary-value'>{verifiedName}{pairedPartner && attending === 'both' ? ` & ${pairedPartner}` : ''}</span>
+                  <span className='rsvp-summary-value'>{verifiedName}{pairedPartner && attending === 'both' ? ` + ${pairedPartner}` : ''}</span>
                 </div>
                 <div className='rsvp-summary-row'>
                   <span className='rsvp-summary-label'>Email</span>
@@ -1239,17 +1390,22 @@ export function RsvpForm() {
                 </div>
                 {Array.from({ length: getPartySize() }, (_, i) => {
                   const choice = meals.find(m => m.value === formData.mealChoices[i]);
+                  const hasRestriction = dietaryMembers.includes(i);
+                  const guestName = getGuestLabel(i);
+                  const guestFirstName = guestName.trim().split(/\s+/)[0] || guestName;
                   return (
                     <div key={i} className='rsvp-summary-row'>
                       <span className='rsvp-summary-label'>{i === 0 ? 'Meal' : ''}</span>
                       <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
-                        <span>{getGuestLabel(i)}</span>
-                        {choice && (
-                          <span className='relative'>
+                        <span>{guestFirstName}</span>
+                        <span className='relative'>
+                          {choice ? (
                             <span className={`summary-meal-chip ${choice.color}`}>{choice.shortTitle}</span>
-                            {dietaryMembers.includes(i) && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
-                          </span>
-                        )}
+                          ) : (
+                            <span className='summary-meal-chip meal-blue'>Other</span>
+                          )}
+                          {hasRestriction && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
+                        </span>
                       </span>
                     </div>
                   );
@@ -1258,6 +1414,7 @@ export function RsvpForm() {
                 {kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0 && (
                   Array.from({ length: formData.kidCount }, (_, i) => {
                     const kidName = (formData.kidNames || [])[i] || `Kid ${i + 1}`;
+                    const kidFirstName = kidName.trim().split(/\s+/)[0] || kidName;
                     const kidMealVal = formData.kidMeals[i];
                     const kidMealChoice = meals.find(m => m.value === kidMealVal);
                     const dietaryIndex = getPartySize() + i;
@@ -1266,7 +1423,7 @@ export function RsvpForm() {
                       <div key={`kid-${i}`} className='rsvp-summary-row'>
                         <span className='rsvp-summary-label'>{i === 0 ? 'Kids' : ''}</span>
                         <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
-                          <span>{kidName}</span>
+                          <span>{kidFirstName}</span>
                           <span className='relative'>
                             {kidMealChoice ? (
                               <span className={`summary-meal-chip ${kidMealChoice.color}`}>{kidMealChoice.shortTitle}</span>
@@ -1286,17 +1443,23 @@ export function RsvpForm() {
                     <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
                   </div>
                 )}
-                {welcomePartyInvited && formData.welcomeParty && (
+                {hasWelcomeInvite && formData.welcomeEvent && (
                   <div className='rsvp-summary-row'>
                     <span className='rsvp-summary-label'>Party</span>
-                    <span className='rsvp-summary-value'>{formData.welcomeParty === 'yes' ? 'Count me in!' : 'Skipping this one'}</span>
+                    <span className='rsvp-summary-value'>
+                      {formData.welcomeEvent === 'both'
+                        ? 'Dinner + party 🎉'
+                        : formData.welcomeEvent === 'party'
+                          ? (dinnerInviteAvailable ? 'Just the party 🎉' : 'Yes 🎉')
+                          : 'Declined'}
+                    </span>
                   </div>
                 )}
               </div>
 
               <p className='text-center mt-5! mb-4 text-base!'>Everything look good?</p>
 
-              <div className='step-buttons justify-center'>
+              <div className='step-actions step-actions-sparkle justify-center'>
                 <button type='submit' className='step-continue-btn step-continue-ready step-submit-btn' disabled={isSubmitting} onMouseEnter={spawnSparkles}>
                   {isSubmitting ? "SENDING..." : "OH YEAH!"}
                 </button>

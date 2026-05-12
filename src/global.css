@@ -35,9 +35,13 @@
   --color-red: #ff6969;
   --color-red-light: #fff0f0;
   --color-darkpink: rgb(207, 78, 76);
+    --color-darkred: rgb(93 14 12);
+
 
   --color-sky: #DBEAFC;
   --color-blue: #BFD3DB;
+  --color-blue-med: #536E79;
+  --color-blue-med-light: #8AA3AD;
   --color-blue-light: #eaf1f9;
   --color-blue-dark: #7ba8d4;
 
@@ -507,6 +511,82 @@ label {
     @apply block mb-2 text-base md:text-lg text-primary;
 }
 
+.welcome-mini-schedule {
+  @apply flex flex-col md:flex-row pb-5 pt-2 relative gap-0;
+}
+
+.welcome-mini-header {
+  @apply text-lg font-sanremo-caps tracking-wider uppercase text-primary/70 text-center mb-2;
+}
+
+.welcome-divider {
+  @apply z-10 text-xl md:text-3xl font-sanremo-caps absolute bottom-2/5 md:bottom-auto left-1/2 -translate-x-1/2 mt-2 pr-3 text-white;
+  transition: opacity 0.22s ease, scale 0.22s ease;
+  opacity: 1;
+  scale: 1;
+  text-shadow: 
+    1px 1px 0 var(--color-primary),
+    1px 4px 0 var(--color-primary),
+    4px 1px 0 var(--color-primary),
+    4px 4px 0 var(--color-primary);
+}
+
+.welcome-divider.welcome-divider-neutral {
+  opacity: 1;
+  scale: 1;
+}
+
+.welcome-divider.welcome-divider-pop {
+  opacity: 1;
+  scale: 1.05;
+}
+
+.welcome-divider.welcome-divider-dim {
+  opacity: 0;
+  scale: 0.92;
+}
+
+.welcome-mini-item {
+  @apply flex items-center justify-center md:w-full gap-3 md:p-5 p-3 uppercase text-sm md:text-lg font-sanremo-caps tracking-widest opacity-100 scale-100;
+  transition: opacity 0.22s ease, scale 0.22s ease;
+  &.welcome-dinner {
+    @apply bg-primary text-white -rotate-2;
+  }
+  &.welcome-party {
+    @apply bg-red text-darkred rotate-2 md:-ml-4 ml-2 md:translate-y-4 translate-y-1;
+  }
+}
+
+.welcome-mini-item.welcome-neutral {
+  @apply opacity-100 scale-100;
+}
+
+.welcome-mini-item.welcome-pop {
+  @apply opacity-100 scale-105;
+}
+
+.welcome-mini-item.welcome-pop-soft {
+  @apply opacity-100 scale-102;
+}
+
+.welcome-mini-item.welcome-subtle {
+  @apply opacity-40 scale-97;
+}
+
+.welcome-mini-item.welcome-muted {
+  @apply opacity-40 scale-94;
+}
+
+@media (max-width: 480px) {
+  .welcome-mini-item {
+    @apply gap-2 items-center;
+  }
+}
+
+.location-pill {
+  @apply relative inline-block text-red font-semibold cursor-pointer transition-all hover:after:w-full after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:h-0.5 after:bg-red after:w-0 after:transition-all after:duration-150;
+}
+
 input[type="text"],
 input[type="email"],
 input[type="number"],
@@ -540,7 +620,14 @@ textarea:focus {
 
 /* Forms nested inside .rsvp-panel — strip the default form chrome */
 .rsvp-inner-form {
-  @apply bg-transparent p-0 shadow-none rounded-none;
+  @apply bg-transparent p-0 shadow-none rounded-none overflow-visible relative;
+}
+
+.rsvp-flow-form {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  padding-bottom: 2.75rem;
 }
 
 /* Custom Radio Button Styles */
@@ -574,20 +661,20 @@ label:has(input[type="radio"]:checked)::before {
 }
 
 
-button[type="submit"] {
+button[type="submit"]:not(.step-continue-btn) {
     @apply m-auto rounded-full bg-white text-primary pb-3 pt-2 px-8 block cursor-pointer transition-all relative border-primary border-2
     font-medium text-lg;
     box-shadow: 0px 0px 0 0 black;
 }
 
 @media (hover: hover) {
-  button[type="submit"]:hover {
+  button[type="submit"]:not(.step-continue-btn):hover {
       @apply -translate-0.5;
       box-shadow: 4px 5px 0 0 var(--color-radio);
   }
 }
 
-button[type="submit"]:active {
+button[type="submit"]:not(.step-continue-btn):active {
     @apply scale-95;
     box-shadow: 0px 0px 0 0 black;
 }
@@ -1082,6 +1169,19 @@ button[type="submit"]:active {
   background: var(--color-gray-300, #d1d5db) !important;
 }
 
+button,
+.button,
+.attendance-pill,
+.meal-pill,
+.suggestion-button,
+.back-button,
+.not-me-button,
+.step-continue-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .radio-group {
   @apply flex gap-4 mt-2;
 }
@@ -1126,11 +1226,11 @@ button[type="submit"]:active {
 }
 
 .step-title {
-  @apply text-3xl! md:text-3xl!;
+  @apply text-3xl! md:text-3xl! pb-0! md:pb-4 mb-0 md:mb-5;
 }
 
 .meal-options {
-  @apply flex flex-wrap gap-2 flex-1;
+  @apply flex flex-wrap gap-2 flex-1 justify-center md:justify-start;
 }
 
 .meal-pill {
@@ -1163,7 +1263,7 @@ button[type="submit"]:active {
 
 /* ═══ RSVP Wizard Step Navigation ═══ */
 .step-nav-row {
-  @apply flex justify-center mb-8;
+  @apply flex justify-center md:mb-8 mb-2;
   position: relative;
 }
 
@@ -1227,60 +1327,59 @@ button[type="submit"]:active {
 
 /* ═══ Step Panels ═══ */
 @keyframes stepSlideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .step-panel {
   animation: stepSlideIn 0.3s ease-out forwards;
+  overflow: visible;
 }
 
 /* ═══ Step Buttons (back + continue) ═══ */
-.step-buttons {
-  @apply flex flex-col items-center gap-3 mt-6;
+.step-actions {
+  @apply flex flex-col items-center gap-3 w-full;
+  overflow: visible;
+}
+
+.step-actions-sparkle {
+  position: static;
 }
 
 /* Continue button — always rendered, disabled/faded until ready */
 .step-continue-btn {
-  @apply block mx-auto px-8 py-3 rounded-full text-sm md:text-base font-medium
-    border-2 border-primary/15 cursor-not-allowed select-none
-    transition-all;
-  background: transparent;
-  color: var(--color-primary);
-  opacity: 0.25;
+  @apply absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-8 py-3 rounded-full
+    font-sanremo-caps text-lg bg-blue-med-light text-white tracking-wider transition-all cursor-not-allowed select-none;
+  transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
   pointer-events: none;
+  box-shadow: 0 0 0 8px var(--color-blue);
+  z-index: 3;
 }
 
 .step-continue-btn.step-continue-ready {
-  @apply cursor-pointer border-primary bg-white text-primary;
+  @apply cursor-pointer bg-primary transition-all;
   opacity: 1;
   pointer-events: auto;
-  box-shadow: 0px 0px 0 0 black;
-  animation: btnFadeIn 0.2s ease-out forwards;
+}
+
+@media (max-width: 767px) {
+  .step-continue-btn {
+    min-width: 12.5rem;
+    max-width: none;
+  }
 }
 
 @media (hover: hover) {
   .step-continue-btn.step-continue-ready:hover {
-    @apply -translate-y-0.5;
-    box-shadow: 4px 5px 0 0 var(--color-radio);
+    @apply bg-primary text-white px-8.5 py-3.5;
   }
-}
-
-.step-continue-btn.step-continue-ready:active {
-  @apply scale-95 translate-y-0;
-  box-shadow: 0px 0px 0 0 black;
 }
 
 /* Submit button special treatment */
 .step-submit-btn {
-  @apply text-base md:text-lg px-10 py-2 relative;
+  @apply text-base md:text-lg;
   overflow: visible;
   z-index: 1;
-}
-
-.step-buttons {
-  overflow: visible;
-  position: relative;
 }
 
 /* Sparkle burst on submit hover — sits behind the button */
@@ -1290,8 +1389,12 @@ button[type="submit"]:active {
   height: 8px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
   animation: sparkle-burst 0.85s ease-out forwards;
+  animation-fill-mode: both;
+  transform: translate(-50%, -50%) scale(1.2);
+  opacity: 1;
+  will-change: transform, opacity;
 }
 
 @keyframes sparkle-burst {
@@ -1309,11 +1412,6 @@ button[type="submit"]:active {
     ) scale(0);
     opacity: 0;
   }
-}
-
-@keyframes btnFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
 }
 
 /* ═══ Compact Menu (Step 2) ═══ */

@@ -345,7 +345,7 @@ function App() {
       <section id='rsvp' className='theme-blue pl-6! md:pl-22! px-6! md:px-10! pt-[12vh]! md:pt-[15vh] pb-16' style={{ minHeight: '100vh' }}>
         <div className='block-inner w-full'>
           <div className='form-container relative max-w-2xl mx-auto w-full'>
-            <RsvpForm />
+            <RsvpForm onOpenPlace={setActivePlace} />
           </div>
         </div>
       </section>
@@ -403,7 +403,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
               As our own gift to each other, we'll be setting off on an extended honeymoon.
               </p>
               <p>
-                And for anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our honeymoon. Whichever spot gets the most love will be our destination. 💕
+                And for anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our trip. Whichever spot gets the most love will be our destination. 💕
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
           </div>
