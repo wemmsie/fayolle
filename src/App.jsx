@@ -20,7 +20,7 @@ function App() {
 
   const funkyDesktop = [image.funky2, image.funky3, image.funky5, image.funky6, image.funky7, image.funky8];
   const funkyGalleryOnly = [
-    image.funky10, image.funky11, image.funky12, image.funky13, image.funky14,
+    image.funky9, image.funky10, image.funky11, image.funky12, image.funky13, image.funky14,
     image.funky15, image.funky16, image.funky17, image.funky18,
   ];
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;

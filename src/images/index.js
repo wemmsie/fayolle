@@ -23,6 +23,7 @@ export { default as funky5 } from './funky-5.jpg';
 export { default as funky6 } from './funky-6.jpg';
 export { default as funky7 } from './funky-7.jpg';
 export { default as funky8 } from './funky-8.jpg';
+export { default as funky9 } from './funky/funky-9.jpg';
 export { default as funky10 } from './funky/funky-10.jpg';
 export { default as funky11 } from './funky/funky-11.jpg';
 export { default as funky12 } from './funky/funky-12.jpg';
