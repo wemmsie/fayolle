@@ -495,7 +495,7 @@ section {
   @apply absolute w-60 top-0 left-1/2 -translate-x-1/2 -translate-y-40;
 }
 .letter {
-  @apply absolute w-40 top-0 left-1/2 -translate-x-1/2 -translate-y-15;
+  @apply absolute w-28 md:w-40 top-0 left-1/2 -translate-x-1/2 -translate-y-12 md:-translate-y-15;
 }
 /* Form Styles */
 
@@ -1073,8 +1073,16 @@ button[type="submit"]:not(.step-continue-btn):active {
   @apply text-left;
 }
 
+.address-form form {
+  @apply mb-0 pt-10! md:py-10;
+}
+
+.address-form .sub-form {
+  @apply p-4 md:p-6 mt-3 md:mt-5 mb-5 md:mb-8;
+}
+
 .sub-form {
-  @apply bg-blue-50 p-6 rounded-lg mb-10 mt-5;
+  @apply bg-blue-50 p-6 rounded-lg mb-10 mt-4;
 }
 
 .suggestion-button {

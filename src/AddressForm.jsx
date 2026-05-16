@@ -178,10 +178,10 @@ export function AddressForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className={isFadingOut ? 'fade-out' : ''}>
-          <h1 className='text-center mb-10 pt-15 max-w-70 mx-auto'>Send us your address!</h1>
+          <h1 className='text-center mb-4 md:mb-8 pt-10 md:pt-15 max-w-70 mx-auto'>Send us your address!</h1>
           <p className='text-base!'>We've got something special to mail you</p>
 
-          <div className='mb-10'>
+          <div className='mb-6'>
         <label htmlFor='preferred'>How would you like your mail to be addressed?</label>
             <input 
                 type='text' 
