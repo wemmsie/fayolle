@@ -1357,7 +1357,7 @@ button,
 /* Continue button — always rendered, disabled/faded until ready */
 .step-continue-btn {
   @apply absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-8 py-3 rounded-full
-    font-sanremo-caps text-lg bg-blue-med-light text-white tracking-wider transition-all cursor-not-allowed select-none;
+    font-sanremo-caps text-lg bg-blue-med! text-white tracking-wider transition-all cursor-not-allowed select-none;
   transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
   pointer-events: none;
   box-shadow: 0 0 0 8px var(--color-blue);
@@ -1365,8 +1365,7 @@ button,
 }
 
 .step-continue-btn.step-continue-ready {
-  @apply cursor-pointer bg-primary transition-all;
-  opacity: 1;
+  @apply cursor-pointer bg-primary! text-white transition-all;
   pointer-events: auto;
 }
 
@@ -1379,7 +1378,7 @@ button,
 
 @media (hover: hover) {
   .step-continue-btn.step-continue-ready:hover {
-    @apply bg-primary text-white px-8.5 py-3.5;
+    @apply bg-primary-dark! text-white tracking-widest;
   }
 }
 
