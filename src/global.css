@@ -93,7 +93,7 @@ body {
 }
 
 h1 {
-    @apply font-sanremo-script text-3xl md:text-5xl mb-4 text-primary md:leading-[0.6] pt-3;
+    @apply font-sanremo-script text-4xl md:text-5xl mb-4 text-primary md:leading-[0.6] pt-3;
 }
 
 h2 {
@@ -245,19 +245,19 @@ section {
 }
 
 .timeline-item {
-  @apply flex items-baseline md:pl-[20%] gap-6;
+  @apply flex items-baseline md:pl-[20%] gap-4;
 }
 
 .timeline-time {
-  @apply font-sanremo-caps text-xl md:text-2xl text-primary w-20 shrink-0 text-right;
+  @apply font-sanremo-caps text-2xl md:text-2xl text-primary w-18 shrink-0 text-right;
 }
 
 .timeline-event {
-  @apply font-sanremo-caps text-xl md:text-2xl text-red block;
+  @apply font-sanremo-caps text-2xl md:text-2xl text-red block;
 }
 
 .timeline-detail {
-  @apply text-xl md:text-2xl text-primary block lowercase font-sanremo-script -mt-4;
+  @apply text-[34px] md:text-[40px] text-primary block lowercase font-sanremo-script -mt-3;
 }
 
 .wedding-day-img {
@@ -374,13 +374,103 @@ section {
   }
 }
 
-/* Clickable collage on desktop */
+/* Desktop outfit collage */
 .funky-img {
-  cursor: pointer;
+  pointer-events: none;
 }
-.funky-img:hover img {
-  transform: scale(1.05);
-  transition: transform 0.3s ease;
+
+/* ═══ Outfit Print Stack (mobile Swiper) ═══ */
+.outfit-pile-wrap {
+  width: 100%;
+  max-width: min(88vw, 360px);
+  margin: 0 auto;
+}
+
+.outfit-pile-swiper {
+  width: 100%;
+  overflow: visible !important;
+}
+
+/* Print container shrink-wraps each image — shadow follows the image's own proportions */
+.outfit-print {
+  display: block;
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  background: #fdfcfa;
+  border-radius: 3px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  line-height: 0;
+}
+
+/* Dark overlay on back-of-pile cards; fades away when the card becomes active */
+.outfit-pile-swiper .swiper-slide .outfit-print::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.outfit-pile-swiper .swiper-slide-active .outfit-print::after {
+  opacity: 0;
+}
+
+/* Both axes auto so the browser preserves aspect ratio within both caps */
+.outfit-print img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 68vw;
+}
+
+.outfit-pile-nav {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2.25rem;
+}
+
+/* ═══ Outfit Nav Arrows (desktop) ═══ */
+.outfit-arrows {
+  @apply items-center justify-center gap-4 mt-15 relative z-10 hidden md:flex;
+}
+
+.outfit-arrow {
+  @apply w-auto h-auto opacity-100 text-3xl cursor-pointer flex items-center justify-center transition-all duration-200;
+}
+
+.outfit-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.outfit-arrow:disabled:hover {
+  @apply opacity-100;
+}
+
+.outfit-counter {
+  font-size: 0.8rem;
+  opacity: 0.55;
+  min-width: 3rem;
+  text-align: center;
+  font-family: var(--font-gothic);
+  letter-spacing: 0.05em;
+}
+
+/* Desktop: fade in scattered images on navigate (triggered by React key remount) */
+@keyframes outfitImgFadeIn {
+  from { opacity: 0.05; }
+  to   { opacity: 1; }
+}
+
+.outfit-img-anim {
+  animation: outfitImgFadeIn 0.4s ease forwards;
 }
 
 /* Photo pile indicators */
@@ -398,8 +488,10 @@ section {
   font-family: system-ui, sans-serif;
 }
 
-.photo-pile-arrow:hover {
-  @apply bg-white shadow-md scale-110;
+@media (hover: hover) {
+  .photo-pile-arrow:hover {
+    @apply bg-white shadow-md scale-110;
+  }
 }
 
 .photo-pile-arrow-disabled {
@@ -704,8 +796,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.todo-tab:hover {
-  @apply bg-primary/10;
+@media (hover: hover) {
+  .todo-tab:hover {
+    @apply bg-primary/10;
+  }
 }
 
 .todo-tab-active {
@@ -799,16 +893,18 @@ button[type="submit"]:not(.step-continue-btn):active {
   @apply bg-white shadow-sm opacity-100 scale-105;
 }
 
-.scroll-nav-item:hover {
-  @apply bg-white shadow-md scale-105;
-}
+@media (hover: hover) {
+  .scroll-nav-item:hover {
+    @apply bg-white shadow-md scale-105;
+  }
 
-.scroll-nav-item:hover .scroll-nav-emoji {
-  @apply scale-105;
-}
+  .scroll-nav-item:hover .scroll-nav-emoji {
+    @apply scale-105;
+  }
 
-.scroll-nav-item:hover .scroll-nav-label {
-  @apply text-primary;
+  .scroll-nav-item:hover .scroll-nav-label {
+    @apply text-primary;
+  }
 }
 
 .scroll-nav-emoji {
@@ -823,14 +919,16 @@ button[type="submit"]:not(.step-continue-btn):active {
   padding-right: 0;
 }
 
-.scroll-nav:hover .scroll-nav-label {
-  @apply max-w-40 opacity-100;
-  padding-left: 0.5rem;
-  padding-right: 0.4rem;
-}
+@media (hover: hover) {
+  .scroll-nav:hover .scroll-nav-label {
+    @apply max-w-40 opacity-100;
+    padding-left: 0.5rem;
+    padding-right: 0.4rem;
+  }
 
-.scroll-nav:hover .scroll-nav-item {
-  @apply bg-white/90 shadow-sm;
+  .scroll-nav:hover .scroll-nav-item {
+    @apply bg-white/90 shadow-sm;
+  }
 }
 
 .scroll-nav-active .scroll-nav-label {
@@ -859,8 +957,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.modal-close:hover {
-  @apply bg-white/80 text-primary;
+@media (hover: hover) {
+  .modal-close:hover {
+    @apply bg-white/80 text-primary;
+  }
 }
 
 .modal-directions {
@@ -868,8 +968,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   transition: background-color 0.15s ease;
 }
 
-.modal-directions:hover {
-  @apply bg-primary/5;
+@media (hover: hover) {
+  .modal-directions:hover {
+    @apply bg-primary/5;
+  }
 }
 
 .modal-photo {
@@ -952,8 +1054,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.venue-map-card:hover {
-  @apply bg-primary/5 border-primary/30;
+@media (hover: hover) {
+  .venue-map-card:hover {
+    @apply bg-primary/5 border-primary/30;
+  }
 }
 
 .venue-map-icon {
@@ -1062,11 +1166,11 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .fade-out {
-  animation: fadeOut 0.4s ease-out forwards;
+  animation: fadeOut var(--rsvp-anim, 200ms) ease-out forwards;
 }
 
 .fade-in {
-  animation: fadeIn 0.5s ease-in forwards;
+  animation: fadeIn var(--rsvp-anim, 200ms) ease-in forwards;
 }
 
 .address-form input {
@@ -1090,8 +1194,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   cursor-pointer;
 }
 
-.suggestion-button:hover {
-  @apply bg-primary text-white border-primary -translate-y-0.5;
+@media (hover: hover) {
+  .suggestion-button:hover {
+    @apply bg-primary text-white border-primary -translate-y-0.5;
+  }
 }
 
 /* State/Address Autocomplete Suggestions */
@@ -1103,8 +1209,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   @apply px-4 py-3 cursor-pointer text-base md:text-lg font-routed tracking-wider transition-all;
 }
 
-.state-suggestion-item:hover {
-  @apply bg-primary/10;
+@media (hover: hover) {
+  .state-suggestion-item:hover {
+    @apply bg-primary/10;
+  }
 }
 
 /* Menu Display */
@@ -1173,8 +1281,10 @@ button[type="submit"]:not(.step-continue-btn):active {
   padding: 0.5rem 1.25rem !important;
 }
 
-.back-button:hover {
-  background: var(--color-gray-300, #d1d5db) !important;
+@media (hover: hover) {
+  .back-button:hover {
+    background: var(--color-gray-300, #d1d5db) !important;
+  }
 }
 
 button,
@@ -1208,25 +1318,27 @@ button,
     transition-all duration-200 font-medium border-2 border-primary/20 select-none bg-transparent;
 }
 
-.attendance-pill:hover {
-  @apply border-primary/40 -translate-y-0.5;
-  background: #dde4ff;
+@media (hover: hover) {
+  .attendance-pill:hover {
+    @apply border-primary/40 -translate-y-0.5;
+    background: #dde4ff;
+  }
+
+  .attendance-pill-selected:hover {
+    @apply bg-primary border-primary;
+  }
+
+  .attendance-pill-decline:hover {
+    @apply border-red/30 bg-red/10;
+  }
 }
 
 .attendance-pill-selected {
   @apply bg-primary text-white border-primary;
 }
 
-.attendance-pill-selected:hover {
-  @apply bg-primary border-primary;
-}
-
 .attendance-pill-decline {
   @apply border-gray-200;
-}
-
-.attendance-pill-decline:hover {
-  @apply border-red/30 bg-red/10;
 }
 
 .attendance-pill-decline.attendance-pill-selected {
@@ -1295,8 +1407,10 @@ button,
   @apply opacity-65;
 }
 
-.step-nav-done:hover {
-  @apply opacity-100;
+@media (hover: hover) {
+  .step-nav-done:hover {
+    @apply opacity-100;
+  }
 }
 
 .step-nav-active {
@@ -1334,13 +1448,15 @@ button,
 }
 
 /* ═══ Step Panels ═══ */
-@keyframes stepSlideIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+/* Reuses fadeIn / fadeOut keyframes defined above — no separate keyframes needed */
 
 .step-panel {
-  animation: stepSlideIn 0.3s ease-out forwards;
+  animation: fadeIn var(--rsvp-anim, 200ms) ease-out forwards;
+  overflow: visible;
+}
+
+.step-fade-out {
+  animation: fadeOut var(--rsvp-anim, 200ms) ease-in forwards;
   overflow: visible;
 }
 

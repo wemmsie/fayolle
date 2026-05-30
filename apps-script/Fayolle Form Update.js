@@ -29,10 +29,12 @@ function doPost(e) {
       sheet.getRange(i + 1, 20).setValue(data.kidCount || 0); // Col T = kid count
       sheet.getRange(i + 1, 21).setValue(data.kidName1 || ''); // Col U = kid name 1
       sheet.getRange(i + 1, 22).setValue(data.kidName2 || ''); // Col V = kid name 2
-      sheet.getRange(i + 1, 23).setValue(data.kidMeal1 || ''); // Col W = kid meal 1
-      sheet.getRange(i + 1, 24).setValue(data.kidMeal2 || ''); // Col X = kid meal 2
-      sheet.getRange(i + 1, 25).setValue(data.dietaryNotes || ''); // Col Y = dietary notes (all)
-      sheet.getRange(i + 1, 29).setValue(data.message || ''); // Col AC = message
+      sheet.getRange(i + 1, 23).setValue(data.kidName3 || ''); // Col W = kid name 3
+      sheet.getRange(i + 1, 24).setValue(data.kidMeal1 || ''); // Col X = kid meal 1
+      sheet.getRange(i + 1, 25).setValue(data.kidMeal2 || ''); // Col Y = kid meal 2
+      sheet.getRange(i + 1, 26).setValue(data.kidMeal3 || ''); // Col Z = kid meal 3
+      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA = dietary notes (all)
+      sheet.getRange(i + 1, 31).setValue(data.message || ''); // Col AE = message
       break;
     }
 
@@ -45,10 +47,12 @@ function doPost(e) {
       sheet.getRange(i + 1, 20).setValue(data.kidCount || 0); // Col T
       sheet.getRange(i + 1, 21).setValue(data.kidName1 || ''); // Col U
       sheet.getRange(i + 1, 22).setValue(data.kidName2 || ''); // Col V
-      sheet.getRange(i + 1, 23).setValue(data.kidMeal1 || ''); // Col W
-      sheet.getRange(i + 1, 24).setValue(data.kidMeal2 || ''); // Col X
-      sheet.getRange(i + 1, 25).setValue(data.dietaryNotes || ''); // Col Y
-      sheet.getRange(i + 1, 29).setValue(data.message || ''); // Col AC
+      sheet.getRange(i + 1, 23).setValue(data.kidName3 || ''); // Col W
+      sheet.getRange(i + 1, 24).setValue(data.kidMeal1 || ''); // Col X
+      sheet.getRange(i + 1, 25).setValue(data.kidMeal2 || ''); // Col Y
+      sheet.getRange(i + 1, 26).setValue(data.kidMeal3 || ''); // Col Z
+      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA
+      sheet.getRange(i + 1, 31).setValue(data.message || ''); // Col AE
       break;
     }
   }

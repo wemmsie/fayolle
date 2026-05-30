@@ -1,5 +1,6 @@
 import './global.css'
 import * as image from './images';
+import { funkyImages } from './images/funky';
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 import { Polaroid } from './Polaroid'
@@ -9,24 +10,19 @@ import { PlaceModal } from './PlaceModal'
 import { VenueMapModal } from './VenueMapModal'
 import { ScrollNav } from './ScrollNav'
 import { Squiggle } from './Squiggle'
+import { OutfitPile } from './OutfitPile'
 
 function App() {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', tag: '', x: 0, y: 0 });
   const [activePlace, setActivePlace] = useState(null);
   const [activeTab, setActiveTab] = useState('do');
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
   const [venueMapOpen, setVenueMapOpen] = useState(false);
 
-  const funkyDesktop = [image.funky2, image.funky3, image.funky5, image.funky6, image.funky7, image.funky8];
-  const funkyGalleryOnly = [
-    image.funky9, image.funky10, image.funky11, image.funky12, image.funky13, image.funky14,
-    image.funky15, image.funky16, image.funky17, image.funky18,
-  ];
+  const outfitImages = funkyImages;
+  const desktopPageCount = Math.floor(outfitImages.length / 6);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const funkyPhotos = isMobile ? [...funkyDesktop, ...funkyGalleryOnly] : funkyGalleryOnly;
   const tooltipRef = useRef(null);
-
+  const [outfitIndex, setOutfitIndex] = useState(0);
   const positionTip = useCallback((el, x, y) => {
     const pad = 8;
     const offset = 20;
@@ -63,6 +59,12 @@ function App() {
     window.addEventListener('scroll', hide, { passive: true });
     return () => window.removeEventListener('scroll', hide);
   }, []);
+
+  const navigateOutfitPage = (dir) => setOutfitIndex(i => {
+    const page = Math.floor(i / 6);
+    const next = Math.max(0, Math.min(page + dir, desktopPageCount - 1));
+    return next * 6;
+  });
 
   const tipProps = (tag, tip) => isMobile ? {} : ({
     'data-tag': tag,
@@ -143,9 +145,9 @@ function App() {
             <Polaroid photo={image.codycafe} className='polaroid-spread-3' />
           </div>
           <div className='text-center mt-10 max-w-3xl mx-auto pl-2 md:pl-0'>
-            <h1 className='pb-5'>let's do this thing</h1>
+            <h1 className='pb-5'>let's do this thing!</h1>
             <p>
-              Please join us in <b>Chicago</b> on <b>Saturday August 8th, 2026</b> to celebrate our marriage beneath an excessive number of disco balls (yes, really) and the ungovernable influence of actually really good espresso martinis.
+              Please join us in <b>Chicago</b> on <b>Saturday August 8th, 2026</b> to celebrate our marriage beneath an excessive number of disco balls 🪩✨ (yes, really) and the ungovernable influence of actually really good espresso martinis.
             </p>
             <p>
               We've got a snazzy menu and a groovy playlist coming together, plus plenty of tips for things to do and places to stay while you're here.</p>
@@ -162,11 +164,10 @@ function App() {
           <div className='text-center mb-10 pl-2 md:pl-0'>
             <h1>when we party</h1>
             <p>
-              We got you covered for the whole event in one place. <a className='button px-3! py-0! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>Parking</a> is available next door and signs will guide you where you need to go.</p>
+              We got you covered for the whole event in one place. <a className='button px-3! py-1! -my-0.5! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>Parking</a> is available next door and signs will guide you where you need to go.</p>
               <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
-                <p className="m-0!">Please join us at the</p>
-                <a className='button px-3! py-0! leading-5 md:leading-8 mx-1!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
-                <p className="m-0!">anytime after 3 PM!</p>
+                <p className="m-0!">Join us at the <a className='button px-3! py-1! leading-5 md:leading-8 mx-1! -my-0.5!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
+                anytime after 3 PM!</p>
               </div>
 
 
@@ -206,19 +207,21 @@ function App() {
       </section>
 
       {/* Outfit Inspiration */}
-      <section id='outfit' className='block theme-cream overflow-x-clip pl-8! overflow-y-visible!'>
+      <section id='outfit' className='block theme-cream overflow-x-clip md:pl-8! overflow-y-visible!'>
         <div className='block-inner text-center relative'>
-          {/* Scattered collage — left side */}
-          <div className='funky-img funky-left-1' onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}><img src={image.funky2} alt='' /></div>
-          <div className='funky-img funky-left-2' onClick={() => { setGalleryIndex(2); setGalleryOpen(true); }}><img src={image.funky5} alt='' /></div>
-          <div className='funky-img funky-left-3' onClick={() => { setGalleryIndex(5); setGalleryOpen(true); }}><img src={image.funky8} alt='' /></div>
 
-          {/* Scattered collage — right side */}
-          <div className='funky-img funky-right-1' onClick={() => { setGalleryIndex(1); setGalleryOpen(true); }}><img src={image.funky3} alt='' /></div>
-          <div className='funky-img funky-right-2' onClick={() => { setGalleryIndex(3); setGalleryOpen(true); }}><img src={image.funky6} alt='' /></div>
-          <div className='funky-img funky-right-3' onClick={() => { setGalleryIndex(4); setGalleryOpen(true); }}><img src={image.funky7} alt='' /></div>
+          {/* Desktop: scattered collage — all 6 swap per page */}
+          <div className='hidden md:block'>
+            <div key={`l1-${outfitIndex}`} className='funky-img funky-left-1 outfit-img-anim'><img src={outfitImages[outfitIndex % outfitImages.length]} alt='' /></div>
+            <div key={`l2-${outfitIndex}`} className='funky-img funky-left-2 outfit-img-anim'><img src={outfitImages[(outfitIndex + 1) % outfitImages.length]} alt='' /></div>
+            <div key={`l3-${outfitIndex}`} className='funky-img funky-left-3 outfit-img-anim'><img src={outfitImages[(outfitIndex + 2) % outfitImages.length]} alt='' /></div>
+            <div key={`r1-${outfitIndex}`} className='funky-img funky-right-1 outfit-img-anim'><img src={outfitImages[(outfitIndex + 3) % outfitImages.length]} alt='' /></div>
+            <div key={`r2-${outfitIndex}`} className='funky-img funky-right-2 outfit-img-anim'><img src={outfitImages[(outfitIndex + 4) % outfitImages.length]} alt='' /></div>
+            <div key={`r3-${outfitIndex}`} className='funky-img funky-right-3 outfit-img-anim'><img src={outfitImages[(outfitIndex + 5) % outfitImages.length]} alt='' /></div>
+          </div>
 
-          <div className='relative z-10 max-w-lg mx-auto bg-blue rounded-2xl px-8 py-10'>
+          {/* Text card */}
+          <div className='relative z-10 max-w-lg mx-auto bg-blue rounded-2xl px-8 py-10 pb-20'>
             <h1 className='text-white!'>what to wear</h1>
             <p>
               Think <b>funky cocktail</b> - Harry Styles at a garden party meets your coolest aunt at a disco. Bold colors, wild prints, and shoes you can actually dance in.
@@ -226,8 +229,24 @@ function App() {
             <p>
               Most importantly, be comfortable. The ceremony and cocktail hour are shaded outdoors, then the evening moves inside. So dress for a warm Chicago summer day (<span className='font-bold text-[#4a8ab5]'>↓65°</span> <span className='font-bold text-[#d54444]'>82°F↑</span>) and bring a layer if you run cold!
             </p>
-            <button className='button mt-4' onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}>See More Inspo</button>
           </div>
+
+          {/* Mobile: draggable print stack */}
+          <div className='md:hidden -mt-15 z-20 relative'>
+            <OutfitPile images={outfitImages} />
+          </div>
+
+          {/* Desktop arrows — 1 group of 6 at a time, no repeats */}
+          <div className='outfit-arrows hidden md:flex'>
+            <button className='outfit-arrow' onClick={() => navigateOutfitPage(-1)} aria-label='Previous' disabled={outfitIndex === 0}>
+              <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-5 h-5'><path d='M15 18l-6-6 6-6'/></svg>
+            </button>
+            <span className='outfit-counter'>{Math.floor(outfitIndex / 6) + 1} / {desktopPageCount}</span>
+            <button className='outfit-arrow' onClick={() => navigateOutfitPage(1)} aria-label='Next' disabled={Math.floor(outfitIndex / 6) >= desktopPageCount - 1}>
+              <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-5 h-5'><path d='M9 18l6-6-6-6'/></svg>
+            </button>
+          </div>
+
         </div>
       </section>
 
@@ -283,33 +302,32 @@ function App() {
           {(() => {
             const places = {
               do: [
-                { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
-                { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: 'Architectural Boat Tour' },
+                { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: '⭐️ Architectural Boat Tour' },
                 { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: '⭐️ Art Institute Chicago' },
-                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
                 { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
-                { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
+                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
+                { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
                 { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
+                { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
               ],
               eat: [
-                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
+                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
                 { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee with a stellar patio', label: '⭐️ Bang Bang Pie & Biscuits' },
+                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
+                // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
+                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
+                { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
                 { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
                 { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
-                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
-                // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
-                { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
-                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
               ],
               drink: [
-                { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
-                { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
                 { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: '⭐️ Easy Does It' },
+                { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
+                { name: 'The Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn' },
+                { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
                 { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
                 { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
                 { name: 'Welcome Back Lounge', tag: 'drinks & eats', tip: 'Retro cocktail lounge with great bites', label: 'Welcome Back Lounge' },
-                { name: 'The Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn' },
-
               ],
             };
             const PlaceList = ({ items }) => items.map(p => (
@@ -394,10 +412,10 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
       {/* Registry */}
       <section id='registry' className='block theme-red'>
         <div className='block-inner block-split'>
-          <div className='block-copy text-center md:text-left pl-2 md:pl-0'>
+          <div className='block-copy text-center md:text-left pl-2 md:pl-0 pr-4'>
             <h1>adventure awaits</h1>
             <p>We've skipped the registry - our home (and hearts) are already full. This party is about celebrating with the people we love most.</p>
-            <p>Having you here means <b>everything</b> to us.</p>
+            <p>Having you here means <b>everything</b> to us!</p>
             <Squiggle height={12} className='w-1/3 my-4 mx-auto md:mx-0 text-white/40' />
               <p>
               As our own gift to each other, we'll be setting off on an extended honeymoon.
@@ -453,37 +471,6 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
 
       {activePlace && (
         <PlaceModal place={activePlace} onClose={() => setActivePlace(null)} />
-      )}
-
-      {galleryOpen && (
-        <div className='gallery-backdrop' onClick={() => setGalleryOpen(false)}>
-          <div className='gallery-modal' onClick={e => e.stopPropagation()}
-            onTouchStart={e => { e.currentTarget.dataset.touchX = e.touches[0].clientX; }}
-            onTouchEnd={e => {
-              const dx = e.changedTouches[0].clientX - Number(e.currentTarget.dataset.touchX);
-              if (dx < -50) setGalleryIndex(i => (i + 1) % funkyPhotos.length);
-              if (dx > 50) setGalleryIndex(i => (i - 1 + funkyPhotos.length) % funkyPhotos.length);
-            }}
-          >
-            <button className='gallery-close' onClick={() => setGalleryOpen(false)}>
-              <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round' className='w-5 h-5'><path d='M18 6L6 18M6 6l12 12'/></svg>
-            </button>
-            <div className='gallery-img-wrap'>
-              <img src={funkyPhotos[galleryIndex]} alt='' />
-            </div>
-            <div className='gallery-nav'>
-              <button
-                className='gallery-arrow'
-                onClick={() => setGalleryIndex(i => (i - 1 + funkyPhotos.length) % funkyPhotos.length)}
-              ><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-6 h-6'><path d='M15 18l-6-6 6-6'/></svg></button>
-              <span className='gallery-count'>{galleryIndex + 1} / {funkyPhotos.length}</span>
-              <button
-                className='gallery-arrow'
-                onClick={() => setGalleryIndex(i => (i + 1) % funkyPhotos.length)}
-              ><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3' strokeLinecap='round' strokeLinejoin='round' className='w-6 h-6'><path d='M9 18l6-6-6-6'/></svg></button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

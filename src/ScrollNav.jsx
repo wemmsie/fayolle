@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 
 const sections = [
-    { id: 'details', emoji: '💃', label: 'Details' },
+    { id: 'details', emoji: '💃', label: 'Hi there!' },
     { id: 'schedule', emoji: '⏰', label: 'Schedule' },
-    { id: 'outfit', emoji: '🦩', label: 'Outfit' },
-    { id: 'stay', emoji: '🏨', label: 'Stay' },
+    { id: 'outfit', emoji: '🦩', label: 'Dresscode' },
+    { id: 'stay', emoji: '🏨', label: 'Accomodations' },
     { id: 'todo', emoji: '🗺', label: 'To Do' },
     { id: 'rsvp', emoji: '💌', label: 'RSVP' },
-    { id: 'story', emoji: '💕', label: 'Story' },
-    { id: 'registry', emoji: '🎁', label: "Vote" },
+    { id: 'story', emoji: '💕', label: 'Our Story' },
+    { id: 'registry', emoji: '🎁', label: "Honeymoon" },
 ];
 
 export function ScrollNav() {
@@ -23,9 +23,8 @@ export function ScrollNav() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!isSmooth.current) {
-          setRsvpInView(entry.isIntersecting);
-        }
+        // No isSmooth guard here — rsvp visibility is always authoritative
+        setRsvpInView(entry.isIntersecting);
       },
       { threshold: 0.3 }
     );
@@ -52,10 +51,13 @@ export function ScrollNav() {
   }, []);
 
   const scrollTo = (id) => {
-    isSmooth.current = true;
+    if (id === 'rsvp') {
+      setRsvpInView(true); // hide nav immediately, don't wait for observer
+    } else {
+      isSmooth.current = true;
+      setTimeout(() => { isSmooth.current = false; }, 1000);
+    }
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    // Keep nav visible during smooth scroll, then let IntersectionObserver take over
-    setTimeout(() => { isSmooth.current = false; }, 1000);
   };
 
   return (

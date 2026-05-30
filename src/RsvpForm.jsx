@@ -130,6 +130,12 @@ const DEV_MODE = import.meta.env.DEV && SKIP_RSVP_GATES;
 // Toggle to false to disable the password gate entirely
 const REQUIRE_PASSWORD = false;
 
+// ← ONE PLACE to tune all RSVP transition speeds.
+// Changing this value automatically updates every fade/slide animation
+// via the --rsvp-anim CSS custom property.
+const RSVP_ANIM_MS = 200;
+document.documentElement.style.setProperty('--rsvp-anim', `${RSVP_ANIM_MS}ms`);
+
 export function RsvpForm({ onOpenPlace }) {
   // Guest data loaded from Google Sheet (with fallback to static CSV)
   const [guestList, setGuestList] = useState([]);
@@ -180,18 +186,53 @@ export function RsvpForm({ onOpenPlace }) {
   const [kidsAllowed, setKidsAllowed] = useState(false); // from Col S
   const [nameSuggestions, setNameSuggestions] = useState([]);
   const [showNotOnList, setShowNotOnList] = useState(false);
+  const [isGateFadingOut, setIsGateFadingOut] = useState(false);
+  const [gateView, setGateView] = useState('form'); // 'form' | 'suggestions' | 'notfound'
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
   const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
   const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=meals, 3=details, 4=review
   const [maxStep, setMaxStep] = useState(0); // highest step ever reached
+  const [isStepFadingOut, setIsStepFadingOut] = useState(false);
+  const [isLeavingForm, setIsLeavingForm] = useState(false);
+  const [gateShouldFadeIn, setGateShouldFadeIn] = useState(false);
+
+  const handleNotMe = () => {
+    setIsLeavingForm(true);
+    setTimeout(() => {
+      setIsVerified(false);
+      setVerifiedName('');
+      setNameInput('');
+      setPairedPartner(null);
+      setPlusOneName('');
+      setAttending('');
+      setAlreadyRsvpd(null);
+      setEditingRsvp(false);
+      setPartyInviteAvailable(false);
+      setDinnerInviteAvailable(false);
+      setKidsAllowed(false);
+      setStep(0);
+      setMaxStep(0);
+      setIsLeavingForm(false);
+      setGateView('form');
+      setNameSuggestions([]);
+      setShowNotOnList(false);
+      setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '' }));
+      setGateShouldFadeIn(true);
+      setTimeout(() => setGateShouldFadeIn(false), RSVP_ANIM_MS + 50);
+    }, RSVP_ANIM_MS);
+  };
 
   const goToStep = (n) => {
     // Skip the kids step (3) when going forward if kids aren't allowed
     let target = n;
     if (n === 3 && !kidsAllowed) target = 4;
-    setStep(target);
-    setMaxStep(prev => Math.max(prev, target));
-    requestAnimationFrame(() => scrollToRsvp());
+    setIsStepFadingOut(true);
+    scrollToRsvp();
+    setTimeout(() => {
+      setStep(target);
+      setMaxStep(prev => Math.max(prev, target));
+      setIsStepFadingOut(false);
+    }, RSVP_ANIM_MS);
   };
 
   const [formData, setFormData] = useState({
@@ -204,7 +245,7 @@ export function RsvpForm({ onOpenPlace }) {
     mealChoices: {},
     kidsAttending: '',  // 'yes' | 'no' | ''
     kidCount: 0,
-    kidNames: [],       // array of strings, max 2
+    kidNames: [],       // array of strings, max 3
     kidMeals: {},       // { 0: 'shortrib'|'chicken'|'gnocchi'|'', ... }
     welcomeEvent: '',   // dinner invite flow: 'both'|'party'|'no'; party-only flow: 'party'|'no'
     message: '',
@@ -238,6 +279,10 @@ export function RsvpForm({ onOpenPlace }) {
   const animationTimers = useRef({});
   const formTopRef = useRef(null);
   const greetingNameRef = useRef(null);
+  const gateContentRef = useRef(null);
+  const gateFormRef = useRef(null);
+  const gateSuggestionsRef = useRef(null);
+  const gateNotFoundRef = useRef(null);
 
   // Fuzzy search configuration — rebuilds when guestList updates
   const fuse = useRef(null);
@@ -278,6 +323,41 @@ export function RsvpForm({ onOpenPlace }) {
     return () => window.removeEventListener('resize', checkNameWrap);
   }, [verifiedName]);
 
+  // Animate gate content height when switching between form / suggestions / not-found views
+  const prevSuggestionsLengthRef = useRef(0);
+  const prevShowNotOnListRef = useRef(false);
+
+  const animateGateHeight = (getTargetRef) => {
+    const wrap = gateContentRef.current;
+    if (wrap) wrap.style.height = `${wrap.offsetHeight}px`;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const target = getTargetRef();
+      if (wrap && target) wrap.style.height = `${target.scrollHeight}px`;
+    }));
+    setTimeout(() => { if (wrap) wrap.style.height = ''; }, 430);
+  };
+
+  useEffect(() => {
+    const prevLen = prevSuggestionsLengthRef.current;
+    prevSuggestionsLengthRef.current = nameSuggestions.length;
+    if (nameSuggestions.length > 0 && prevLen === 0) {
+      setGateView('suggestions');
+      animateGateHeight(() => gateSuggestionsRef.current);
+    }
+  }, [nameSuggestions]);
+
+  useEffect(() => {
+    const prev = prevShowNotOnListRef.current;
+    prevShowNotOnListRef.current = showNotOnList;
+    if (showNotOnList && !prev) {
+      setGateView('notfound');
+      animateGateHeight(() => gateNotFoundRef.current);
+    } else if (!showNotOnList && prev) {
+      setGateView('form');
+      animateGateHeight(() => gateFormRef.current);
+    }
+  }, [showNotOnList]);
+
   // Handle name verification
   const handlePasswordCheck = (e) => {
     e.preventDefault();
@@ -301,9 +381,23 @@ export function RsvpForm({ onOpenPlace }) {
     setDinnerInviteAvailable(dinnerInviteMap.get(name.toLowerCase()) || false);
     setKidsAllowed(kidsAllowedMap.get(name.toLowerCase()) || false);
     setEditingRsvp(false);
-    setIsVerified(true);
     setNameSuggestions([]);
     setShowNotOnList(false);
+    setIsGateFadingOut(true);
+    setTimeout(() => {
+      setIsVerified(true);
+      setIsGateFadingOut(false);
+    }, Math.round(RSVP_ANIM_MS * 0.75));
+  };
+
+  const handleSuggestionsBack = () => {
+    setGateView('form');
+    animateGateHeight(() => gateFormRef.current);
+    setTimeout(() => {
+      setNameSuggestions([]);
+      setNameInput('');
+      setShowNotOnList(false);
+    }, 430);
   };
 
   const handleNameCheck = (e) => {
@@ -465,7 +559,7 @@ export function RsvpForm({ onOpenPlace }) {
   // Kid data handlers
   const handleKidCountChange = (delta) => {
     setFormData(prev => {
-      const newCount = Math.max(0, Math.min(2, (prev.kidCount || 0) + delta));
+      const newCount = Math.max(0, Math.min(3, (prev.kidCount || 0) + delta));
       const kidNames = Array.from({ length: newCount }, (_, i) => (prev.kidNames || [])[i] || '');
       const kidMeals = Object.fromEntries(Object.entries(prev.kidMeals || {}).filter(([i]) => +i < newCount));
       return { ...prev, kidCount: newCount, kidNames, kidMeals };
@@ -571,7 +665,7 @@ export function RsvpForm({ onOpenPlace }) {
             email: formData.email || '',
             totalGuestCount: 0,
             kidCount: 0,
-            kidName1: '', kidName2: '', kidMeal1: '', kidMeal2: '',
+            kidName1: '', kidName2: '', kidName3: '', kidMeal1: '', kidMeal2: '', kidMeal3: '',
             dietaryNotes: '',
             message: formData.message || '',
           });
@@ -580,7 +674,7 @@ export function RsvpForm({ onOpenPlace }) {
             setIsDeclined(true);
             scrollToRsvp();
             setIsFadingOut(false);
-          }, 400);
+          }, RSVP_ANIM_MS);
         })
         .catch(() => alert('Oops! Something went wrong. Please try again.'))
         .finally(() => setIsSubmitting(false));
@@ -654,8 +748,10 @@ export function RsvpForm({ onOpenPlace }) {
           kidCount: hasKids ? formData.kidCount : 0,
           kidName1: hasKids ? ((formData.kidNames || [])[0] || '') : '',
           kidName2: hasKids ? ((formData.kidNames || [])[1] || '') : '',
+          kidName3: hasKids ? ((formData.kidNames || [])[2] || '') : '',
           kidMeal1: hasKids ? kidMealLabel(formData.kidMeals[0]) : '',
           kidMeal2: hasKids ? kidMealLabel(formData.kidMeals[1]) : '',
+          kidMeal3: hasKids ? kidMealLabel(formData.kidMeals[2]) : '',
           dietaryNotes: formData.dietaryDetails || '',
           message: formData.message || '',
         });
@@ -690,7 +786,7 @@ export function RsvpForm({ onOpenPlace }) {
           setAttending('');
           setDietaryMembers([]);
           setStep(0);
-        }, 400);
+        }, RSVP_ANIM_MS);
       })
       .catch((error) => {
         console.error('FAILED...', error);
@@ -782,11 +878,56 @@ export function RsvpForm({ onOpenPlace }) {
           )}
         </div>
       ) : !isVerified ? (
-        <div className='rsvp-panel'>
+        <div className={`rsvp-panel${isGateFadingOut ? ' fade-out' : ''}${gateShouldFadeIn ? ' step-panel' : ''}`}>
           <h1 className='mb-10 mx-auto'>time to rsvp!</h1>
 
-          {nameSuggestions.length > 0 ? (
-            <>
+          {/* Height-animated wrapper — all three panels live here simultaneously */}
+          <div
+            ref={gateContentRef}
+            style={{ position: 'relative', overflow: 'visible', transition: 'height 0.42s cubic-bezier(0.4,0,0.2,1)' }}
+          >
+            {/* Form panel — active when gateView === 'form' */}
+            <div
+              ref={gateFormRef}
+              style={{
+                opacity: gateView === 'form' ? 1 : 0,
+                pointerEvents: gateView === 'form' ? 'auto' : 'none',
+                transition: 'opacity 0.15s ease',
+                position: gateView !== 'form' ? 'absolute' : 'relative',
+                top: 0, left: 0, right: 0,
+                paddingBottom: '2.75rem',
+              }}
+            >
+              <p className='text-base! mb-6'>First things first...</p>
+              <form id='name-check-form' onSubmit={handleNameCheck} className='rsvp-inner-form'>
+                <div className='mb-0'>
+                  <input
+                    type='text'
+                    value={nameInput}
+                    onChange={(e) => setNameInput(e.target.value)}
+                    onClick={() => requestAnimationFrame(() => scrollToRsvp())}
+                    placeholder="What's your name?"
+                    autocomplete="name"
+                    required
+                  />
+                </div>
+              </form>
+              <div className='step-actions justify-center'>
+                <button type='submit' form='name-check-form' className='step-continue-btn step-continue-ready -bottom-10!'>Check list</button>
+              </div>
+            </div>
+
+            {/* Suggestions panel — active when gateView === 'suggestions' */}
+            <div
+              ref={gateSuggestionsRef}
+              style={{
+                opacity: gateView === 'suggestions' ? 1 : 0,
+                pointerEvents: gateView === 'suggestions' ? 'auto' : 'none',
+                transition: 'opacity 0.15s ease',
+                position: gateView !== 'suggestions' ? 'absolute' : 'relative',
+                top: 0, left: 0, right: 0,
+              }}
+            >
               <p className='text-base! mb-6'>Did you mean one of these?</p>
               <div className='flex flex-col items-center gap-2'>
                 {nameSuggestions.map((suggestion, index) => (
@@ -798,14 +939,24 @@ export function RsvpForm({ onOpenPlace }) {
               <button
                 type='button'
                 className='back-button mt-6 group'
-                onClick={() => { setNameSuggestions([]); setNameInput(''); setShowNotOnList(false); }}
+                onClick={handleSuggestionsBack}
               >
                 <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
                 None of these
               </button>
-            </>
-          ) : showNotOnList ? (
-            <>
+            </div>
+
+            {/* Not-found panel — active when gateView === 'notfound' */}
+            <div
+              ref={gateNotFoundRef}
+              style={{
+                opacity: gateView === 'notfound' ? 1 : 0,
+                pointerEvents: gateView === 'notfound' ? 'auto' : 'none',
+                transition: 'opacity 0.15s ease',
+                position: gateView !== 'notfound' ? 'absolute' : 'relative',
+                top: 0, left: 0, right: 0,
+              }}
+            >
               <p className='mb-2 text-red'>
                 Hmm, we couldn't find that name on our guest list.
               </p>
@@ -823,35 +974,15 @@ export function RsvpForm({ onOpenPlace }) {
                 <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
                 Try again
               </button>
-            </>
-          ) : (
-            <>
-              <p className='text-base! mb-6'>First things first...</p>
-              <form id='name-check-form' onSubmit={handleNameCheck} className='rsvp-inner-form'>
-                <div className='mb-6'>
-                  <input
-                    type='text'
-                    value={nameInput}
-                    onChange={(e) => setNameInput(e.target.value)}
-                    onClick={() => requestAnimationFrame(() => scrollToRsvp())}
-                    placeholder="What's your name?"
-                    autocomplete="name"
-                    required
-                  />
-                </div>
-              </form>
-              <div className='step-actions justify-center'>
-                <button type='submit' form='name-check-form' className='step-continue-btn step-continue-ready'>Check list</button>
-              </div>
-            </>
-          )}
+            </div>
+          </div>
         </div>
       ) : alreadyRsvpd && !editingRsvp ? (
-        <>
+        <div className={isLeavingForm ? 'step-fade-out' : 'step-panel'}>
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setPartyInviteAvailable(false); setDinnerInviteAvailable(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '' })); }}
+            onClick={handleNotMe}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName}?
@@ -876,13 +1007,13 @@ export function RsvpForm({ onOpenPlace }) {
               Change RSVP
             </button>
           </div>
-        </>
+        </div>
       ) : (
-        <>
+        <div className={isLeavingForm ? 'step-fade-out' : undefined}>
           <button
             type='button'
             className='not-me-button group'
-            onClick={() => { setIsVerified(false); setVerifiedName(''); setNameInput(''); setPairedPartner(null); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(false); setPartyInviteAvailable(false); setDinnerInviteAvailable(false); setKidsAllowed(false); setStep(0); setMaxStep(0); setFormData(prev => ({ ...prev, name: '', plusOne: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '' })); }}
+            onClick={handleNotMe}
           >
             <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
             Not {verifiedName}?
@@ -891,9 +1022,9 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 0: Greeting + Attendance ═══ */}
           {step === 0 && (
-            <>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
           <h1 className='font-sanremo-caps! text-center pt-10 text-xl! md:mb-6 mx-auto text-primary!'>hey</h1>
-          <h1 ref={greetingNameRef} className='text-center text-4xl! md:text-5xl! pt-0! mb-2! md:mb-6! mx-auto lowercase leading-12! md:leading-10! text-red!'>{showFullNameInGreeting ? verifiedName : verifiedFirstName}!</h1>
+          <h1 ref={greetingNameRef} className='text-center text-4xl! md:text-5xl! pt-0! mb-2! md:mb-6! mx-auto lowercase leading-15! md:leading-10! text-red!'>{showFullNameInGreeting ? verifiedName : verifiedFirstName}!</h1>
           {pairedPartner && (
             <h1 className='font-sanremo-caps! text-center text-xl! mx-auto text-primary!'>and {pairedPartner.split(' ')[0]}</h1>
           )}
@@ -999,8 +1130,7 @@ export function RsvpForm({ onOpenPlace }) {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && stepZeroContinueReady) {
                         e.preventDefault();
-                        setStep(1);
-                        requestAnimationFrame(() => scrollToRsvp());
+                        goToStep(1);
                       }
                     }}
                     placeholder="What's their name?"
@@ -1020,12 +1150,12 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
             </div>
           )}
-            </>
+            </div>
           )}
 
           {/* ═══ STEP NAV (visible on steps 1+) ═══ */}
           {step >= 1 && (
-            <div className='step-nav-row'>
+            <div className='step-nav-row step-panel'>
               <div className='step-nav'>
                 {stepDefs.map((s, displayIdx) => {
                   const displayNum = displayIdx + 1;
@@ -1042,7 +1172,7 @@ export function RsvpForm({ onOpenPlace }) {
                       isAhead ? 'step-nav-ahead' :
                       isVisited ? 'step-nav-done' : ''
                     }`}
-                    onClick={() => { if (s.num <= maxStep) { setStep(s.num); requestAnimationFrame(() => scrollToRsvp()); } }}
+                    onClick={() => { if (s.num <= maxStep) goToStep(s.num); }}
                     disabled={s.num > maxStep}
                   >
                     <span className='step-nav-circle'>
@@ -1060,7 +1190,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 1: Email ═══ */}
           {step === 1 && (
-            <div className='step-panel text-center'>
+            <div className={`${isStepFadingOut ? 'step-fade-out' : 'step-panel'} text-center`}>
               <h1 className='text-primary! step-title text-center pb-2'>We'll need your email</h1>
               <p className='text-center mb-6 text-sm! md:text-lg!'>To keep track of your RSVP and follow up on possible questions!</p>
               <div className='mb-8 max-inner'>
@@ -1071,7 +1201,7 @@ export function RsvpForm({ onOpenPlace }) {
                   value={formData.email}
                   onChange={handleChange}
                   onClick={() => requestAnimationFrame(() => scrollToRsvp())}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && isValidEmail(formData.email)) { e.preventDefault(); setStep(2); requestAnimationFrame(() => scrollToRsvp()); } }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && isValidEmail(formData.email)) { e.preventDefault(); goToStep(2); } }}
                   required
                   placeholder='your.email@example.com'
                   autoFocus
@@ -1088,7 +1218,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 2: Meal Selection ═══ */}
           {step === 2 && (
-            <div className='step-panel'>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Meal selection</h1>
 
               <div className='mb-6 max-inner'>
@@ -1131,7 +1261,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 3: Kids ═══ */}
           {step === 3 && (
-            <div className='step-panel'>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Kids tagging along?</h1>
               {/* <label className='text-center pb-2'>Add kids ohere</label> */}
 
@@ -1162,7 +1292,7 @@ export function RsvpForm({ onOpenPlace }) {
                       <span className='text-2xl font-bold text-primary w-6 text-center'>{formData.kidCount}</span>
                       <button
                         type='button'
-                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount >= 2 ? 'opacity-30' : ''}`}
+                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount >= 3 ? 'opacity-30' : ''}`}
                         onClick={() => handleKidCountChange(1)}
                       >+</button>
                     </div>
@@ -1214,7 +1344,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 4: Dietary Restrictions ═══ */}
           {step === 4 && (
-            <div className='step-panel'>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Dietary restrictions</h1>
 
               <div className='mb-6 max-inner'>
@@ -1230,7 +1360,7 @@ export function RsvpForm({ onOpenPlace }) {
                   </label>
                   <label className='radio-label'>
                     <input type='radio' name='hasDietary' value='help' checked={formData.hasDietary === 'help'} onChange={handleChange} />
-                    None of these options work - help us out!
+                    None of these options work
                   </label>
                 </div>
               </div>
@@ -1284,7 +1414,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 5: Last Details ═══ */}
           {step === 5 && (
-            <div className='step-panel'>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Last details</h1>
 
               <div className='mb-6 max-inner'>
@@ -1376,7 +1506,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* ═══ STEP 6: Summary / Review ═══ */}
           {step === 6 && (
-            <div className='step-panel'>
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-4'>Review your rsvp</h1>
 
               <div className='rsvp-summary max-inner'>
@@ -1468,7 +1598,7 @@ export function RsvpForm({ onOpenPlace }) {
           )}
 
         </form>
-        </>
+        </div>
       )}
     </>
   );
