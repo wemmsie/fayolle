@@ -9,6 +9,7 @@ export function PhotoPile({ photos }) {
   const swiperRef = useRef(null);
   const [isBeginning, setIsBeginning] = useState(true);
   const [isEnd, setIsEnd] = useState(photos.length <= 1);
+  const [hasSwiped, setHasSwiped] = useState(false);
 
   const updateNav = (swiper) => {
     setIsBeginning(swiper.isBeginning);
@@ -23,7 +24,7 @@ export function PhotoPile({ photos }) {
         modules={[EffectCards]}
         className="w-full"
         onSwiper={(swiper) => { swiperRef.current = swiper; updateNav(swiper); }}
-        onSlideChange={updateNav}
+        onSlideChange={(swiper) => { updateNav(swiper); setHasSwiped(true); }}
       >
         {photos.map((photo, index) => (
           <SwiperSlide key={index}>
@@ -31,13 +32,9 @@ export function PhotoPile({ photos }) {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className="photo-pile-nav">
-        <button className={`photo-pile-arrow ${isBeginning ? 'photo-pile-arrow-disabled' : ''}`} onClick={() => swiperRef.current?.slidePrev()} disabled={isBeginning} aria-label="Previous photo">
-          👈
-        </button>
-        <button className={`photo-pile-arrow ${isEnd ? 'photo-pile-arrow-disabled' : ''}`} onClick={() => swiperRef.current?.slideNext()} disabled={isEnd} aria-label="Next photo">
-          👉
-        </button>
+      <div className={`outfit-swipe-hint ${hasSwiped ? ' outfit-swipe-hint--gone' : ''}`} aria-hidden='true'>
+        <div className='outfit-swipe-trail' />
+        <div className='outfit-swipe-finger'>👆</div>
       </div>
     </div>
   )

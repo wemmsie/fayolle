@@ -231,6 +231,38 @@ section {
   transform: rotate(3deg) translateX(-1.5rem) translateY(-4px);
 }
 
+/* Sprawled vertical polaroid stack (mobile, static) */
+.polaroid-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.polaroid-stack .polaroid-stack-item {
+  max-width: 16rem;
+  width: 100%;
+}
+
+.polaroid-stack .polaroid-stack-item + .polaroid-stack-item {
+  margin-top: -2.5rem;
+}
+
+.polaroid-stack-1 {
+  transform: rotate(-5deg);
+  z-index: 1;
+}
+
+.polaroid-stack-2 {
+  transform: rotate(3deg) translateX(0.9rem);
+  z-index: 2;
+}
+
+.polaroid-stack-3 {
+  transform: rotate(-2deg) translateX(-0.4rem);
+  z-index: 3;
+}
+
 /* Wedding Day timeline */
 .wedding-day {
   @apply relative overflow-hidden;
@@ -257,7 +289,7 @@ section {
 }
 
 .timeline-detail {
-  @apply text-[34px] md:text-[40px] text-primary block lowercase font-sanremo-script -mt-3;
+  @apply text-[34px] md:text-[40px] text-primary block lowercase font-sanremo-script -mt-1 leading-7;
 }
 
 .wedding-day-img {
@@ -434,6 +466,72 @@ section {
   justify-content: center;
   gap: 2rem;
   margin-top: 2.25rem;
+}
+
+/* Swipe-hint: ☝️ swipes right→left leaving a fading streak, then lifts and returns */
+.outfit-swipe-hint {
+  position: relative;
+  width: 90px;
+  height: 36px;
+  margin: 1rem auto 0;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.5s ease;
+}
+
+.outfit-swipe-hint--gone {
+  opacity: 0;
+}
+
+.outfit-swipe-trail {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 50px;
+  height: 12px;
+  margin-left: -20px;
+  border-radius: 999px;
+  background: linear-gradient(to right, rgba(101 62 38 / 0.20), rgba(158 132 52 / 0));
+  clip-path: inset(0 0 0 100%);
+  animation: outfit-swipe-trail 1.5s linear infinite;
+}
+
+.outfit-swipe-finger {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  font-size: 40px;
+  line-height: 1;
+  margin-left: -10px;
+  transform-origin: 50% 8%;
+  animation: outfit-swipe-finger 1.5s linear infinite;
+}
+
+@keyframes outfit-swipe-finger {
+  /* hand sits at right, finger down */
+  0%   { transform: translate(20px, 0px) rotate(15deg) scale(1);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.2, 1); }
+  /* fast swipe to the left */
+  28%       { transform: translate(-20px, 0px) rotate(-15deg) scale(1);
+    animation-timing-function: ease-out; }
+  /* hold briefly at end */
+  35%       { transform: translate(-20px, 0px) rotate(-15deg) scale(1.1);   animation-timing-function: ease-out; }
+  /* float back to the right while raised */
+  70%      { transform: translate(20px, 0px) rotate(15deg) scale(1.1);   animation-timing-function: ease-in; }
+  /* place hand back down */
+   100% { transform: translate(20px, 0px) rotate(15deg) scale(1); }
+}
+
+@keyframes outfit-swipe-trail {
+  /* hidden before the swipe */
+  0% { clip-path: inset(0 0 0 100%); opacity: 1; }
+  /* reveal from right→left in sync with the fast finger swipe */
+  25%      { clip-path: inset(0 0 0 0%);   opacity: 1; }
+  /* fully present while finger pauses */
+  35%      { clip-path: inset(0 0 0 0%);   opacity: 1; }
+  /* streak fades while the hand is lifted/returning */
+  70%      { clip-path: inset(0 0 0 0%);   opacity: 0; }
+  100%     { clip-path: inset(0 0 0 100%); opacity: 0; }
 }
 
 /* ═══ Outfit Nav Arrows (desktop) ═══ */
@@ -773,12 +871,12 @@ button[type="submit"]:not(.step-continue-btn):active {
 
 .button {
     @apply inline-flex items-center gap-2 px-8 py-2 m-2 rounded-full text-primary bg-primary/20 hover:bg-primary hover:text-white font-medium text-base
-    cursor-pointer;
+    cursor-pointer font-sanremo-caps tracking-wider;
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .to-do .button {
-  @apply md:text-nowrap px-4;
+  @apply md:text-nowrap px-4 font-routed tracking-normal text-sm md:text-base;
 }
 
 .to-do .tab {

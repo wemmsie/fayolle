@@ -15,6 +15,7 @@ export function OutfitPile({ images }) {
   const rotations = useMemo(() => images.map((_, i) => pseudoRot(i)), []);
   const [isBeginning, setIsBeginning] = useState(true);
   const [isEnd, setIsEnd] = useState(false);
+  const [hasSwiped, setHasSwiped] = useState(false);
 
   const syncEdges = (swiper) => {
     setIsBeginning(swiper.isBeginning);
@@ -33,7 +34,7 @@ export function OutfitPile({ images }) {
           slideShadows: false,
         }}
         onSwiper={(swiper) => { swiperRef.current = swiper; syncEdges(swiper); }}
-        onSlideChange={syncEdges}
+        onSlideChange={(swiper) => { syncEdges(swiper); setHasSwiped(true); }}
         className='outfit-pile-swiper'
       >
         {images.map((img, i) => (
@@ -44,10 +45,14 @@ export function OutfitPile({ images }) {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className='outfit-pile-nav'>
+      <div className={`outfit-swipe-hint${hasSwiped ? ' outfit-swipe-hint--gone' : ''}`} aria-hidden='true'>
+        <div className='outfit-swipe-trail' />
+        <div className='outfit-swipe-finger'>👆</div>
+      </div>
+      {/* <div className='outfit-pile-nav'>
         <button className='outfit-arrow' onClick={() => swiperRef.current?.slidePrev()} aria-label='Previous' disabled={isBeginning}>👈</button>
         <button className='outfit-arrow' onClick={() => swiperRef.current?.slideNext()} aria-label='Next' disabled={isEnd}>👉</button>
-      </div>
+      </div> */}
     </div>
   );
 }

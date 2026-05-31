@@ -134,9 +134,11 @@ function App() {
       {/* The Details */}
       <section id='details' className='block theme-blue'>
         <div className='block-inner'>
-          {/* Mobile: swipeable card stack */}
-          <div className='md:hidden'>
-            <PhotoPile photos={[image.usny, image.emilyparis, image.codycafe]} />
+          {/* Mobile: sprawled polaroid stack */}
+          <div className='md:hidden! polaroid-stack'>
+            <Polaroid photo={image.usny} className='polaroid-stack-item polaroid-stack-1' />
+            {/* <Polaroid photo={image.emilyparis} className='polaroid-stack-item polaroid-stack-2' />
+            <Polaroid photo={image.codycafe} className='polaroid-stack-item polaroid-stack-3' /> */}
           </div>
           {/* Desktop: three overlapping polaroids */}
           <div className='hidden md:flex justify-center polaroid-spread'>
@@ -147,7 +149,7 @@ function App() {
           <div className='text-center mt-10 max-w-3xl mx-auto pl-2 md:pl-0'>
             <h1 className='pb-5'>let's do this thing!</h1>
             <p>
-              Please join us in <b>Chicago</b> on <b>Saturday August 8th, 2026</b> to celebrate our marriage beneath an excessive number of disco balls 🪩✨ (yes, really) and the ungovernable influence of actually really good espresso martinis.
+              Please join us in <b>Chicago</b> on <b>Saturday August 8th, 2026</b> to celebrate our marriage beneath an excessive number of disco balls (yes, really) and the ungovernable influence of actually really good espresso martinis.
             </p>
             <p>
               We've got a snazzy menu and a groovy playlist coming together, plus plenty of tips for things to do and places to stay while you're here.</p>
@@ -415,7 +417,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
           <div className='block-copy text-center md:text-left pl-2 md:pl-0 pr-4'>
             <h1>adventure awaits</h1>
             <p>We've skipped the registry - our home (and hearts) are already full. This party is about celebrating with the people we love most.</p>
-            <p>Having you here means <b>everything</b> to us!</p>
+            <p className='max-w-80! ml-0!'>Having you here means <b>everything</b> to us!</p>
             <Squiggle height={12} className='w-1/3 my-4 mx-auto md:mx-0 text-white/40' />
               <p>
               As our own gift to each other, we'll be setting off on an extended honeymoon.
@@ -423,7 +425,7 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
               <p>
                 And for anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our trip. Whichever spot gets the most love will be our destination. 💕
             </p>
-            <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button'>Contribute to Our Honeymoon</a>
+            <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button m-0! px-4!'>Contribute to Our Honeymoon</a>
           </div>
           <div className='block-media'>
             {/* Mobile: swipeable card stack */}
