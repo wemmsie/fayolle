@@ -118,9 +118,9 @@ function buildGuestMaps(guestData) {
 }
 
 const meals = [
-  { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', color: 'meal-red', desc: 'Mashed potatoes, asparagus, crispy leeks and a rich red wine demi-glaze' },
-  { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', color: 'meal-yellow', desc: 'Roasted garlic potatoes, charred seasonal vegetables, pan jus' },
-  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-green', desc: 'Roasted seasonal vegetables, charred cauliflower, wilted baby kale, brown butter sauce, crispy sage' },
+  { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', color: 'meal-red', desc: 'Mashed potatoes, asparagus, crispy leeks, rich red wine demi-glaze' },
+  { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', color: 'meal-yellow', desc: 'Roasted garlic potatoes, seasonal vegetables, pan jus' },
+  { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-green', desc: 'Roasted seasonal veg, charred cauliflower, baby kale, brown butter sauce, crispy sage' },
 ];
 
 // Toggle to false to test the real RSVP flow in dev
@@ -1309,7 +1309,7 @@ export function RsvpForm({ onOpenPlace }) {
                             value={(formData.kidNames || [])[i] || ''}
                             onChange={(e) => handleKidNameChange(i, e.target.value)}
                             placeholder={`Name`}
-                            className='text-sm! flex-1 min-w-0'
+                            className='text-sm! flex-1 min-w-0 py-2!'
                           />
                           <div className='meal-options md:flex-nowrap shrink-0 justify-end pt-2 md:pt-0'>
                             {meals.map((meal) => (

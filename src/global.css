@@ -1543,9 +1543,9 @@ button,
 }
 
 .menu-compact-item {
-  @apply rounded-lg px-4 py-2.5 md:py-3;
-  background: rgba(255,255,255,0.15);
-  border-left: 3px solid transparent;
+  @apply px-3 py-2 md:py-2 rounded-r-xl;
+  background: rgba(219 227 230 / 0.18);
+  border-left: 4px solid transparent;
 }
 
 .menu-compact-item.meal-red { border-left-color: var(--color-red); }
