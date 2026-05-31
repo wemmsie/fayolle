@@ -793,7 +793,8 @@ textarea {
     @apply w-full pb-4 pt-3 border-b-2 border-primary/20 transition-all font-routed tracking-wider text-base md:text-lg text-center bg-transparent focus:bg-transparent;
 }
 textarea {
-  @apply leading-5 text-sm md:text-base text-left;
+  /* Keep ≥16px on mobile so iOS Safari doesn't auto-zoom on focus */
+  @apply leading-5 text-base md:text-base text-left;
 }
 
 input[type="text"]:focus,

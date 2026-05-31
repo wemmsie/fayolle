@@ -1309,7 +1309,7 @@ export function RsvpForm({ onOpenPlace }) {
                             value={(formData.kidNames || [])[i] || ''}
                             onChange={(e) => handleKidNameChange(i, e.target.value)}
                             placeholder={`Name`}
-                            className='text-sm! flex-1 min-w-0 py-2!'
+                            className='text-base! md:text-sm! flex-1 min-w-0 py-2!'
                           />
                           <div className='meal-options md:flex-nowrap shrink-0 justify-end pt-2 md:pt-0'>
                             {meals.map((meal) => (
