@@ -492,7 +492,12 @@ section {
   margin-left: -20px;
   border-radius: 999px;
   background: linear-gradient(to right, rgba(101 62 38 / 0.20), rgba(158 132 52 / 0));
-  clip-path: inset(0 0 0 100%);
+  /* Base state matches keyframe 0% so iOS doesn't flash an unmasked trail before the animation starts */
+  opacity: 0;
+  -webkit-mask: linear-gradient(#000, #000) right center / 0% 100% no-repeat;
+          mask: linear-gradient(#000, #000) right center / 0% 100% no-repeat;
+  transform: translateZ(0);
+  will-change: opacity, -webkit-mask-size, mask-size;
   animation: outfit-swipe-trail 1.5s linear infinite;
 }
 
@@ -504,6 +509,9 @@ section {
   line-height: 1;
   margin-left: -10px;
   transform-origin: 50% 8%;
+  /* Base transform matches keyframe 0% so the emoji doesn't jump from its natural position on first paint */
+  transform: translate3d(20px, 0, 0) rotate(15deg);
+  will-change: transform;
   animation: outfit-swipe-finger 1.5s linear infinite;
 }
 
@@ -524,14 +532,14 @@ section {
 
 @keyframes outfit-swipe-trail {
   /* hidden before the swipe */
-  0% { clip-path: inset(0 0 0 100%); opacity: 1; }
+  0%       { -webkit-mask-size: 0% 100%;   mask-size: 0% 100%;   opacity: 1; }
   /* reveal from right→left in sync with the fast finger swipe */
-  25%      { clip-path: inset(0 0 0 0%);   opacity: 1; }
+  25%      { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; opacity: 1; }
   /* fully present while finger pauses */
-  35%      { clip-path: inset(0 0 0 0%);   opacity: 1; }
+  35%      { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; opacity: 1; }
   /* streak fades while the hand is lifted/returning */
-  70%      { clip-path: inset(0 0 0 0%);   opacity: 0; }
-  100%     { clip-path: inset(0 0 0 100%); opacity: 0; }
+  70%      { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; opacity: 0; }
+  100%     { -webkit-mask-size: 0% 100%;   mask-size: 0% 100%;   opacity: 0; }
 }
 
 /* ═══ Outfit Nav Arrows (desktop) ═══ */

@@ -32,10 +32,10 @@ export function PhotoPile({ photos }) {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className={`outfit-swipe-hint ${hasSwiped ? ' outfit-swipe-hint--gone' : ''}`} aria-hidden='true'>
+      {/* <div className={`outfit-swipe-hint ${hasSwiped ? ' outfit-swipe-hint--gone' : ''}`} aria-hidden='true'>
         <div className='outfit-swipe-trail' />
         <div className='outfit-swipe-finger'>👆</div>
-      </div>
+      </div> */}
     </div>
   )
 }
