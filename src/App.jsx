@@ -417,13 +417,13 @@ Emily and Cody could not be more thrilled to officially tie the knot this August
           <div className='block-copy text-center md:text-left pl-2 md:pl-0 pr-4'>
             <h1>adventure awaits</h1>
             <p>We've skipped the registry - our home (and hearts) are already full. This party is about celebrating with the people we love most.</p>
-            <p className='max-w-80! ml-0!'>Having you here means <b>everything</b> to us!</p>
+            <p className='max-w-60! md:max-w-80! md:ml-0!'>Having you here means <b>everything</b> to us!</p>
             <Squiggle height={12} className='w-1/3 my-4 mx-auto md:mx-0 text-white/40' />
               <p>
               As our own gift to each other, we'll be setting off on an extended honeymoon.
               </p>
               <p>
-                And for anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our trip. Whichever spot gets the most love will be our destination. 💕
+                For anyone who just can't help themselves, you're welcome to cast a vote with a contribution toward our trip. Whichever spot gets the most love will be our destination. 💕
             </p>
             <a target="_blank" rel="noopener noreferrer" href='https://www.zola.com/registry/emilyandcodyaugust8' className='button m-0! px-4!'>Contribute to Our Honeymoon</a>
           </div>
