@@ -404,8 +404,17 @@ export function RsvpForm({ onOpenPlace }) {
     e.preventDefault();
     const trimmedName = nameInput.trim();
 
-    // Check for exact full name match (case-insensitive)
-    const exactMatch = guestList.find((guest) => guest.toLowerCase() === trimmedName.toLowerCase());
+    // Normalize for matching: lowercase, strip accents/diacritics, strip apostrophes
+    // e.g. "Sébastien" / "Sebastien" / "O'Brien" / "Obrien" all match each other
+    const norm = (s) => s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[''`]/g, '');
+    const normalizedInput = norm(trimmedName);
+
+    // Check for exact full name match (accent/apostrophe-insensitive)
+    const exactMatch = guestList.find((guest) => norm(guest) === normalizedInput);
 
     if (exactMatch) {
       verifyGuest(exactMatch);
@@ -413,10 +422,9 @@ export function RsvpForm({ onOpenPlace }) {
     }
 
     // Check for exact first name match only — no partial/prefix matching
-    const input = trimmedName.toLowerCase();
     const firstNameMatches = guestList.filter(guest => {
-      const firstName = guest.split(' ')[0].toLowerCase();
-      return firstName === input;
+      const firstName = guest.split(' ')[0];
+      return norm(firstName) === normalizedInput;
     });
 
     if (firstNameMatches.length === 1) {
