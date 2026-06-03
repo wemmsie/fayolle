@@ -121,6 +121,7 @@ const meals = [
   { value: 'shortrib', title: '🍷 Braised Short Rib', shortTitle: 'Short Rib', tag: 'GF', color: 'meal-red', desc: 'Mashed potatoes, asparagus, crispy leeks, rich red wine demi-glaze' },
   { value: 'chicken', title: '🍋 Lemon Rosemary Chicken', shortTitle: 'Chicken', color: 'meal-yellow', desc: 'Roasted garlic potatoes, seasonal vegetables, pan jus' },
   { value: 'gnocchi', title: '🍠 Sweet Potato Gnocchi', shortTitle: 'Gnocchi', tag: 'VEG', color: 'meal-green', desc: 'Roasted seasonal veg, charred cauliflower, baby kale, brown butter sauce, crispy sage' },
+  { value: 'other', title: '✨ Other', shortTitle: 'Other', color: 'meal-blue', desc: "Skipping the meal or have specific needs — we'll follow up on the next step" },
 ];
 
 // Toggle to false to test the real RSVP flow in dev
@@ -135,6 +136,36 @@ const REQUIRE_PASSWORD = false;
 // via the --rsvp-anim CSS custom property.
 const RSVP_ANIM_MS = 200;
 document.documentElement.style.setProperty('--rsvp-anim', `${RSVP_ANIM_MS}ms`);
+
+// Wraps children with the existing animate-in / animate-out keyframes,
+// keeping content mounted during the exit animation so it slides up smoothly
+// instead of snapping out of view.
+function AnimatedReveal({ show, className = '', durationMs = 220, children }) {
+  const [render, setRender] = useState({ mounted: !!show, animating: false });
+  const timerRef = useRef(null);
+  useEffect(() => {
+    if (show) {
+      clearTimeout(timerRef.current);
+      setRender({ mounted: true, animating: false });
+    } else {
+      setRender(prev => {
+        if (!prev.mounted || prev.animating) return prev;
+        return { mounted: true, animating: true };
+      });
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setRender({ mounted: false, animating: false });
+      }, durationMs);
+    }
+    return () => clearTimeout(timerRef.current);
+  }, [show, durationMs]);
+  if (!render.mounted) return null;
+  return (
+    <div className={`${render.animating ? 'animate-out' : 'animate-in'} ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 export function RsvpForm({ onOpenPlace }) {
   // Guest data loaded from Google Sheet (with fallback to static CSV)
@@ -190,7 +221,7 @@ export function RsvpForm({ onOpenPlace }) {
   const [gateView, setGateView] = useState('form'); // 'form' | 'suggestions' | 'notfound'
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
   const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
-  const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=meals, 3=details, 4=review
+  const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=kids, 3=meals, 4=dietary, 5=details, 6=review
   const [maxStep, setMaxStep] = useState(0); // highest step ever reached
   const [isStepFadingOut, setIsStepFadingOut] = useState(false);
   const [isLeavingForm, setIsLeavingForm] = useState(false);
@@ -223,9 +254,9 @@ export function RsvpForm({ onOpenPlace }) {
   };
 
   const goToStep = (n) => {
-    // Skip the kids step (3) when going forward if kids aren't allowed
+    // Skip the kids step (2) when going forward if kids aren't allowed
     let target = n;
-    if (n === 3 && !kidsAllowed) target = 4;
+    if (n === 2 && !kidsAllowed) target = 3;
     setIsStepFadingOut(true);
     scrollToRsvp();
     setTimeout(() => {
@@ -239,18 +270,20 @@ export function RsvpForm({ onOpenPlace }) {
     name: DEV_MODE ? 'Dev User' : '',
     email: '',
     plusOne: '',
-    hasDietary: '',
-    dietaryCount: '',
     dietaryDetails: '',
     mealChoices: {},
     kidsAttending: '',  // 'yes' | 'no' | ''
     kidCount: 0,
     kidNames: [],       // array of strings, max 3
-    kidMeals: {},       // { 0: 'shortrib'|'chicken'|'gnocchi'|'', ... }
+    kidMeals: {},       // { 0: 'shortrib'|'chicken'|'gnocchi'|'other'|'', ... }
     welcomeEvent: '',   // dinner invite flow: 'both'|'party'|'no'; party-only flow: 'party'|'no'
     message: '',
+    otherMealResponses: {}, // { [memberIndex]: 'skip' | 'special' } — for guests who chose 'other'
+    otherSpecialRequests: {}, // { [memberIndex]: string } — the actual special request text
+    hasDietary: '',     // 'yes' | 'no' | '' — answer to the dietary-restrictions radio
   });
-  const [dietaryMembers, setDietaryMembers] = useState([]); // indices of party members with dietary restrictions
+  // Render state for the dietary-note textarea — supports an exit animation
+  const [dietaryNoteRender, setDietaryNoteRender] = useState({ mounted: false, animating: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isDeclined, setIsDeclined] = useState(false);
@@ -271,11 +304,9 @@ export function RsvpForm({ onOpenPlace }) {
   }, [isSubmitted, isDeclined]);
 
   // Track visibility and animation state for conditional fields
-  const [fieldState, setFieldState] = useState({
-    dietaryFields: { visible: false, animating: false },
-  });
+  const [fieldState, setFieldState] = useState({});
 
-  const prevValues = useRef({ hasDietary: '' });
+  const prevValues = useRef({});
   const animationTimers = useRef({});
   const formTopRef = useRef(null);
   const greetingNameRef = useRef(null);
@@ -448,9 +479,7 @@ export function RsvpForm({ onOpenPlace }) {
   };
 
   // Map field names to their corresponding form data keys
-  const fieldToDataKey = {
-    dietaryFields: 'hasDietary',
-  };
+  const fieldToDataKey = {};
 
   // Generic handler for conditional field visibility
   const handleFieldVisibility = (fieldName, condition, onClear, expandValues = ['yes']) => {
@@ -470,11 +499,6 @@ export function RsvpForm({ onOpenPlace }) {
       }, 500);
     }
   };
-
-  useEffect(() => {
-    handleFieldVisibility('dietaryFields', formData.hasDietary, () => { setFormData((prev) => ({ ...prev, dietaryCount: '', dietaryDetails: '' })); setDietaryMembers([]); }, ['yes', 'help']);
-    prevValues.current.hasDietary = formData.hasDietary;
-  }, [formData.hasDietary]);
 
   // Calculate total party size
   const getPartySize = () => {
@@ -533,17 +557,69 @@ export function RsvpForm({ onOpenPlace }) {
   const isDeclining = attending === 'none' || attending === 'no';
   // Party is "complete" when we know the final headcount (and they're coming)
   const partyComplete = attendanceAnswered && !isDeclining && (pairedPartner ? true : formData.plusOne !== '' || attending === 'yes');
-  const mealsStepComplete = getPartySize() > 0;
+  // Whether kid meals must be filled in (kids step says yes and at least one kid)
+  const kidsEating = kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0;
+  const mealsStepComplete = getPartySize() > 0
+    && Array.from({ length: getPartySize() }, (_, i) => formData.mealChoices[i]).every(Boolean)
+    && (!kidsEating
+      || Array.from({ length: formData.kidCount }, (_, i) => formData.kidMeals[i]).every(Boolean));
 
-  // Kids step: complete when kidsAttending answered and (if yes) each kid has a meal selected
-  const kidsStepDone = formData.kidsAttending === 'no' || formData.kidCount > 0;
+  // Kids step: complete when kidsAttending answered and (if yes) each kid has a name
+  const kidsStepDone = formData.kidsAttending === 'no'
+    || (formData.kidCount > 0
+      && Array.from({ length: formData.kidCount }, (_, i) => ((formData.kidNames || [])[i] || '').trim()).every(Boolean));
+
+  // Indices of party + kid members who selected the "Other" meal option.
+  // Member indices are: 0..partySize-1 = adults, partySize..partySize+kidCount-1 = kids.
+  const otherMemberIndices = (() => {
+    const indices = [];
+    const partySize = getPartySize();
+    for (let i = 0; i < partySize; i++) {
+      if (formData.mealChoices[i] === 'other') indices.push(i);
+    }
+    if (kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0) {
+      for (let i = 0; i < formData.kidCount; i++) {
+        if (formData.kidMeals[i] === 'other') indices.push(partySize + i);
+      }
+    }
+    return indices;
+  })();
+  const hasOtherMeal = otherMemberIndices.length > 0;
+  const allOtherResponded = otherMemberIndices.every(i => !!formData.otherMealResponses[i]);
+  const anyOtherSpecial = otherMemberIndices.some(i => formData.otherMealResponses[i] === 'special');
+  // Total members (adults + kids if attending)
+  const totalMembers = getPartySize() + (kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0 ? formData.kidCount : 0);
+  const hasNonOtherMembers = totalMembers - otherMemberIndices.length > 0;
+  // Everyone in the party is "Other → Not eating" (nobody actually eating)
+  const everyoneNotEating = hasOtherMeal
+    && !hasNonOtherMembers
+    && otherMemberIndices.every(i => formData.otherMealResponses[i] === 'skip');
+  // Whether every Other → Special guest has typed a (non-empty) request
+  const allSpecialRequestsFilled = otherMemberIndices
+    .filter(i => formData.otherMealResponses[i] === 'special')
+    .every(i => (formData.otherSpecialRequests[i] || '').trim() !== '');
+  // Whether the dietary-note textarea should currently be visible (logical state)
+  const dietaryNoteShouldShow = formData.hasDietary === 'yes' && !everyoneNotEating;
+
+  // Drive mount + exit animation for the dietary-note textarea
+  useEffect(() => {
+    if (dietaryNoteShouldShow) {
+      clearTimeout(animationTimers.current.dietaryNote);
+      setDietaryNoteRender({ mounted: true, animating: false });
+    } else if (dietaryNoteRender.mounted && !dietaryNoteRender.animating) {
+      setDietaryNoteRender({ mounted: true, animating: true });
+      animationTimers.current.dietaryNote = setTimeout(() => {
+        setDietaryNoteRender({ mounted: false, animating: false });
+      }, 220);
+    }
+  }, [dietaryNoteShouldShow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Wizard steps definition (dynamic based on kidsAllowed)
-  // Absolute step numbers: 1=Email, 2=Meals, 3=Kids(optional), 4=Dietary, 5=Details, 6=Review
+  // Absolute step numbers: 1=Email, 2=Kids(optional), 3=Meals, 4=Dietary, 5=Details, 6=Review
   const stepDefs = [
     { num: 1, label: 'Email' },
-    { num: 2, label: 'Meals' },
-    ...(kidsAllowed ? [{ num: 3, label: 'Kids' }] : []),
+    ...(kidsAllowed ? [{ num: 2, label: 'Kids' }] : []),
+    { num: 3, label: 'Meals' },
     { num: 4, label: 'Dietary' },
     { num: 5, label: 'Details' },
     { num: 6, label: 'Review' },
@@ -552,9 +628,20 @@ export function RsvpForm({ onOpenPlace }) {
   // Whether each step's data is fully filled (keyed by absolute step number)
   const stepComplete = {
     1: isValidEmail(formData.email),
-    2: mealsStepComplete,
-    3: formData.kidsAttending !== '' && kidsStepDone,
-    4: formData.hasDietary !== '',
+    2: formData.kidsAttending !== '' && kidsStepDone,
+    3: mealsStepComplete,
+    4: (
+      // All "Other" meal selections must have a follow-up response
+      allOtherResponded
+      // Each Other → Special needs a non-empty request typed in
+      && allSpecialRequestsFilled
+      && (
+        everyoneNotEating
+        // Otherwise the yes/no radio must be answered (and notes filled if 'yes')
+        || formData.hasDietary === 'no'
+        || (formData.hasDietary === 'yes' && formData.dietaryDetails.trim() !== '')
+      )
+    ),
     5: !hasWelcomeInvite || formData.welcomeEvent !== '', // required if invited to dinner/party
     6: false, // review is never "done" until submitted
   };
@@ -583,10 +670,22 @@ export function RsvpForm({ onOpenPlace }) {
   };
 
   const handleKidMealChange = (i, value) => {
-    setFormData(prev => ({
-      ...prev,
-      kidMeals: { ...prev.kidMeals, [i]: prev.kidMeals[i] === value ? '' : value }
-    }));
+    setFormData(prev => {
+      const newChoice = prev.kidMeals[i] === value ? '' : value;
+      const memberIndex = getPartySize() + i;
+      const newOther = { ...prev.otherMealResponses };
+      const newSpecial = { ...prev.otherSpecialRequests };
+      if (newChoice !== 'other') {
+        delete newOther[memberIndex];
+        delete newSpecial[memberIndex];
+      }
+      return {
+        ...prev,
+        kidMeals: { ...prev.kidMeals, [i]: newChoice },
+        otherMealResponses: newOther,
+        otherSpecialRequests: newSpecial,
+      };
+    });
   };
 
   const getGuestLabel = (index) => {
@@ -607,20 +706,40 @@ export function RsvpForm({ onOpenPlace }) {
     return '';
   };
 
-  const toggleDietaryMember = (index) => {
-    setDietaryMembers(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
-
   const handleMealChange = (guestIndex, value) => {
-    setFormData(prev => ({
-      ...prev,
-      mealChoices: { ...prev.mealChoices, [guestIndex]: prev.mealChoices[guestIndex] === value ? '' : value }
-    }));
+    setFormData(prev => {
+      const newChoice = prev.mealChoices[guestIndex] === value ? '' : value;
+      // If this guest is no longer 'other', drop their otherMealResponses entry
+      const newOther = { ...prev.otherMealResponses };
+      const newSpecial = { ...prev.otherSpecialRequests };
+      if (newChoice !== 'other') {
+        delete newOther[guestIndex];
+        delete newSpecial[guestIndex];
+      }
+      return {
+        ...prev,
+        mealChoices: { ...prev.mealChoices, [guestIndex]: newChoice },
+        otherMealResponses: newOther,
+        otherSpecialRequests: newSpecial,
+      };
+    });
     if (invalidFields.includes(`meal_${guestIndex}`)) {
       setInvalidFields(prev => prev.filter(f => f !== `meal_${guestIndex}`));
     }
+  };
+
+  const setOtherMealResponse = (memberIndex, value) => {
+    setFormData(prev => ({
+      ...prev,
+      otherMealResponses: { ...prev.otherMealResponses, [memberIndex]: value },
+    }));
+  };
+
+  const setOtherSpecialRequest = (memberIndex, value) => {
+    setFormData(prev => ({
+      ...prev,
+      otherSpecialRequests: { ...prev.otherSpecialRequests, [memberIndex]: value },
+    }));
   };
 
   // Fire-and-forget update to Google Sheet via Apps Script
@@ -675,6 +794,7 @@ export function RsvpForm({ onOpenPlace }) {
             kidCount: 0,
             kidName1: '', kidName2: '', kidName3: '', kidMeal1: '', kidMeal2: '', kidMeal3: '',
             dietaryNotes: '',
+            foodNotes: '',
             message: formData.message || '',
           });
           setIsFadingOut(true);
@@ -692,7 +812,6 @@ export function RsvpForm({ onOpenPlace }) {
     // Validate radio buttons (these will flash if not selected)
     const invalid = [];
     if (!pairedPartner && !formData.plusOne) invalid.push('plusOne');
-    if (!formData.hasDietary && partyComplete) invalid.push('hasDietary');
     if (invalid.length > 0) {
       setInvalidFields(invalid);
       return;
@@ -711,22 +830,33 @@ export function RsvpForm({ onOpenPlace }) {
       from_email: formData.email,
       plus_one: getPlusOneName() || 'N/A',
       party_size: getPartySize(),
-      has_dietary: formData.hasDietary === 'help' ? 'Needs alternative meal' : formData.hasDietary,
-      dietary_count: dietaryMembers.length > 0
-        ? dietaryMembers.map(i => getGuestLabel(i)).join(', ')
-        : 'N/A',
+      has_dietary: formData.dietaryDetails.trim() ? 'yes' : 'no',
+      dietary_count: 'N/A',
       dietary_details: formData.dietaryDetails || 'None',
       meal_choices: Array.from({ length: getPartySize() }, (_, i) => {
         const choice = meals.find(m => m.value === formData.mealChoices[i]);
-        return getGuestLabel(i) + ': ' + (choice ? choice.title : 'none selected');
+        const base = choice ? choice.title : 'none selected';
+        const note = formData.mealChoices[i] === 'other'
+          ? (formData.otherMealResponses[i] === 'skip' ? ' — won\'t be eating'
+              : formData.otherMealResponses[i] === 'special'
+                ? ` — special request: ${(formData.otherSpecialRequests[i] || '').trim() || 'unspecified'}`
+                : '')
+          : '';
+        return getGuestLabel(i) + ': ' + base + note;
       }).join('\n'),
       kids: kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0
         ? Array.from({ length: formData.kidCount }, (_, i) => {
             const kidName = (formData.kidNames || [])[i] || `Kid ${i + 1}`;
             const mealVal = formData.kidMeals[i];
-            const mealLabel = mealVal === 'other' ? 'Other / dietary needs'
-              : meals.find(m => m.value === mealVal)?.title || 'N/A';
-            return `${kidName}: ${mealLabel}`;
+            const mealLabel = meals.find(m => m.value === mealVal)?.title || 'N/A';
+            const dietaryIndex = getPartySize() + i;
+            const note = mealVal === 'other'
+              ? (formData.otherMealResponses[dietaryIndex] === 'skip' ? ' — won\'t be eating'
+                  : formData.otherMealResponses[dietaryIndex] === 'special'
+                    ? ` — special request: ${(formData.otherSpecialRequests[dietaryIndex] || '').trim() || 'unspecified'}`
+                    : '')
+              : '';
+            return `${kidName}: ${mealLabel}${note}`;
           }).join('\n')
         : 'N/A',
       welcome_party: getWelcomeEventEmailLabel(),
@@ -743,6 +873,41 @@ export function RsvpForm({ onOpenPlace }) {
         const plusOneMeal = getPartySize() > 1 ? meals.find(m => m.value === formData.mealChoices[1]) : null;
         const hasKids = kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0;
         const kidMealLabel = (val) => val === 'other' ? 'Other' : meals.find(m => m.value === val)?.shortTitle || '';
+
+        // Compose dietaryNotes: prefix per-guest "Other" special requests / not-eating notes,
+        // then append the free-form "anything else" textarea content.
+        const specialRequestLines = [];
+        const partySize = getPartySize();
+        for (let i = 0; i < partySize; i++) {
+          if (formData.mealChoices[i] !== 'other') continue;
+          const fullLabel = getGuestLabel(i) || '';
+          const firstName = (fullLabel.trim().split(/\s+/)[0]) || fullLabel || `Guest ${i + 1}`;
+          const response = formData.otherMealResponses[i];
+          if (response === 'skip') {
+            specialRequestLines.push(`${firstName}: not eating`);
+          } else if (response === 'special') {
+            const text = (formData.otherSpecialRequests[i] || '').trim();
+            specialRequestLines.push(`${firstName}: ${text || 'special request (unspecified)'}`);
+          }
+        }
+        if (hasKids) {
+          for (let i = 0; i < formData.kidCount; i++) {
+            if (formData.kidMeals[i] !== 'other') continue;
+            const dietaryIndex = partySize + i;
+            const rawName = (formData.kidNames || [])[i] || '';
+            const firstName = rawName ? (rawName.split(/\s+/)[0] || rawName) : `Kid ${i + 1}`;
+            const response = formData.otherMealResponses[dietaryIndex];
+            if (response === 'skip') {
+              specialRequestLines.push(`${firstName}: not eating`);
+            } else if (response === 'special') {
+              const text = (formData.otherSpecialRequests[dietaryIndex] || '').trim();
+              specialRequestLines.push(`${firstName}: ${text || 'special request (unspecified)'}`);
+            }
+          }
+        }
+        const composedDietaryNotes = specialRequestLines.join('\n');
+        const composedFoodNotes = (formData.dietaryDetails || '').trim();
+
         updateGoogleSheet({
           name: formData.name,
           rsvp: 'Yes',
@@ -760,7 +925,8 @@ export function RsvpForm({ onOpenPlace }) {
           kidMeal1: hasKids ? kidMealLabel(formData.kidMeals[0]) : '',
           kidMeal2: hasKids ? kidMealLabel(formData.kidMeals[1]) : '',
           kidMeal3: hasKids ? kidMealLabel(formData.kidMeals[2]) : '',
-          dietaryNotes: formData.dietaryDetails || '',
+          dietaryNotes: composedDietaryNotes,
+          foodNotes: composedFoodNotes,
           message: formData.message || '',
         });
 
@@ -774,8 +940,6 @@ export function RsvpForm({ onOpenPlace }) {
             name: prev.name,
             email: prev.email,
             plusOne: '',
-            hasDietary: '',
-            dietaryCount: '',
             dietaryDetails: '',
             mealChoices: {},
             kidsAttending: '',
@@ -784,15 +948,13 @@ export function RsvpForm({ onOpenPlace }) {
             kidMeals: {},
             welcomeEvent: '',
             message: '',
+            otherMealResponses: {},
+            otherSpecialRequests: {},
+            hasDietary: '',
           }));
-          setFieldState({
-            dietaryFields: { visible: false, animating: false },
-          });
-          prevValues.current = { hasDietary: '' };
           // Reset form selections (keep name/partner for "Update my RSVP")
           setPlusOneName('');
           setAttending('');
-          setDietaryMembers([]);
           setStep(0);
         }, RSVP_ANIM_MS);
       })
@@ -807,9 +969,13 @@ export function RsvpForm({ onOpenPlace }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      // Clear free-form notes when user explicitly says "no dietary needs"
+      if (name === 'hasDietary' && value === 'no') {
+        next.dietaryDetails = '';
+      }
+      return next;
     });
     // Clear validation error when field is filled
     if (invalidFields.includes(name)) {
@@ -832,7 +998,7 @@ export function RsvpForm({ onOpenPlace }) {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsSubmitted(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '', otherMealResponses: {}, otherSpecialRequests: {}, hasDietary: '' })); requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
             Change RSVP
           </button>
@@ -846,9 +1012,9 @@ export function RsvpForm({ onOpenPlace }) {
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
-            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', hasDietary: '', dietaryCount: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '' })); setDietaryMembers([]); setFieldState({ dietaryFields: { visible: false, animating: false } }); prevValues.current = { hasDietary: '' }; requestAnimationFrame(() => scrollToRsvp('instant')); }}
+            onClick={() => { setIsDeclined(false); setStep(0); setMaxStep(0); setPlusOneName(''); setAttending(''); setAlreadyRsvpd(null); setEditingRsvp(true); setFormData(prev => ({ ...prev, plusOne: '', dietaryDetails: '', mealChoices: {}, kidsAttending: '', kidCount: 0, kidNames: [], kidMeals: {}, welcomeEvent: '', message: '', otherMealResponses: {}, otherSpecialRequests: {}, hasDietary: '' })); requestAnimationFrame(() => scrollToRsvp('instant')); }}
           >
-            Update my RSVP
+            Change RSVP
           </button>
           <p className='mt-6!'>
             Have questions? Reach out at{' '}
@@ -921,7 +1087,14 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
               </form>
               <div className='step-actions justify-center'>
-                <button type='submit' form='name-check-form' className='step-continue-btn step-continue-ready -bottom-10!'>Check list</button>
+                <button
+                  type='submit'
+                  form='name-check-form'
+                  className={`step-continue-btn -bottom-10! ${nameInput.trim() ? 'step-continue-ready' : ''}`}
+                  disabled={!nameInput.trim()}
+                >
+                  Check list
+                </button>
               </div>
             </div>
 
@@ -999,7 +1172,7 @@ export function RsvpForm({ onOpenPlace }) {
             <h1 className='text-center mb-4!'>
               {alreadyRsvpd === 'yes' ? 'you\'re all set!' : 'we got your note'}
             </h1>
-            <p className='leading-10! mb-6!'>
+            <p className='mb-6!'>
               {alreadyRsvpd === 'yes'
                 ? `Looks like you've already RSVP'd - see you soon!`
                 : `We have you down as not attending. We'll miss you!`}
@@ -1047,13 +1220,13 @@ export function RsvpForm({ onOpenPlace }) {
               <div className='flex flex-col md:flex-row items-center gap-2 mt-3 justify-center'>
                 <span
                   className={`attendance-pill ${attending === 'both' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); goToStep(1); }}
+                  onClick={() => { setAttending('both'); setFormData(prev => ({ ...prev, plusOne: 'yes' })); }}
                 >
                   We'll be there!
                 </span>
                 <span
                   className={`attendance-pill ${attending === 'solo' ? 'attendance-pill-selected' : ''}`}
-                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); goToStep(1); }}
+                  onClick={() => { setAttending('solo'); setFormData(prev => ({ ...prev, plusOne: 'no' })); }}
                 >
                   Just me this time
                 </span>
@@ -1087,6 +1260,7 @@ export function RsvpForm({ onOpenPlace }) {
 
           {/* Decline path */}
           {isDeclining && (
+            <>
               <div className='animate-in max-inner'>
                 <div className='mb-6'>
                   <p>That's okay! We appreciate you letting us know, and we hope to celebrate with you another time. 💕</p>
@@ -1101,16 +1275,32 @@ export function RsvpForm({ onOpenPlace }) {
                   placeholder='Any parting words? (optional)'
                 />
               </div>
-               <div className='step-actions justify-center'>
+            </div>
+            <div className='step-actions justify-center'>
               <button type='submit' className='step-continue-btn step-continue-ready' disabled={isSubmitting}>
                 {isSubmitting ? 'Sending...' : 'Send RSVP'}
               </button>
-                </div>
+            </div>
+            </>
+          )}
+
+          {/* Paired: continue after attendance is chosen */}
+          {pairedPartner && !isDeclining && (
+            <div className='step-actions justify-center'>
+              <button
+                type='button'
+                className={`step-continue-btn ${(attending === 'both' || attending === 'solo') ? 'step-continue-ready' : ''}`}
+                disabled={!(attending === 'both' || attending === 'solo')}
+                onClick={() => goToStep(1)}
+              >
+                Continue
+              </button>
             </div>
           )}
 
           {/* Non-paired: plus one on step 0 */}
           {attending === 'yes' && !pairedPartner && (
+            <>
             <div className='animate-in max-inner mt-6'>
               <div className='mb-6 flex flex-col items-center'>
                 <label className='w-full text-center mb-3'>Plus one?</label>
@@ -1146,17 +1336,18 @@ export function RsvpForm({ onOpenPlace }) {
                   />
                 </div>
               )}
-              <div className='step-actions justify-center'>
-                <button
-                  type='button'
-                  className={`mb-1 step-continue-btn mt-4 ${stepZeroContinueReady ? 'step-continue-ready' : ''}`}
-                  disabled={!stepZeroContinueReady}
-                  onClick={() => goToStep(1)}
-                >
-                  Continue
-                </button>
-                </div>
             </div>
+            <div className='step-actions justify-center'>
+              <button
+                type='button'
+                className={`mb-1 step-continue-btn mt-4 ${stepZeroContinueReady ? 'step-continue-ready' : ''}`}
+                disabled={!stepZeroContinueReady}
+                onClick={() => goToStep(1)}
+              >
+                Continue
+              </button>
+            </div>
+            </>
           )}
             </div>
           )}
@@ -1225,53 +1416,10 @@ export function RsvpForm({ onOpenPlace }) {
           )}
 
           {/* ═══ STEP 2: Meal Selection ═══ */}
+          {/* ═══ STEP 2: Kids ═══ */}
           {step === 2 && (
             <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
-              <h1 className='text-primary! step-title text-center pb-2'>Meal selection</h1>
-
-              <div className='mb-6 max-inner'>
-                <div className='menu-compact'>
-                  {meals.map((meal) => (
-                    <div key={meal.value} className={`menu-compact-item ${meal.color}`}>
-                      <span className='menu-compact-title'>{meal.title}{meal.tag && <span className='menu-compact-tag'>{meal.tag}</span>}</span>
-                      <span className='menu-compact-desc'>{meal.desc}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className='guest-meals mt-6'>
-                  {Array.from({ length: getPartySize() }, (_, i) => (
-                    <div key={i} className={`guest-meal-row ${invalidFields.includes(`meal_${i}`) ? 'flash-invalid-meal' : ''}`}>
-                      <span className='guest-name text-center md:text-left mb-1 md:mb-0'>{getGuestLabel(i)}</span>
-                      <div className='meal-options'>
-                        {meals.map((meal) => (
-                          <span
-                            key={meal.value}
-                            className={`meal-pill ${meal.color} ${formData.mealChoices[i] === meal.value ? 'meal-pill-selected' : ''}`}
-                            onClick={() => handleMealChange(i, meal.value)}
-                          >
-                            {meal.shortTitle}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className='step-actions'>
-                <button type='button' className={`step-continue-btn ${mealsStepComplete ? 'step-continue-ready' : ''}`} disabled={!mealsStepComplete} onClick={() => goToStep(3)}>
-                  Continue
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ═══ STEP 3: Kids ═══ */}
-          {step === 3 && (
-            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Kids tagging along?</h1>
-              {/* <label className='text-center pb-2'>Add kids ohere</label> */}
 
               <div className='mb-6 max-inner'>
                 <div className='radio-group mt-3 md:pt-3 flex justify-center'>
@@ -1286,64 +1434,120 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
               </div>
 
-              {formData.kidsAttending === 'yes' && (
-                <div className='animate-in max-inner'>
-                  {/* Kid count stepper */}
-                  <div className='mb-6'>
-                    <label className='text-center'>How many?</label>
-                    <div className='flex items-center justify-center gap-4 mt-3'>
-                      <button
-                        type='button'
-                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount <= 0 ? 'opacity-30' : ''}`}
-                        onClick={() => handleKidCountChange(-1)}
-                      >−</button>
-                      <span className='text-2xl font-bold text-primary w-6 text-center'>{formData.kidCount}</span>
-                      <button
-                        type='button'
-                        className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount >= 3 ? 'opacity-30' : ''}`}
-                        onClick={() => handleKidCountChange(1)}
-                      >+</button>
-                    </div>
+              <AnimatedReveal show={formData.kidsAttending === 'yes'} className='max-inner'>
+                {/* Kid count stepper */}
+                <div className='mb-6'>
+                  <label className='text-center'>How many?</label>
+                  <div className='flex items-center justify-center gap-4 mt-3'>
+                    <button
+                      type='button'
+                      className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount <= 0 ? 'opacity-30' : ''}`}
+                      onClick={() => handleKidCountChange(-1)}
+                    >−</button>
+                    <span className='text-2xl font-bold text-primary w-6 text-center'>{formData.kidCount}</span>
+                    <button
+                      type='button'
+                      className={`cursor-pointer w-9 h-9 rounded-full border-2 border-primary text-primary text-xl font-bold flex items-center justify-center hover:bg-primary hover:text-white transition-colors ${formData.kidCount >= 3 ? 'opacity-30' : ''}`}
+                      onClick={() => handleKidCountChange(1)}
+                    >+</button>
                   </div>
-
-                  {/* Per-kid name + meal */}
-                  {formData.kidCount > 0 && (
-                    <div className='guest-meals mb-4'>
-                      <label className='text-sm! text-center text-primary/60 mb-4'>If no meals are selected, we'll reach out to make sure they're taken care of!</label>
-                      {Array.from({ length: formData.kidCount }, (_, i) => (
-                        <div key={i} className='guest-meal-row md:flex-row items-center'>
-                          <input
-                            type='text'
-                            value={(formData.kidNames || [])[i] || ''}
-                            onChange={(e) => handleKidNameChange(i, e.target.value)}
-                            placeholder={`Name`}
-                            className='text-base! md:text-sm! flex-1 min-w-0 py-2!'
-                          />
-                          <div className='meal-options md:flex-nowrap shrink-0 justify-end pt-2 md:pt-0'>
-                            {meals.map((meal) => (
-                              <span
-                                key={meal.value}
-                                className={`meal-pill ${meal.color} ${formData.kidMeals[i] === meal.value ? 'meal-pill-selected' : ''}`}
-                                onClick={() => handleKidMealChange(i, meal.value)}
-                              >
-                                {meal.shortTitle}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              )}
+
+                {/* Per-kid name */}
+                <AnimatedReveal show={formData.kidCount > 0}>
+                  <div className='guest-meals mb-4'>
+                    <label className='text-center mb-3'>What are their names?</label>
+                    {Array.from({ length: formData.kidCount }, (_, i) => (
+                      <div key={i} className='guest-meal-row md:flex-row items-center'>
+                        <input
+                          type='text'
+                          value={(formData.kidNames || [])[i] || ''}
+                          onChange={(e) => handleKidNameChange(i, e.target.value)}
+                          placeholder={`Name`}
+                          className='text-base! md:text-base! flex-1 min-w-0 py-2!'
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </AnimatedReveal>
+              </AnimatedReveal>
 
               <div className='step-actions'>
                 <button
                   type='button'
-                  className={`step-continue-btn ${stepComplete[3] ? 'step-continue-ready' : ''}`}
-                  disabled={!stepComplete[3]}
-                  onClick={() => goToStep(4)}
+                  className={`step-continue-btn ${stepComplete[2] ? 'step-continue-ready' : ''}`}
+                  disabled={!stepComplete[2]}
+                  onClick={() => goToStep(3)}
                 >
+                  Continue
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═══ STEP 3: Meals ═══ */}
+          {step === 3 && (
+            <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
+              <h1 className='text-primary! step-title text-center pb-2'>Meal selection</h1>
+
+              <div className='mb-6 max-inner'>
+                <div className='menu-compact'>
+                  {meals.filter(m => m.value !== 'other').map((meal) => (
+                    <div key={meal.value} className={`menu-compact-item ${meal.color}`}>
+                      <span className='menu-compact-title'>{meal.title}{meal.tag && <span className='menu-compact-tag'>{meal.tag}</span>}</span>
+                      <span className='menu-compact-desc'>{meal.desc}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className='guest-meals mt-6'>
+                  {Array.from({ length: getPartySize() }, (_, i) => {
+                    const fullLabel = getGuestLabel(i);
+                    const firstName = (fullLabel.trim().split(/\s+/)[0]) || fullLabel;
+                    return (
+                    <div key={i} className={`guest-meal-row ${invalidFields.includes(`meal_${i}`) ? 'flash-invalid-meal' : ''}`}>
+                      <span className='guest-name text-center md:text-left mb-1 md:mb-0'>{firstName}</span>
+                      <div className='meal-options'>
+                        {meals.map((meal) => (
+                          <span
+                            key={meal.value}
+                            className={`meal-pill ${meal.color} ${formData.mealChoices[i] === meal.value ? 'meal-pill-selected' : ''}`}
+                            onClick={() => handleMealChange(i, meal.value)}
+                          >
+                            {meal.shortTitle}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    );
+                  })}
+
+                  {/* Kid meal pickers — shown when kids are tagging along */}
+                  {kidsEating && Array.from({ length: formData.kidCount }, (_, i) => {
+                    const rawName = ((formData.kidNames || [])[i] || '').trim();
+                    const kidFirstName = rawName ? (rawName.split(/\s+/)[0] || rawName) : `Kid ${i + 1}`;
+                    return (
+                      <div key={`kid-${i}`} className='guest-meal-row'>
+                        <span className='guest-name text-center md:text-left mb-1 md:mb-0'>{kidFirstName}</span>
+                        <div className='meal-options'>
+                          {meals.map((meal) => (
+                            <span
+                              key={meal.value}
+                              className={`meal-pill ${meal.color} ${formData.kidMeals[i] === meal.value ? 'meal-pill-selected' : ''}`}
+                              onClick={() => handleKidMealChange(i, meal.value)}
+                            >
+                              {meal.shortTitle}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className='step-actions'>
+                <button type='button' className={`step-continue-btn ${mealsStepComplete ? 'step-continue-ready' : ''}`} disabled={!mealsStepComplete} onClick={() => goToStep(4)}>
                   Continue
                 </button>
               </div>
@@ -1355,65 +1559,104 @@ export function RsvpForm({ onOpenPlace }) {
             <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Dietary restrictions</h1>
 
-              <div className='mb-6 max-inner'>
-                <label className='text-center pb-4'>Anything we should know about your meal?</label>
-                <div className={`radio-group-col ${invalidFields.includes('hasDietary') ? 'flash-invalid' : ''}`}>
-                  <label className='radio-label'>
-                    <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
-                    Nope, the menu looks great!
-                  </label>
-                  <label className='radio-label'>
-                    <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
-                    Yes, there are some dietary restrictions
-                  </label>
-                  <label className='radio-label'>
-                    <input type='radio' name='hasDietary' value='help' checked={formData.hasDietary === 'help'} onChange={handleChange} />
-                    None of these options work
-                  </label>
-                </div>
-              </div>
+               {/* Subtle back-link in case Other was a misclick */}
+                  <div className='bg-primary/10 rounded-xl justify-center items-center flex flex-col p-3 mt-4 mb-4'>
+                  <p className='text-base! mb-2! text-center'>
+                    Need to change a selection?
+                  </p>
+                  <button
+                    type='button'
+                    className='meal-pill text-white! bg-primary/80! hover:bg-primary!'
+                    onClick={() => goToStep(3)}
+                  >
+                    Go back to meals
+                  </button>
+                  </div>
 
-              {fieldState.dietaryFields.visible && (['yes', 'help'].includes(formData.hasDietary) || fieldState.dietaryFields.animating) && (
-                <div className={fieldState.dietaryFields.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
-                  {(() => {
-                    const kidsHere = kidsAllowed && formData.kidsAttending === 'yes' && formData.kidCount > 0;
-                    const totalMembers = getPartySize() + (kidsHere ? formData.kidCount : 0);
-                    return totalMembers > 1 && formData.hasDietary === 'yes' && (
-                      <div className='mb-6'>
-                        <label>Who has dietary restrictions?</label>
-                        <div className='meal-options mt-2'>
-                          {Array.from({ length: totalMembers }, (_, i) => (
-                            <span
-                              key={i}
-                              className={`meal-pill meal-alert ${dietaryMembers.includes(i) ? 'meal-pill-selected' : ''}`}
-                              onClick={() => toggleDietaryMember(i)}
-                            >
-                              {getGuestLabel(i)}
-                            </span>
-                          ))}
+              {/* "Other" meal callout — appears when one or more guests picked Other */}
+              {hasOtherMeal && (
+                <div className='mb-6 max-inner'>
+                  <div className='guest-meals pt-4'>
+                    {/* <p className='pt-2 text-center'>Let's plan this out:</p> */}
+                    {otherMemberIndices.map((i) => {
+                      const firstName = (getGuestLabel(i).trim().split(/\s+/)[0]) || getGuestLabel(i);
+                      const response = formData.otherMealResponses[i] || '';
+                      return (
+                        <div key={`other-${i}`}>
+                          <div className='guest-meal-row'>
+                            <span className='guest-name text-center md:text-left'>{firstName}</span>
+                            <div className='meal-options'>
+                              <span
+                                className={`meal-pill ${response === 'special' ? 'meal-pill-selected' : ''}`}
+                                onClick={() => setOtherMealResponse(i, 'special')}
+                              >
+                                Special request
+                              </span>
+                              <span
+                                className={`meal-pill ${response === 'skip' ? 'meal-pill-selected' : ''}`}
+                                onClick={() => setOtherMealResponse(i, 'skip')}
+                              >
+                                Not eating
+                              </span>
+                            </div>
+                          </div>
+                          <AnimatedReveal show={response === 'special'} className='mt-2 mb-3'>
+                            <input
+                              type='text'
+                              value={formData.otherSpecialRequests[i] || ''}
+                              onChange={(e) => setOtherSpecialRequest(i, e.target.value)}
+                              placeholder={`How can we accomodate ${firstName}?`}
+                              className='text-base! py-2!'
+                            />
+                          </AnimatedReveal>
                         </div>
-                      </div>
-                    );
-                  })()}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
+              {/* Yes/No radio — always present and selectable. Hidden when nobody is eating. */}
+              {!everyoneNotEating && (
+                <div className='mb-6 max-inner'>
+                  <label className='text-center pb-2'>
+                    {hasOtherMeal
+                      ? 'Any additional allergies or dietary restrictions?'
+                      : 'Any allergies or dietary restrictions to share?'}
+                  </label>
+                  <div className='radio-group mt-3 flex justify-center flex-col md:flex-row'>
+                    <label className='radio-label'>
+                      <input type='radio' name='hasDietary' value='no' checked={formData.hasDietary === 'no'} onChange={handleChange} />
+                      Nope, all good
+                    </label>
+                    <label className='radio-label'>
+                      <input type='radio' name='hasDietary' value='yes' checked={formData.hasDietary === 'yes'} onChange={handleChange} />
+                      Yes, I'll share details
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Free-form note — animates in/out */}
+              {dietaryNoteRender.mounted && (
+                <div className={dietaryNoteRender.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
                   <div className='mb-6'>
+                    <label className='text-center pb-2'></label>
                     <textarea
                       id='dietaryDetails'
                       name='dietaryDetails'
                       value={formData.dietaryDetails}
                       onChange={handleChange}
-                      required
-                      rows='2'
-                      placeholder={formData.hasDietary === 'help'
-                        ? 'Tell us what you need and we\'ll make sure you\'re taken care of!'
-                        : 'Vegetarian, gluten free, nut allergy? Let us know!'}
+                      required={anyOtherSpecial || formData.hasDietary === 'yes'}
+                      rows='3'
+                      placeholder={'e.g. Mike has a nut allergy'}
                     />
                   </div>
                 </div>
               )}
 
               <div className='step-actions'>
-                <button type='button' className={`step-continue-btn ${formData.hasDietary !== '' ? 'step-continue-ready' : ''}`} disabled={formData.hasDietary === ''} onClick={() => goToStep(5)}>
+                <button type='button' className={`step-continue-btn ${stepComplete[4] ? 'step-continue-ready' : ''}`} disabled={!stepComplete[4]} onClick={() => goToStep(5)}>
                   Continue
                 </button>
               </div>
@@ -1528,9 +1771,11 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
                 {Array.from({ length: getPartySize() }, (_, i) => {
                   const choice = meals.find(m => m.value === formData.mealChoices[i]);
-                  const hasRestriction = dietaryMembers.includes(i);
                   const guestName = getGuestLabel(i);
                   const guestFirstName = guestName.trim().split(/\s+/)[0] || guestName;
+                  const otherNote = formData.mealChoices[i] === 'other'
+                    ? (formData.otherMealResponses[i] === 'skip' ? ' (not eating)' : formData.otherMealResponses[i] === 'special' ? ' (special)' : '')
+                    : '';
                   return (
                     <div key={i} className='rsvp-summary-row'>
                       <span className='rsvp-summary-label'>{i === 0 ? 'Meal' : ''}</span>
@@ -1538,11 +1783,10 @@ export function RsvpForm({ onOpenPlace }) {
                         <span>{guestFirstName}</span>
                         <span className='relative'>
                           {choice ? (
-                            <span className={`summary-meal-chip ${choice.color}`}>{choice.shortTitle}</span>
+                            <span className={`summary-meal-chip ${choice.color}`}>{choice.shortTitle}{otherNote}</span>
                           ) : (
                             <span className='summary-meal-chip meal-blue'>Other</span>
                           )}
-                          {hasRestriction && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
                         </span>
                       </span>
                     </div>
@@ -1556,7 +1800,9 @@ export function RsvpForm({ onOpenPlace }) {
                     const kidMealVal = formData.kidMeals[i];
                     const kidMealChoice = meals.find(m => m.value === kidMealVal);
                     const dietaryIndex = getPartySize() + i;
-                    const hasRestriction = dietaryMembers.includes(dietaryIndex);
+                    const otherNote = kidMealVal === 'other'
+                      ? (formData.otherMealResponses[dietaryIndex] === 'skip' ? ' (not eating)' : formData.otherMealResponses[dietaryIndex] === 'special' ? ' (special)' : '')
+                      : '';
                     return (
                       <div key={`kid-${i}`} className='rsvp-summary-row'>
                         <span className='rsvp-summary-label'>{i === 0 ? 'Kids' : ''}</span>
@@ -1564,18 +1810,17 @@ export function RsvpForm({ onOpenPlace }) {
                           <span>{kidFirstName}</span>
                           <span className='relative'>
                             {kidMealChoice ? (
-                              <span className={`summary-meal-chip ${kidMealChoice.color}`}>{kidMealChoice.shortTitle}</span>
+                              <span className={`summary-meal-chip ${kidMealChoice.color}`}>{kidMealChoice.shortTitle}{otherNote}</span>
                             ) : (
                               <span className='summary-meal-chip meal-blue'>Other</span>
                             )}
-                            {hasRestriction && <span className='rsvp-summary-dietary' title='Has dietary needs'>⚠️</span>}
                           </span>
                         </span>
                       </div>
                     );
                   })
                 )}
-                {formData.hasDietary !== 'no' && formData.dietaryDetails && (
+                {formData.dietaryDetails && (
                   <div className='rsvp-summary-row'>
                     <span className='rsvp-summary-label'>Notes</span>
                     <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>

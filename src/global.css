@@ -93,7 +93,7 @@ body {
 }
 
 h1 {
-    @apply font-sanremo-script text-4xl md:text-5xl mb-4 text-primary md:leading-[0.6] pt-3;
+    @apply font-sanremo-script text-4xl md:text-5xl mb-4 text-primary leading-[0.5] md:leading-[0.6] pt-3;
 }
 
 h2 {
@@ -347,6 +347,7 @@ section {
 .gallery-backdrop {
   @apply fixed inset-0 z-50 flex items-center justify-center;
   background: rgba(0,0,0,0.85);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 .gallery-modal {
@@ -1050,6 +1051,7 @@ button[type="submit"]:not(.step-continue-btn):active {
 .modal-backdrop {
   @apply fixed inset-0 z-50 flex items-center justify-center;
   background: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   animation: fadeIn 0.2s ease-out;
 }
@@ -1263,12 +1265,12 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .animate-in {
-  animation: expandIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: expandIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   overflow: hidden;
 }
 
 .animate-out {
-  animation: collapseOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: collapseOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   overflow: hidden;
 }
 
@@ -1357,14 +1359,36 @@ button[type="submit"]:not(.step-continue-btn):active {
 /* Guest Meal Selectors */
 .guest-meals {
   @apply space-y-3;
+
+  input {
+    @apply tracking-normal!;
+  }
 }
 
 .guest-meal-row {
-  @apply flex flex-col md:flex-row md:items-center gap-2 md:gap-4 py-1 rounded-lg;
+  @apply flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 md:gap-3 py-1 rounded-lg;
 }
 
 .guest-name {
-  @apply font-semibold text-primary text-sm md:text-base md:min-w-36 shrink-0;
+  @apply font-semibold text-primary text-sm md:text-base shrink-0;
+}
+
+@media (min-width: 768px) {
+  .guest-name {
+    flex: 1 0 100px;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  /* Tasteful dotted leader connecting the guest's name to their meal pills */
+  .guest-meal-row > .guest-name::after {
+    content: '';
+    flex: 1;
+    height: 0;
+    border-top: 2px dotted color-mix(in srgb, var(--color-primary) 20%, transparent);
+    transform: translateY(-2px);
+  }
 }
 
 /* RSVP form shared classes */
@@ -1391,6 +1415,20 @@ button[type="submit"]:not(.step-continue-btn):active {
 @media (hover: hover) {
   .back-button:hover {
     background: var(--color-gray-300, #d1d5db) !important;
+  }
+}
+
+.other-change-pill {
+  @apply inline-flex items-center rounded-full border-none cursor-pointer transition-colors text-primary;
+  font-size: 0.8125rem !important;
+  background: color-mix(in srgb, var(--color-blue) 18%, transparent) !important;
+  padding: 0.3rem 0.9rem !important;
+  line-height: 1 !important;
+}
+
+@media (hover: hover) {
+  .other-change-pill:hover {
+    background: color-mix(in srgb, var(--color-blue) 30%, transparent) !important;
   }
 }
 
@@ -1421,7 +1459,7 @@ button,
 
 /* Attendance pills */
 .attendance-pill {
-  @apply px-6 py-2 rounded-full text-sm md:text-base cursor-pointer
+  @apply px-6 py-2 pt-1.5 rounded-full text-sm md:text-base cursor-pointer
     transition-all duration-200 font-medium border-2 border-primary/20 select-none bg-transparent;
 }
 
@@ -1453,21 +1491,22 @@ button,
 }
 
 .step-title {
-  @apply text-3xl! md:text-3xl! pb-0! md:pb-4 mb-0 md:mb-5;
+  @apply text-3xl! md:text-3xl! pb-2! md:pb-4 mb-0 md:mb-5;
 }
 
 .meal-options {
-  @apply flex flex-wrap gap-2 flex-1 justify-center md:justify-start;
+  @apply flex flex-nowrap gap-2 flex-1 justify-center md:justify-end md:flex-none;
 }
 
 .meal-pill {
-  @apply px-4 py-1.5 rounded-full text-xs md:text-sm cursor-pointer
-    transition-all duration-200 text-text-light font-medium border-2 border-transparent;
+  @apply px-3 py-1.5 rounded-full text-xs md:text-sm cursor-pointer tracking-normal!
+    transition-all duration-200 text-text-light font-medium border-2 border-transparent
+    whitespace-nowrap;
   background: #eef2ff;
 }
 
 .meal-pill-selected {
-  @apply text-primary bg-red/30;
+  @apply  bg-red text-white;
 }
 
 @media (hover: hover) {
@@ -1476,7 +1515,7 @@ button,
   }
 
   .meal-pill-selected:hover {
-    @apply text-primary;
+    @apply text-white bg-red;
   }
 }
 
@@ -1577,14 +1616,22 @@ button,
   position: static;
 }
 
-/* Continue button — always rendered, disabled/faded until ready */
+/* Continue button — always rendered, disabled/faded until ready.
+   Absolutely positioned so it can straddle the bottom edge of the form.
+   `transform: translateZ(0)` promotes the button to its own compositing
+   layer in Safari/WebKit, which prevents the bug where animated
+   `overflow: hidden` ancestors (e.g. `.animate-in`) intermittently clip
+   absolutely-positioned descendants. */
 .step-continue-btn {
-  @apply absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 px-8 py-3 rounded-full
+  @apply absolute bottom-0 left-1/2 px-8 py-3 rounded-full
     font-sanremo-caps text-lg bg-blue-med! text-white tracking-wider transition-all cursor-not-allowed select-none;
   transition: background-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
   pointer-events: none;
   box-shadow: 0 0 0 8px var(--color-blue);
   z-index: 3;
+  transform: translate3d(-50%, 50%, 0);
+  -webkit-transform: translate3d(-50%, 50%, 0);
+  will-change: transform;
 }
 
 .step-continue-btn.step-continue-ready {

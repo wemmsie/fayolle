@@ -12,6 +12,37 @@ import { ScrollNav } from './ScrollNav'
 import { Squiggle } from './Squiggle'
 import { OutfitPile } from './OutfitPile'
 
+const TODO_PLACES = {
+  do: [
+    { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: '⭐️ Architectural Boat Tour' },
+    { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: '⭐️ Art Institute Chicago' },
+    { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
+    { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
+    { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
+    { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
+    { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
+  ],
+  eat: [
+    { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
+    { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee with a stellar patio', label: '⭐️ Bang Bang Pie & Biscuits' },
+    { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
+    // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
+    { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
+    { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
+    { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
+    { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
+  ],
+  drink: [
+    { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: '⭐️ Easy Does It' },
+    { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
+    { name: 'The Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn' },
+    { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
+    { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
+    { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
+    { name: 'Welcome Back Lounge', tag: 'drinks & eats', tip: 'Retro cocktail lounge with great bites', label: 'Welcome Back Lounge' },
+  ],
+};
+
 function App() {
   const [tooltip, setTooltip] = useState({ visible: false, text: '', tag: '', x: 0, y: 0 });
   const [activePlace, setActivePlace] = useState(null);
@@ -301,63 +332,38 @@ function App() {
             Want to make a weekend of it? Chicago has no shortage of things to do, and we're happy to give recommendations.
           </p>
 
-          {(() => {
-            const places = {
-              do: [
-                { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: '⭐️ Architectural Boat Tour' },
-                { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: '⭐️ Art Institute Chicago' },
-                { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
-                { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
-                { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
-                { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
-                { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
-              ],
-              eat: [
-                { name: 'Akahoshi Ramen', tag: 'dinner', tip: 'Rich Japanese ramen', label: 'Akahoshi Ramen' },
-                { name: 'Bang Bang Pie & Biscuits', tag: 'brunch', tip: 'Savory pies, biscuits & coffee with a stellar patio', label: '⭐️ Bang Bang Pie & Biscuits' },
-                { name: 'Cozy Corner Restaurant', tag: 'brunch', tip: 'Southern comfort food', label: '⭐️ Cozy Corner' },
-                // { name: "Dove's Luncheonette", tag: 'brunch', tip: 'Charming Tex-Mex diner vibes', label: "Dove's Luncheonette" },
-                { name: 'Girl & The Goat', tag: 'all day', tip: 'Bold, world-famous, inventive plates', label: '⭐️ Girl & The Goat' },
-                { name: 'Gretel', tag: 'all day', tip: 'Modern & casual European fare', label: 'Gretel' },
-                { name: 'Loaf Lounge', tag: 'brunch', tip: 'Fresh bread, deli, killer egg sandwiches', label: 'Loaf Lounge' },
-                { name: 'Lula Cafe', tag: 'all day', tip: 'Funky, inventive, farm-to-table', label: 'Lula Cafe' },
-              ],
-              drink: [
-                { name: 'Easy Does It Bar', tag: 'drinks', tip: 'Laid-back neighborhood bar', label: '⭐️ Easy Does It' },
-                { name: 'Lazybird Chicago', tag: 'drinks', tip: 'Speakeasy-style cocktails', label: 'Lazybird' },
-                { name: 'The Leavitt Street Inn & Tavern', tag: 'drinks & eats', tip: 'Cozy neighborhood bar with solid food', label: 'Leavitt Street Inn' },
-                { name: 'Little Victories Coffee', tag: 'drinks', tip: 'Cozy coffee & natural wine', label: 'Little Victories' },
-                { name: 'Pilot Project Brewing', tag: 'drinks', tip: 'Local craft beer taproom', label: 'Pilot Project' },
-                { name: 'Truce Chicago', tag: 'drinks & eats', tip: 'Specialty coffee & pastries', label: 'Truce' },
-                { name: 'Welcome Back Lounge', tag: 'drinks & eats', tip: 'Retro cocktail lounge with great bites', label: 'Welcome Back Lounge' },
-              ],
-            };
-            const PlaceList = ({ items }) => items.map(p => (
-              <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
-            ));
-            return (<>
-              {/* Mobile: tappable tabs */}
-              <div className='md:hidden mt-8'>
-                <div className='todo-tabs'>
-                  <button className={`todo-tab ${activeTab === 'do' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('do')}>Do</button>
-                  <button className={`todo-tab ${activeTab === 'eat' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('eat')}>Eat</button>
-                  <button className={`todo-tab ${activeTab === 'drink' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('drink')}>Drink</button>
-                </div>
-                <div className='todo-tab-content'>
-                  {activeTab === 'do' && <div className='tab'><PlaceList items={places.do} /></div>}
-                  {activeTab === 'eat' && <div className='tab'><PlaceList items={places.eat} /></div>}
-                  {activeTab === 'drink' && <div className='tab'><PlaceList items={places.drink} /></div>}
-                </div>
-              </div>
+          {/* Mobile: tappable tabs */}
+          <div className='md:hidden mt-8'>
+            <div className='todo-tabs'>
+              <button className={`todo-tab ${activeTab === 'do' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('do')}>Do</button>
+              <button className={`todo-tab ${activeTab === 'eat' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('eat')}>Eat</button>
+              <button className={`todo-tab ${activeTab === 'drink' ? 'todo-tab-active' : ''}`} onClick={() => setActiveTab('drink')}>Drink</button>
+            </div>
+            <div className='todo-tab-content'>
+              {activeTab === 'do' && <div className='tab'>{TODO_PLACES.do.map(p => (
+                <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+              ))}</div>}
+              {activeTab === 'eat' && <div className='tab'>{TODO_PLACES.eat.map(p => (
+                <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+              ))}</div>}
+              {activeTab === 'drink' && <div className='tab'>{TODO_PLACES.drink.map(p => (
+                <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+              ))}</div>}
+            </div>
+          </div>
 
-              {/* Desktop: three columns */}
-              <div className='hidden md:flex gap-4 justify-between mt-8'>
-                <div className='tab'><h2>Do</h2><PlaceList items={places.do} /></div>
-                <div className='tab'><h2>Eat</h2><PlaceList items={places.eat} /></div>
-                <div className='tab'><h2>Drink</h2><PlaceList items={places.drink} /></div>
-              </div>
-            </>);
-          })()}
+          {/* Desktop: three columns */}
+          <div className='hidden md:flex gap-4 justify-between mt-8'>
+            <div className='tab'><h2>Do</h2>{TODO_PLACES.do.map(p => (
+              <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+            ))}</div>
+            <div className='tab'><h2>Eat</h2>{TODO_PLACES.eat.map(p => (
+              <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+            ))}</div>
+            <div className='tab'><h2>Drink</h2>{TODO_PLACES.drink.map(p => (
+              <a key={p.name} className='button' href='#' {...placeButton(p.name, p.tag, p.tip)}>{p.label}</a>
+            ))}</div>
+          </div>
         </div>
       </section>
 

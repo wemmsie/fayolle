@@ -67,7 +67,8 @@ function handleRequest(e) {
       sheet.getRange(i + 1, 24).setValue(data.kidMeal1 || ''); // Col X = kid meal 1
       sheet.getRange(i + 1, 25).setValue(data.kidMeal2 || ''); // Col Y = kid meal 2
       sheet.getRange(i + 1, 26).setValue(data.kidMeal3 || ''); // Col Z = kid meal 3
-      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA = dietary notes (all)
+      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA = Dietary (Other-only: not eating / special requests)
+      sheet.getRange(i + 1, 28).setValue(data.foodNotes || '');    // Col AB = Food Notes (free-form allergies / dietary)
       sheet.getRange(i + 1, 31).setValue(data.message || ''); // Col AE = message
       found = true;
       debug.matchedRow = i + 1;
@@ -89,7 +90,8 @@ function handleRequest(e) {
       sheet.getRange(i + 1, 24).setValue(data.kidMeal1 || ''); // Col X
       sheet.getRange(i + 1, 25).setValue(data.kidMeal2 || ''); // Col Y
       sheet.getRange(i + 1, 26).setValue(data.kidMeal3 || ''); // Col Z
-      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA
+      sheet.getRange(i + 1, 27).setValue(data.dietaryNotes || ''); // Col AA = Dietary (Other-only)
+      sheet.getRange(i + 1, 28).setValue(data.foodNotes || '');    // Col AB = Food Notes
       sheet.getRange(i + 1, 31).setValue(data.message || ''); // Col AE
       found = true;
       debug.matchedRow = i + 1;
