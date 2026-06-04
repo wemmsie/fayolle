@@ -795,7 +795,7 @@ textarea {
 }
 textarea {
   /* Keep ≥16px on mobile so iOS Safari doesn't auto-zoom on focus */
-  @apply leading-5 text-base md:text-base text-left;
+  @apply leading-5 text-base md:text-base text-left field-sizing-content;
 }
 
 input[type="text"]:focus,
@@ -1397,11 +1397,13 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .not-me-button {
-  @apply absolute -top-10 left-1/2 -translate-x-1/2 z-10 rounded-full
+  @apply absolute -top-11 left-1/2 -translate-x-1/2 z-10 rounded-full
     bg-white/70 backdrop-blur-sm border-none cursor-pointer
-    opacity-60 hover:opacity-100 transition-all whitespace-nowrap;
-  font-size: 0.75rem !important;
-  padding: 0.25rem 1rem !important;
+    opacity-60 hover:opacity-100 transition-all whitespace-nowrap
+    text-sm! px-3 py-1.5;
+    b {
+      @apply text-red font-bold capitalize font-sanremo-caps;
+    }
 }
 
 .back-button {
@@ -1491,7 +1493,7 @@ button,
 }
 
 .step-title {
-  @apply text-3xl! md:text-3xl! pb-2! md:pb-4 mb-0 md:mb-5;
+  @apply text-3xl! md:text-3xl! pb-3! md:pb-4 mb-0 md:mb-5;
 }
 
 .meal-options {
@@ -1697,14 +1699,59 @@ button,
 }
 
 .menu-compact-item {
-  @apply px-3 py-2 md:py-2 rounded-r-xl;
+  @apply py-2 md:py-2 rounded-r-xl rounded-l-sm;
   background: rgba(219 227 230 / 0.18);
-  border-left: 4px solid transparent;
+  padding-left: calc(0.75rem + 6px);
+  padding-right: 0.75rem;
+  box-shadow: inset 4px 0 0 0 var(--stripe-color, transparent);
+  transition: transform 220ms ease, box-shadow 220ms ease, background 220ms ease, padding 220ms ease;
+  will-change: transform, box-shadow;
 }
 
-.menu-compact-item.meal-red { border-left-color: var(--color-red); }
-.menu-compact-item.meal-yellow { border-left-color: var(--color-yellow); }
-.menu-compact-item.meal-green { border-left-color: var(--color-green); }
+.menu-compact-item.meal-red { 
+  --stripe-color: var(--color-red);
+}
+.menu-compact-item.meal-yellow { 
+  --stripe-color: var(--color-yellow);
+}
+.menu-compact-item.meal-green { 
+  --stripe-color: var(--color-green);
+}
+
+.menu-compact-item-selected {
+  box-shadow: inset 8px 0 0 0 var(--stripe-color, transparent);
+  @apply pl-5!;
+}
+
+.menu-compact-item-selected.meal-red {
+  background: color-mix(in srgb, var(--color-red) 10%, transparent);
+}
+
+.menu-compact-item-selected.meal-yellow {
+  background: color-mix(in srgb, var(--color-yellow) 18%, transparent);
+}
+
+.menu-compact-item-selected.meal-green {
+  background: color-mix(in srgb, var(--color-green) 16%, transparent);
+}
+
+@keyframes back-label-swap {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) rotateX(-70deg);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+.back-label-swap {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  perspective: 150px;
+  backface-visibility: hidden;
+  animation: back-label-swap 350ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
 
 .menu-compact-title {
   @apply block font-semibold text-primary text-sm md:text-base;
@@ -1745,16 +1792,22 @@ button,
 .rsvp-summary {
   @apply rounded-xl overflow-hidden;
   background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(2,65,89,0.08);
+  border: 1px solid rgba(2,65,89,0.18);
 }
 
 .rsvp-summary-row {
   @apply flex gap-4 px-4 md:px-5 py-2.5 md:py-3 items-center;
-  border-bottom: 1px solid rgba(2,65,89,0.04);
+  border-top: 1px solid rgba(2,65,89,0.05);
 }
 
-.rsvp-summary-row:last-child {
-  border-bottom: none;
+.rsvp-summary-row:first-child {
+  border-top: none;
+}
+
+/* Stronger divider where a new top-level section begins
+   (e.g. Email, Meal group, Party, Note) */
+.rsvp-summary-row.rsvp-summary-divide {
+  border-top: 1px solid rgba(2,65,89,0.18);
 }
 
 .rsvp-summary-label {

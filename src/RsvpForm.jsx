@@ -619,7 +619,7 @@ export function RsvpForm({ onOpenPlace }) {
   const stepDefs = [
     { num: 1, label: 'Email' },
     ...(kidsAllowed ? [{ num: 2, label: 'Kids' }] : []),
-    { num: 3, label: 'Meals' },
+    { num: 3, label: 'Dinner' },
     { num: 4, label: 'Dietary' },
     { num: 5, label: 'Details' },
     { num: 6, label: 'Review' },
@@ -994,7 +994,6 @@ export function RsvpForm({ onOpenPlace }) {
             <a href='mailto:wedding@fayolle.com' className='text-red! transition-all hover:underline'>
               wedding@fayolle.com
             </a></p>
-          {/* <p className='mb-6!'>Need to make changes?</p> */}
           <button
             type='button'
             className='step-continue-btn step-continue-ready'
@@ -1080,7 +1079,7 @@ export function RsvpForm({ onOpenPlace }) {
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     onClick={() => requestAnimationFrame(() => scrollToRsvp())}
-                    placeholder="What's your name?"
+                    placeholder="What's your first or full name?"
                     autocomplete="name"
                     required
                   />
@@ -1191,14 +1190,30 @@ export function RsvpForm({ onOpenPlace }) {
         </div>
       ) : (
         <div className={isLeavingForm ? 'step-fade-out' : undefined}>
-          <button
-            type='button'
-            className='not-me-button group'
-            onClick={handleNotMe}
-          >
-            <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
-            Not {verifiedName}?
-          </button>
+          {step <= 1 ? (
+            <button
+              type='button'
+              className='not-me-button group'
+              onClick={handleNotMe}
+            >
+              <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+              Not {verifiedName}?
+            </button>
+          ) : (() => {
+            const prevDef = [...stepDefs].reverse().find((s) => s.num < step);
+            const prevNum = prevDef ? prevDef.num : 0;
+            const prevLabel = prevDef ? prevDef.label.toLowerCase() : 'start';
+            return (
+              <button
+                type='button'
+                className='not-me-button group'
+                onClick={() => goToStep(prevNum)}
+              >
+                <svg className='inline w-4 h-4 mr-1 -mt-0.5 transition-transform group-hover:-translate-x-1' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.5' strokeLinecap='round' strokeLinejoin='round'><path d='M19 12H5M12 19l-7-7 7-7'/></svg>
+                Back to <b key={prevLabel} className='back-label-swap'>{prevLabel}</b>
+              </button>
+            );
+          })()}
           <form onSubmit={handleSubmit} className={`rsvp-flow-form ${isFadingOut ? 'fade-out' : ''}`}>
 
           {/* ═══ STEP 0: Greeting + Attendance ═══ */}
@@ -1419,7 +1434,7 @@ export function RsvpForm({ onOpenPlace }) {
           {/* ═══ STEP 2: Kids ═══ */}
           {step === 2 && (
             <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
-              <h1 className='text-primary! step-title text-center pb-2'>Kids tagging along?</h1>
+              <h1 className='text-primary! step-title text-center pb-2'>Kids coming along?</h1>
 
               <div className='mb-6 max-inner'>
                 <div className='radio-group mt-3 md:pt-3 flex justify-center'>
@@ -1492,12 +1507,16 @@ export function RsvpForm({ onOpenPlace }) {
 
               <div className='mb-6 max-inner'>
                 <div className='menu-compact'>
-                  {meals.filter(m => m.value !== 'other').map((meal) => (
-                    <div key={meal.value} className={`menu-compact-item ${meal.color}`}>
+                  {meals.filter(m => m.value !== 'other').map((meal) => {
+                    const isPicked = Object.values(formData.mealChoices).includes(meal.value)
+                      || (kidsEating && Object.values(formData.kidMeals).includes(meal.value));
+                    return (
+                    <div key={meal.value} className={`menu-compact-item ${meal.color} ${isPicked ? 'menu-compact-item-selected' : ''}`}>
                       <span className='menu-compact-title'>{meal.title}{meal.tag && <span className='menu-compact-tag'>{meal.tag}</span>}</span>
                       <span className='menu-compact-desc'>{meal.desc}</span>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className='guest-meals mt-6'>
@@ -1558,21 +1577,6 @@ export function RsvpForm({ onOpenPlace }) {
           {step === 4 && (
             <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
               <h1 className='text-primary! step-title text-center pb-2'>Dietary restrictions</h1>
-
-               {/* Subtle back-link in case Other was a misclick */}
-                  <div className='bg-primary/10 rounded-xl justify-center items-center flex flex-col p-3 mt-4 mb-4'>
-                  <p className='text-base! mb-2! text-center'>
-                    Need to change a selection?
-                  </p>
-                  <button
-                    type='button'
-                    className='meal-pill text-white! bg-primary/80! hover:bg-primary!'
-                    onClick={() => goToStep(3)}
-                  >
-                    Go back to meals
-                  </button>
-                  </div>
-
               {/* "Other" meal callout — appears when one or more guests picked Other */}
               {hasOtherMeal && (
                 <div className='mb-6 max-inner'>
@@ -1605,7 +1609,7 @@ export function RsvpForm({ onOpenPlace }) {
                               type='text'
                               value={formData.otherSpecialRequests[i] || ''}
                               onChange={(e) => setOtherSpecialRequest(i, e.target.value)}
-                              placeholder={`How can we accomodate ${firstName}?`}
+                              placeholder={i === 0 ? 'How can we accomodate you?' : `How can we accomodate ${firstName}?`}
                               className='text-base! py-2!'
                             />
                           </AnimatedReveal>
@@ -1615,6 +1619,21 @@ export function RsvpForm({ onOpenPlace }) {
                   </div>
                 </div>
               )}
+
+              {/* Subtle back-link in case Other was a misclick
+                  <div className='bg-primary/10 rounded-xl justify-center items-center flex flex-col p-3 mt-4 mb-4'>
+                    <p className='text-base! mb-2! text-center'>
+                    Need to change something?
+                    </p>
+                    <button
+                      type='button'
+                      className='meal-pill text-white! bg-primary/80! hover:bg-primary!'
+                      onClick={() => goToStep(3)}
+                    >
+                      Back to meals
+                    </button>
+                  </div>
+ */}
 
               {/* Yes/No radio — always present and selectable. Hidden when nobody is eating. */}
               {!everyoneNotEating && (
@@ -1637,6 +1656,8 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
               )}
 
+              
+
               {/* Free-form note — animates in/out */}
               {dietaryNoteRender.mounted && (
                 <div className={dietaryNoteRender.animating ? 'animate-out max-inner' : 'animate-in max-inner'}>
@@ -1655,6 +1676,8 @@ export function RsvpForm({ onOpenPlace }) {
                 </div>
               )}
 
+
+
               <div className='step-actions'>
                 <button type='button' className={`step-continue-btn ${stepComplete[4] ? 'step-continue-ready' : ''}`} disabled={!stepComplete[4]} onClick={() => goToStep(5)}>
                   Continue
@@ -1662,7 +1685,7 @@ export function RsvpForm({ onOpenPlace }) {
               </div>
             </div>
           )}
-
+      
           {/* ═══ STEP 5: Last Details ═══ */}
           {step === 5 && (
             <div className={isStepFadingOut ? 'step-fade-out' : 'step-panel'}>
@@ -1765,7 +1788,7 @@ export function RsvpForm({ onOpenPlace }) {
                   <span className='rsvp-summary-label'>Name</span>
                   <span className='rsvp-summary-value'>{verifiedName}{pairedPartner && attending === 'both' ? ` + ${pairedPartner}` : ''}</span>
                 </div>
-                <div className='rsvp-summary-row'>
+                <div className='rsvp-summary-row rsvp-summary-divide'>
                   <span className='rsvp-summary-label'>Email</span>
                   <span className='rsvp-summary-value'>{formData.email}</span>
                 </div>
@@ -1777,7 +1800,7 @@ export function RsvpForm({ onOpenPlace }) {
                     ? (formData.otherMealResponses[i] === 'skip' ? ' (not eating)' : formData.otherMealResponses[i] === 'special' ? ' (special)' : '')
                     : '';
                   return (
-                    <div key={i} className='rsvp-summary-row'>
+                    <div key={i} className={`rsvp-summary-row${i === 0 ? ' rsvp-summary-divide' : ''}`}>
                       <span className='rsvp-summary-label'>{i === 0 ? 'Meal' : ''}</span>
                       <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
                         <span>{guestFirstName}</span>
@@ -1822,12 +1845,12 @@ export function RsvpForm({ onOpenPlace }) {
                 )}
                 {formData.dietaryDetails && (
                   <div className='rsvp-summary-row'>
-                    <span className='rsvp-summary-label'>Notes</span>
-                    <span className='rsvp-summary-value'>{formData.dietaryDetails}</span>
+                    <span className='rsvp-summary-label'>⚠️</span>
+                    <span className='rsvp-summary-value text-red/80!'>{formData.dietaryDetails}</span>
                   </div>
                 )}
                 {hasWelcomeInvite && formData.welcomeEvent && (
-                  <div className='rsvp-summary-row'>
+                  <div className='rsvp-summary-row rsvp-summary-divide'>
                     <span className='rsvp-summary-label'>Party</span>
                     <span className='rsvp-summary-value'>
                       {formData.welcomeEvent === 'both'
@@ -1836,6 +1859,12 @@ export function RsvpForm({ onOpenPlace }) {
                           ? (dinnerInviteAvailable ? 'Just the party 🎉' : 'Yes 🎉')
                           : 'Declined'}
                     </span>
+                  </div>
+                )}
+                {formData.message && formData.message.trim() && (
+                  <div className='rsvp-summary-row rsvp-summary-divide'>
+                    <span className='rsvp-summary-label'>Note</span>
+                    <span className='rsvp-summary-value'>{formData.message}</span>
                   </div>
                 )}
               </div>
