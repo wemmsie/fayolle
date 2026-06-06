@@ -184,7 +184,7 @@ function App() {
             </p>
             <p>
               We've got a snazzy menu and a groovy playlist coming together, plus plenty of tips for things to do and places to stay while you're here.</p>
-              <br/>
+
               <p>Get ready for one heck of a weekend - hope to see you there!
             </p>
           </div>
@@ -200,7 +200,7 @@ function App() {
               We got you covered for the whole event in one place. <a className='button px-3! py-1! -my-0.5! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>Parking</a> is available next door and signs will guide you where you need to go.</p>
               <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
                 <p className="m-0!">Join us at the <a className='button px-3! py-1! leading-5 md:leading-8 mx-1! -my-0.5!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
-                anytime after 3 PM!</p>
+                anytime after 3pm!</p>
               </div>
 
 
@@ -257,10 +257,13 @@ function App() {
           <div className='relative z-10 max-w-lg mx-auto bg-blue rounded-2xl px-8 py-10 pb-20'>
             <h1 className='text-white!'>what to wear</h1>
             <p>
-              Think <b>funky cocktail</b> - Harry Styles at a garden party meets your coolest aunt at a disco. Bold colors, wild prints, and shoes you can actually dance in.
-            </p>
-            <p>
-              Most importantly, be comfortable. The ceremony and cocktail hour are shaded outdoors, then the evening moves inside. So dress for a warm Chicago summer day (<span className='font-bold text-[#4a8ab5]'>↓65°</span> <span className='font-bold text-[#d54444]'>82°F↑</span>) and bring a layer if you run cold!
+            Bring the <b>color</b>. Bring the <b>prints</b>. Bring the outfit you've been waiting for an excuse to wear!</p>
+             <p>Vintage treasures, bold colors, modern statements, maximalist masterpieces... it's all fair game. If it sparks joy, it's probably perfect.</p>
+              <p>
+                Just make sure you can comfortably eat, drink, and dance in it. We definitely have plans for all three.
+              </p>
+              <p>
+                The ceremony and cocktail hour will be shaded outdoors before the evening moves inside. Expect a warm Chicago summer day <span className='font-bold text-[#4a8ab5]'>↓65°</span> <span className='font-bold text-[#d54444]'>82°F↑</span> and bring a layer if you tend to run cold.
             </p>
           </div>
 
@@ -302,20 +305,18 @@ function App() {
               <a target="_blank" href='https://booking.thehoxton.com/en-us/availability?_gl=1*1c1cf6w*_gcl_au*MTg2ODA4OTA0OS4xNzc1OTMwNTMyLjE5NzE0MjQ3MzUuMTc3NTkzMDU4OS4xNzc1OTMwNTg5*_ga*MjQ2Njc2ODA3LjE3NzU5MzA1MzI.*_ga_F7XM2Q5ZRS*czE3NzU5MzA1MzIkbzEkZzEkdDE3NzU5MzA1OTAkajIkbDAkaDc3MDE4MzY3OQ..&checkin=2026-08-07&checkout=2026-08-09&hotelCode=hoxton.chicago-chicago&modifySearch=false&rateCode=HITCHED826&rooms%5B0%5D.adults=2&rooms%5B0%5D.children=0&rooms-total=1' className='button'>Book Here</a>
             </div>
             <div className='flex-1'>
-              <h2>Leavitt Street Inn</h2>
-              <p className='sub'>$306 per night</p>
+              <h2>AirBnb</h2>
+              <p className='sub'>$150+ per night</p>
               <p>
-                2345 N Leavitt St, Chicago, IL 60647
-                <br />
-                (773) 799-8093
+                Great for groups, extra room to spread out, and a more local Chicago experience
               </p>
-              <a target="_blank" href='https://via.eviivo.com/TheLeavittStreetInn60647?noofrooms=1&startDate=2026-08-07&endDate=2026-08-09&pce=&adults1=2&children1=0' className='button'>Book Here</a>
+              <a target="_blank" href='https://www.airbnb.com/s/Chicago--IL-60614/homes?place_id=ChIJdac44t_SD4gRL9bi_zU8js8&refinement_paths%5B%5D=%2Fhomes&checkin=2026-08-07&checkout=2026-08-09&date_picker_type=calendar&adults=2&guests=2&search_type=filter_change&query=Chicago%2C%20IL%2060614&flexible_trip_lengths%5B%5D=one_week&monthly_start_date=2026-07-01&monthly_length=3&monthly_end_date=2026-10-01&search_mode=regular_search&price_filter_input_type=2&price_filter_num_nights=2&channel=EXPLORE&ne_lat=41.95343166932318&ne_lng=-87.64677800134609&sw_lat=41.891333087528324&sw_lng=-87.72329628523414&zoom=13.878752450280736&zoom_level=13&search_by_map=true&price_max=600&selected_filter_order%5B%5D=price_max%3A600&update_selected_filters=true' className='button'>Book Here</a>
             </div>
             <div className='flex-1'>
-              <h2>More Hotels</h2>
+              <h2>More hotels</h2>
               <p className='sub'>$250+ per night</p>
               <p>
-                More options in the neighborhood at filterable price ranges
+               Prefer a traditional hotel stay? Browse additional options nearby
               </p>
               <a target="_blank" href='https://www.booking.com/searchresults.html?label=gen173nr-1FCAEoggI46AdIM1gEaLsBiAEBmAEJuAEHyAEM2AEB6AEB-AECiAIBqAIEuAKWjZCMBs&aid=304142&ss=Bucktown&ssne=Bucktown&ssne_untouched=Bucktown&lang=en-us&src=searchresults&dest_id=11114&dest_type=district&checkin=2026-08-07&checkout=2026-08-09&group_adults=2&no_rooms=1&group_children=0&chal_t=1776450816100&force_referer=https%3A%2F%2Ffayolle.com%2F&nflt=price%3DUSD-min-400-1' className='button'>Book Here</a>
             </div>
@@ -408,7 +409,7 @@ With Christmas right around the corner, Cody did the only reasonable thing imagi
 Their love felt effortless and only grew from there. Much of 2025 was spent in each other's company. Attending concerts, traveling to new places, petting cats, cozy gaming, and even tattooing each other - all with the biggest grins on their faces.
 </p>
             <p>
-It was only a matter of time before Cody popped the question. Almost exactly one year after they met, the two took a trip to France for a family wedding. You know, were Paris is? The city of love?! As if the universe needed to make it any more obvious. Cody seized the moment along a romantic, lantern-lit path to drop to one knee.
+It was only a matter of time before Cody popped the question. Almost exactly one year after they met, the two took a trip to France for a family wedding. You know, were Paris is? The city of love?! Cody seized the moment along a romantic, lantern-lit path to drop to one knee.
 </p>
             <p>
 Emily and Cody could not be more thrilled to officially tie the knot this August in Chicago. Come ready to dance, eat, and celebrate these two lovely dummies.
