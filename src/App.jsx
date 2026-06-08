@@ -152,7 +152,7 @@ function App() {
         <img src={image.overlay2} alt='' className='hero-overlay-img absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[120vw] md:w-auto max-h-300 max-w-none pointer-events-none -ml-6! md:-ml-12! z-2' />
         <div className='absolute inset-0 bg-text opacity-50 z-3'></div>
 
-         <div className='p-5 md:p-8 rounded-xl bg-white/15 md:bg-black/30 ml-5 absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto'>
+         <div className='hero-rsvp-note p-5 md:p-8 rounded-xl bg-white/15 md:bg-black/30 ml-5 absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto'>
             <h2 className='hero-note text-white/80! tracking-wider text-xl! md:text-[22px]! text-center mb-0!'>
               rsvp by <span className='text-white'>June 20<sup className='text-base'>th</sup></span>
               <Squiggle height={12} className='w-full text-white/80 mt-1' />
