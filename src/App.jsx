@@ -123,10 +123,11 @@ function App() {
       <ScrollNav />
       {/* Hero */}
       <section
-        className='relative h-screen flex items-center justify-center overflow-hidden bg-black pl-0! md:pl-0!'
+        className='relative h-screen flex md:pt-10! md:items-start justify-center overflow-hidden bg-black pl-0! md:pl-0!'
       >
+        
         <img src={image.sparklers} alt='' className='absolute inset-0 w-full h-full object-cover object-center opacity-30 pointer-events-none' />
-        <div className='relative z-10 flex items-center justify-center'>
+        <div className='relative z-10 flex items-center justify-center flex-col'>
           <svg viewBox='0 0 800 450' className='ml-5 w-[115vw] md:w-[95vw] max-w-[700px] md:max-w-[800px] mb-40 md:mb-0' style={{ fontFamily: 'var(--font-sanremo-caps)' }}>
             <defs>
               <path id='topArc' d={`M ${arcs.line1.x1},${arcs.line1.baseY} Q ${arcs.line1.midX},${arcs.line1.peakY} ${arcs.line1.x2},${arcs.line1.baseY}`} fill='none' />
@@ -143,13 +144,23 @@ function App() {
               <textPath href='#line2Arc' startOffset='50%'>are getting married</textPath>
             </text>
           </svg>
+
         </div>
         <div className='confetti-container'>
           {Array.from({ length: 20 }, (_, i) => <div key={i} className='confetti-piece' />)}
         </div>
-        <img src={image.overlay2} alt='' className='hero-overlay-img absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[120vw] md:w-auto max-h-300 max-w-none pointer-events-none -ml-5! md:-ml-12! z-2' />
+        <img src={image.overlay2} alt='' className='hero-overlay-img absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[120vw] md:w-auto max-h-300 max-w-none pointer-events-none -ml-6! md:-ml-12! z-2' />
         <div className='absolute inset-0 bg-text opacity-50 z-3'></div>
-        <div className='hero-arrow absolute bottom-1/8 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
+
+         <div className='p-5 md:p-8 rounded-xl bg-white/15 md:bg-black/30 ml-5 absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto'>
+            <h2 className='hero-note text-white/80! tracking-wider text-xl! md:text-[22px]! text-center mb-0!'>
+              rsvp by <span className='text-white'>June 20<sup className='text-base'>th</sup></span>
+              <Squiggle height={12} className='w-full text-white/80 mt-1' />
+              <span className='text-sm md:text-sm text-white'>pretty please</span>
+            </h2>
+          </div>
+
+        <div className='hero-arrow absolute bottom-5 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
           <svg
             className='w-12 h-12 md:w-18 md:h-18 animate-bounce stroke-2 md:stroke-2.5 stroke-white'
             viewBox='0 0 24 24'
