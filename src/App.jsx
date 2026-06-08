@@ -155,7 +155,7 @@ function App() {
          <a
             href='#rsvp'
             onClick={(e) => { e.preventDefault(); document.getElementById('rsvp')?.scrollIntoView({ behavior: 'smooth' }); }}
-            className='hero-rsvp-note group block no-underline rounded-xl bg-white/15 md:bg-black/30 ml-5 absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto transition-all duration-200 md:hover:bg-black/40 
+            className='hero-rsvp-note group block no-underline rounded-xl bg-white/15 md:bg-black/30 ml-5! md:ml-10! absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto transition-all duration-200 md:hover:bg-black/40 
           
             p-6!'
           >
