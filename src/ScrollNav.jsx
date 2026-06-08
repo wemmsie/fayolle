@@ -14,7 +14,11 @@ const sections = [
 export function ScrollNav() {
   const [active, setActive] = useState('');
   const [pastHero, setPastHero] = useState(false);
-  const [rsvpInView, setRsvpInView] = useState(false);
+  // If the page was loaded directly at #rsvp, start hidden to avoid a flash
+  // before the IntersectionObserver fires.
+  const [rsvpInView, setRsvpInView] = useState(
+    typeof window !== 'undefined' && window.location.hash === '#rsvp'
+  );
   const isSmooth = useRef(false);
 
   useEffect(() => {

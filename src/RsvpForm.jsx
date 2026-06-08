@@ -326,32 +326,52 @@ export function RsvpForm({ onOpenPlace }) {
 
   const GREETING_FULL_NAME_MAX_CHARS = 18;
 
-  // Check if greeting name wraps to multiple lines
+  // Check if greeting name wraps to multiple lines.
+  // IMPORTANT: we must measure the *full* name in the DOM, not whatever is
+  // currently rendered. Otherwise once state flips to `false` (first-name only),
+  // a later run (e.g. after fonts load) would measure the short string, see no
+  // wrap, and incorrectly flip back to `true` — stranding the user with a
+  // multi-line full name.
   const checkNameWrap = () => {
-    const el = greetingNameRef.current;
-    if (!el) return;
+    const trimmed = verifiedName.trim();
+    if (!trimmed) return;
 
-    const nameTooLong = verifiedName.trim().length > GREETING_FULL_NAME_MAX_CHARS;
-
-    let isWrapped = false;
-    const textNode = el.firstChild;
-    if (textNode) {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      const rects = Array.from(range.getClientRects());
-      const uniqueLineTops = new Set(rects.map((r) => Math.round(r.top)));
-      isWrapped = uniqueLineTops.size > 1;
-      range.detach?.();
+    if (trimmed.length > GREETING_FULL_NAME_MAX_CHARS) {
+      setShowFullNameInGreeting(false);
+      return;
     }
 
-    setShowFullNameInGreeting(!nameTooLong && !isWrapped);
+    // Force the full name into the DOM so the measurement below reflects
+    // whether the full name would actually wrap at the current width.
+    setShowFullNameInGreeting(true);
+
+    // Two rAFs: first lets React commit the state update, second lets the
+    // browser perform layout before we measure.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = greetingNameRef.current;
+        if (!el) return;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const rects = Array.from(range.getClientRects());
+        const uniqueLineTops = new Set(rects.map((r) => Math.round(r.top)));
+        const isWrapped = uniqueLineTops.size > 1;
+        range.detach?.();
+        if (isWrapped) setShowFullNameInGreeting(false);
+      });
+    });
   };
 
   useEffect(() => {
     checkNameWrap();
     window.addEventListener('resize', checkNameWrap);
     document.fonts?.ready?.then(checkNameWrap);
-    return () => window.removeEventListener('resize', checkNameWrap);
+    // Re-check after fonts have had a chance to swap in and trigger reflow.
+    const t = setTimeout(checkNameWrap, 250);
+    return () => {
+      window.removeEventListener('resize', checkNameWrap);
+      clearTimeout(t);
+    };
   }, [verifiedName]);
 
   // Animate gate content height when switching between form / suggestions / not-found views
