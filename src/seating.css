@@ -1,0 +1,668 @@
+@import 'tailwindcss';
+@import './global.css';
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+}
+
+/* ─── Password gate ─────────────────────────────────────────────────────────── */
+.sc-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f4ef;
+}
+
+.sc-gate__form {
+  background: #fff;
+  border-radius: 14px;
+  padding: 40px 36px;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 300px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.sc-gate__icon {
+  font-size: 36px;
+}
+
+.sc-gate__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #3d3228;
+}
+
+.sc-gate__sub {
+  margin: 0;
+  color: #9a8a7a;
+  font-size: 13px;
+}
+
+.sc-gate__input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  border: 1.5px solid #d4c4a8;
+  font-family: inherit;
+}
+
+.sc-gate__input--error {
+  border-color: #d9534f;
+}
+
+.sc-gate__error {
+  margin: 0;
+  color: #d9534f;
+  font-size: 12px;
+}
+
+.sc-gate__submit {
+  background: #6b8f71;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ─── Loading / error screens ────────────────────────────────────────────────── */
+.sc-loading,
+.sc-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f4ef;
+  color: #9a8a7a;
+  font-family: system-ui, sans-serif;
+  text-align: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.sc-loading {
+  font-size: 16px;
+}
+
+.sc-error {
+  font-size: 14px;
+}
+
+.sc-error__icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+/* ─── App shell ──────────────────────────────────────────────────────────────── */
+.sc-app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f8f4ef;
+  font-size: 13px;
+}
+
+/* ─── Left panel (guest list) ────────────────────────────────────────────────── */
+.sc-panel {
+  width: 230px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #e8e0d4;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.sc-panel__header {
+  padding: 16px 12px 10px;
+  border-bottom: 1px solid #ece4d8;
+}
+
+.sc-panel__title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #3d3228;
+  margin-bottom: 6px;
+}
+
+.sc-panel__stats {
+  font-size: 11px;
+  color: #9a8a7a;
+  margin-bottom: 10px;
+}
+
+.sc-panel__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid #d4c4a8;
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+}
+
+.sc-panel__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 8px 4px;
+}
+
+.sc-panel__empty {
+  color: #bbb;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* ─── Guest items ─────────────────────────────────────────────────────────────── */
+.sc-guest {
+    @apply  border! px-2 py-1 mb-1 rounded cursor-pointer flex justify-between items-center gap-1 leading-tight transition-colors font-medium;
+  &:hover {
+    @apply bg-green/40 border-green-dark;
+  }
+}
+
+.sc-guest--unassigned {
+    @apply bg-green/20 border-green/80 text-green-dark;
+}
+
+.sc-guest--seated {
+  background: #f5f3f0;
+  color: #999;
+}
+
+.sc-guest--selected {
+    @apply bg-green-dark! border-green-dark text-white font-semibold;
+}
+
+.sc-guest__name {
+  font-size: 12px;
+}
+
+.sc-guest__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.sc-guest__seat-id {
+  font-size: 10px;
+  color: #bbb;
+}
+
+.sc-guest__remove {
+  font-size: 11px;
+  color: #ccc;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+/* ─── Panel footer ────────────────────────────────────────────────────────────── */
+.sc-panel__footer {
+  padding: 10px 10px 12px;
+  border-top: 1px solid #ece4d8;
+}
+
+.sc-placing-badge {
+  background: #fef3b4;
+  border: 1px solid #f0c030;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 11px;
+  color: #7a5800;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sc-placing-badge__dismiss {
+  cursor: pointer;
+  color: #bbb;
+  margin-left: 6px;
+  font-size: 13px;
+}
+
+.sc-btn-save {
+    @apply w-full py-2 rounded border-none font-bold text-sm text-white transition-colors cursor-pointer bg-green-dark/80;
+    &:hover {
+        @apply bg-green-dark;
+    }
+}
+
+.sc-btn-save--saving {
+    @apply bg-green-dark;
+  cursor: default;
+}
+
+.sc-btn-save--saved {
+  background: #5a9f6a;
+}
+
+.sc-btn-save--error {
+  background: #d9534f;
+}
+
+.sc-btn-export {
+  width: 100%;
+  padding: 7px 0;
+  border-radius: 8px;
+  border: 1.5px solid #d4c4a8;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+  font-family: inherit;
+  background: #fff;
+  color: #7a6a58;
+  transition: background 0.15s;
+}
+
+.sc-btn-export:hover {
+  background: #f5f0ea;
+}
+
+/* ─── Chart area ──────────────────────────────────────────────────────────────── */
+.sc-chart {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+.sc-section-label {
+  font-size: 10px;
+  color: #b8a882;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+}
+
+.sc-main-grid {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ─── Divider ─────────────────────────────────────────────────────────────────── */
+.sc-divider {
+  margin: 28px 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sc-divider__line {
+  flex: 1;
+  height: 1px;
+  border-top: 1px dashed #d4c4a8;
+}
+
+.sc-divider__label {
+  font-size: 10px;
+  color: #c4b090;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ─── Middle zone (Tables 2–5 + head tables nested below) ────────────────────── */
+.sc-middle {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: center;
+}
+
+.sc-middle__tables {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.sc-middle__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 16px;
+  width: 100%;
+}
+
+.sc-middle__divider {
+  width: 80%;
+  border: none;
+  border-top: 1px dashed #d4c4a8;
+  margin-bottom: 4px;
+}
+
+.sc-middle__head-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+/* ─── Head tables row ─────────────────────────────────────────────────────────── */
+.sc-head-row {
+    @apply flex gap-6 items-center justify-center;
+}
+
+/* ─── Legend ──────────────────────────────────────────────────────────────────── */
+.sc-legend {
+  margin-top: 36px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: #9a8a7a;
+}
+
+.sc-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-legend__swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sc-legend__tip {
+  color: #ccc;
+  margin-left: 8px;
+}
+
+/* ─── Banquet column ──────────────────────────────────────────────────────────── */
+.sc-banquet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sc-banquet__label {
+  font-size: 9px;
+  color: #b8a882;
+  font-weight: 600;
+  margin-bottom: 5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sc-banquet__body {
+  display: flex;
+  gap: 4px; /* SEAT_GAP */
+}
+
+.sc-banquet__side {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sc-banquet__section {
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-banquet__seats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px; /* SEAT_GAP */
+}
+
+.sc-banquet__gap {
+  height: 6px; /* INTER_GAP */
+}
+
+/* ─── Table bar (vertical) ────────────────────────────────────────────────────── */
+.sc-bar-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sc-bar-connector {
+  width: 30px; /* TABLE_BAR_W */
+  height: 6px; /* INTER_GAP */
+  background: #b8a080;
+  border-top: 1px dashed rgba(255, 255, 255, 0.25);
+}
+
+.sc-bar-section {
+  width: 30px; /* TABLE_BAR_W */
+  background: #b8a080;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sc-bar-section--solo    { border-radius: 4px; }
+.sc-bar-section--top     { border-radius: 4px 4px 0 0; }
+.sc-bar-section--bottom  { border-radius: 0 0 4px 4px; }
+.sc-bar-section--middle  { border-radius: 0; }
+
+.sc-bar-section__label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.04em;
+}
+
+/* ─── Eight-top table (head section, horizontal) ─────────────────────────────── */
+.sc-eight-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px; /* SEAT_GAP */
+}
+
+.sc-eight-top__row {
+  display: flex;
+  gap: 4px; /* SEAT_GAP */
+}
+
+.sc-eight-top__bar {
+  background: #b8a080;
+  border-radius: 4px;
+  padding: 3px 0;
+  text-align: center;
+  font-size: 9px;
+  color: #fff;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+/* ─── Two-top table (bride & groom) ──────────────────────────────────────────── */
+.sc-two-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px; /* SEAT_GAP */
+}
+
+.sc-two-top__row {
+  display: flex;
+  gap: 10px;
+}
+
+.sc-two-top__bar {
+  background: #7a5030;
+  border-radius: 4px;
+  padding: 3px 12px;
+  text-align: center;
+  font-size: 9px;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.sc-two-top__spacer {
+  height: 45px; /* INTER_GAP */
+}   
+
+/* ─── Seat circle ─────────────────────────────────────────────────────────────── */
+.sc-seat {
+    @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer transition-colors;
+}
+
+/* Orphaned guest warning badge */
+.sc-seat__warning {
+    @apply absolute -top-1 -right-1 text-xs leading-none pointer-events-none z-10 filter drop-shadow;
+}
+
+.sc-seat--empty {
+  background: #f0ece6;
+  border: 2px solid #d4c4a8;
+  color: #ccc;
+  font-weight: 400;
+}
+
+.sc-seat--occupied {
+    @apply bg-primary/70 border-primary text-white font-semibold;
+    &:hover {
+        @apply bg-primary/80;
+    }
+}
+
+.sc-seat--moving {
+  background: #f5c842;
+  border: 2px solid #c8a020;
+  color: #6b4c00;
+  font-weight: 700;
+}
+
+.sc-seat--drop-target {
+  background: #e8f5ec;
+  border: 2px dashed #5aad78;
+  color: #9dcbac;
+  font-weight: 400;
+}
+
+/* ─── Seat circle highlights (lit from guest list hover/click or seat hover) ─── */
+.sc-seat--hl-self {
+  box-shadow: 0 0 0 3px #b8a882;
+  z-index: 2;
+}
+
+.sc-seat--hl-partner {
+  box-shadow: 0 0 0 3px #93c5fd;
+  z-index: 2;
+}
+
+.sc-seat--hl-lastname {
+  box-shadow: 0 0 0 3px #fdba74;
+  z-index: 2;
+}
+
+/* ─── Seat tooltip (full name on hover) ──────────────────────────────────────── */
+.sc-seat__tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3d3228;
+  color: #fff;
+  padding: 3px 9px;
+  border-radius: 5px;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+}
+
+.sc-seat:hover .sc-seat__tooltip {
+  display: block;
+}
+
+/* ─── Household groups in guest list ──────────────────────────────────────────── */
+.sc-household {
+  margin-bottom: 3px;
+}
+
+.sc-household + .sc-household {
+  border-top: 1px solid #f0ece6;
+  padding-top: 3px;
+}
+
+/* Partner: slightly indented */
+.sc-guest--partner {
+  margin-left: 10px;
+}
+
+/* Kids: more indented, slightly smaller/muted */
+.sc-guest--kid {
+  margin-left: 14px;
+  font-size: 11px;
+  opacity: 0.82;
+}
+
+/* ─── Guest hover highlights (lit up when hovering a seat on the chart) ─────── */
+
+/* The hovered guest's own list item: subtle ring */
+.sc-guest--hl-self {
+  box-shadow: 0 0 0 2px #b8a882;
+}
+
+/* Their +1 / partner: blue */
+.sc-guest--hl-partner {
+  background: #eff6ff !important;
+  border-color: #93c5fd !important;
+  color: #1e40af !important;
+}
+
+/* Same last name (family): warm amber */
+.sc-guest--hl-lastname {
+  background: #fff7ed !important;
+  border-color: #fdba74 !important;
+  color: #7c2d12 !important;
+}
+
+/* ─── Hover legend (appears inside panel header while hovering a seat) ────────── */
+.sc-panel__hover-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #9a8a7a;
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid #f0ece6;
+}
+
+.sc-hl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.sc-hl-dot--partner  { background: #93c5fd; }
+.sc-hl-dot--lastname { background: #fdba74; }

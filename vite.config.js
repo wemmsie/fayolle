@@ -73,6 +73,7 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         'deets-please': resolve(__dirname, 'deets-please.html'),
+        seating: resolve(__dirname, 'seating.html'),
       },
     },
   },
