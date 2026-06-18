@@ -533,8 +533,7 @@ body {
 
 /* ─── Seat circle ─────────────────────────────────────────────────────────────── */
 .sc-seat {
-    @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer;
-    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer transition-all;
 }
 
 /* Orphaned guest warning badge */
@@ -551,7 +550,7 @@ body {
 .sc-seat--occupied {
   @apply bg-orange/20 border-orange/50 text-primary font-semibold cursor-grab;
   &:hover {
-    @apply bg-blue-dark/50 border-blue-dark font-semibold;
+    @apply bg-blue-dark/50 border-blue-dark font-semibold text-primary!;
   }
 }
 
@@ -559,7 +558,7 @@ body {
 
 /* Primary ring — self, the selected person */
 .sc-seat--hl-self {
-    @apply ring-primary/95 ring-0 border-primary bg-primary/80;
+    @apply bg-blue-dark/50 border-blue-dark font-semibold text-primary!;
   z-index: 2;
   transition-delay: 80ms;
 }
@@ -578,7 +577,7 @@ body {
 
 /* Primary — active / selected / "in hand" */
 .sc-seat--moving {
-  @apply bg-primary text-white font-bold border-none! ring-0!;
+  @apply bg-primary text-white! font-bold border-none! ring-0!;
 }
 
 /* Sky — lightest blue, "available here" */
@@ -592,13 +591,14 @@ body {
 
 /* Seat being dragged — source dims */
 .sc-seat--dragging {
+    @apply bg-primary text-white! border-primary transition-all;
   opacity: 0.35;
   cursor: grabbing !important;
 }
 
 /* Primary dark — unmistakable drop destination */
 .sc-seat--drag-over {
-  @apply text-white! bg-primary-dark/80!;
+  @apply text-white! bg-primary/80!;
   border-color: var(--color-primary) !important;
   transform: scale(1.14);
   transition: transform 0.08s ease;
