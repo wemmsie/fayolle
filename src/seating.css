@@ -16,7 +16,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f4ef;
+  background: var(--color-warm);
 }
 
 .sc-gate__form {
@@ -40,12 +40,12 @@ body {
   margin: 0;
   font-size: 22px;
   font-weight: 700;
-  color: #3d3228;
+  color: var(--color-primary);
 }
 
 .sc-gate__sub {
   margin: 0;
-  color: #9a8a7a;
+  color: var(--color-blue-med);
   font-size: 13px;
 }
 
@@ -54,22 +54,22 @@ body {
   border-radius: 8px;
   font-size: 14px;
   outline: none;
-  border: 1.5px solid #d4c4a8;
+  border: 1.5px solid var(--color-blue);
   font-family: inherit;
 }
 
 .sc-gate__input--error {
-  border-color: #d9534f;
+  border-color: var(--color-red);
 }
 
 .sc-gate__error {
   margin: 0;
-  color: #d9534f;
+  color: var(--color-red);
   font-size: 12px;
 }
 
 .sc-gate__submit {
-  background: #6b8f71;
+    @apply bg-primary;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -83,12 +83,11 @@ body {
 /* ─── Loading / error screens ────────────────────────────────────────────────── */
 .sc-loading,
 .sc-error {
+    @apply text-red bg-pink;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f8f4ef;
-  color: #9a8a7a;
   font-family: system-ui, sans-serif;
   text-align: center;
   padding: 24px;
@@ -113,7 +112,7 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: #f8f4ef;
+  background: var(--color-warm);
   font-size: 13px;
 }
 
@@ -122,7 +121,7 @@ body {
   width: 230px;
   flex-shrink: 0;
   background: #fff;
-  border-right: 1px solid #e8e0d4;
+  border-right: 1px solid var(--color-blue);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -130,19 +129,19 @@ body {
 
 .sc-panel__header {
   padding: 16px 12px 10px;
-  border-bottom: 1px solid #ece4d8;
+  border-bottom: 1px solid var(--color-blue);
 }
 
 .sc-panel__title {
   font-weight: 700;
   font-size: 15px;
-  color: #3d3228;
+  color: var(--color-primary);
   margin-bottom: 6px;
 }
 
 .sc-panel__stats {
   font-size: 11px;
-  color: #9a8a7a;
+  color: var(--color-blue-med);
   margin-bottom: 10px;
 }
 
@@ -151,7 +150,7 @@ body {
   box-sizing: border-box;
   padding: 6px 9px;
   border-radius: 7px;
-  border: 1px solid #d4c4a8;
+  border: 1px solid var(--color-blue);
   font-size: 12px;
   outline: none;
   font-family: inherit;
@@ -164,7 +163,7 @@ body {
 }
 
 .sc-panel__empty {
-  color: #bbb;
+  color: var(--color-blue-med-light);
   font-size: 12px;
   text-align: center;
   margin-top: 16px;
@@ -172,23 +171,30 @@ body {
 
 /* ─── Guest items ─────────────────────────────────────────────────────────────── */
 .sc-guest {
-    @apply  border! px-2 py-1 mb-1 rounded cursor-pointer flex justify-between items-center gap-1 leading-tight transition-colors font-medium;
+  @apply border! px-2 py-1 mb-1 rounded cursor-pointer flex justify-between items-center gap-1 leading-tight transition-colors font-medium
+  border-primary;
   &:hover {
-    @apply bg-green/40 border-green-dark;
+    @apply border-blue bg-blue/50;
   }
 }
 
 .sc-guest--unassigned {
-    @apply bg-green/20 border-green/80 text-green-dark;
+  @apply bg-blue/50 text-primary border-primary;
+  &:hover {
+    @apply bg-blue/70 border-primary/80 text-primary;
+  }
 }
 
 .sc-guest--seated {
-  background: #f5f3f0;
-  color: #999;
+  @apply bg-warm/80! text-primary border-orange;
+  &:hover {
+    @apply bg-orange/30! border-orange/80 text-primary;
+  }
 }
 
+/* Primary — active / "in hand" */
 .sc-guest--selected {
-    @apply bg-green-dark! border-green-dark text-white font-semibold;
+  @apply bg-primary! text-white! font-semibold;
 }
 
 .sc-guest__name {
@@ -204,12 +210,12 @@ body {
 
 .sc-guest__seat-id {
   font-size: 10px;
-  color: #bbb;
+  color: var(--color-blue-med-light);
 }
 
 .sc-guest__remove {
   font-size: 11px;
-  color: #ccc;
+  color: var(--color-blue-med-light);
   cursor: pointer;
   line-height: 1;
   padding: 0 2px;
@@ -218,16 +224,16 @@ body {
 /* ─── Panel footer ────────────────────────────────────────────────────────────── */
 .sc-panel__footer {
   padding: 10px 10px 12px;
-  border-top: 1px solid #ece4d8;
+  border-top: 1px solid var(--color-blue);
 }
 
+/* Active selection badge — primary blue family */
 .sc-placing-badge {
-  background: #fef3b4;
-  border: 1px solid #f0c030;
+  @apply bg-primary/10 text-primary;
+  border: 1px solid var(--color-blue-med-light);
   border-radius: 7px;
   padding: 6px 9px;
   font-size: 11px;
-  color: #7a5800;
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
@@ -236,48 +242,48 @@ body {
 
 .sc-placing-badge__dismiss {
   cursor: pointer;
-  color: #bbb;
+  color: var(--color-blue-med-light);
   margin-left: 6px;
   font-size: 13px;
 }
 
 .sc-btn-save {
-    @apply w-full py-2 rounded border-none font-bold text-sm text-white transition-colors cursor-pointer bg-green-dark/80;
-    &:hover {
-        @apply bg-green-dark;
-    }
+  @apply w-full py-2 rounded border-none font-bold text-sm text-white transition-colors cursor-pointer bg-primary;
+  &:hover {
+    @apply bg-primary-dark;
+  }
 }
 
 .sc-btn-save--saving {
-    @apply bg-green-dark;
+  @apply bg-primary;
   cursor: default;
 }
 
 .sc-btn-save--saved {
-  background: #5a9f6a;
+  @apply bg-blue-med;
 }
 
 .sc-btn-save--error {
-  background: #d9534f;
+  @apply bg-red;
 }
 
 .sc-btn-export {
   width: 100%;
   padding: 7px 0;
   border-radius: 8px;
-  border: 1.5px solid #d4c4a8;
+  border: 1.5px solid var(--color-blue);
   font-weight: 600;
   font-size: 12px;
   cursor: pointer;
   margin-top: 6px;
   font-family: inherit;
   background: #fff;
-  color: #7a6a58;
+  color: var(--color-blue-med);
   transition: background 0.15s;
 }
 
 .sc-btn-export:hover {
-  background: #f5f0ea;
+  background: var(--color-warm);
 }
 
 /* ─── Chart area ──────────────────────────────────────────────────────────────── */
@@ -290,7 +296,7 @@ body {
 
 .sc-section-label {
   font-size: 10px;
-  color: #b8a882;
+  color: var(--color-blue-med-light);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -314,12 +320,12 @@ body {
 .sc-divider__line {
   flex: 1;
   height: 1px;
-  border-top: 1px dashed #d4c4a8;
+  border-top: 1px dashed var(--color-blue);
 }
 
 .sc-divider__label {
   font-size: 10px;
-  color: #c4b090;
+  color: var(--color-blue-med-light);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -351,7 +357,7 @@ body {
 .sc-middle__divider {
   width: 80%;
   border: none;
-  border-top: 1px dashed #d4c4a8;
+  border-top: 1px dashed var(--color-blue);
   margin-bottom: 4px;
 }
 
@@ -373,7 +379,7 @@ body {
   gap: 18px;
   flex-wrap: wrap;
   font-size: 11px;
-  color: #9a8a7a;
+  color: var(--color-blue-med);
 }
 
 .sc-legend__item {
@@ -390,7 +396,7 @@ body {
 }
 
 .sc-legend__tip {
-  color: #ccc;
+  color: var(--color-blue-med-light);
   margin-left: 8px;
 }
 
@@ -403,7 +409,7 @@ body {
 
 .sc-banquet__label {
   font-size: 9px;
-  color: #b8a882;
+  color: var(--color-blue-med-light);
   font-weight: 600;
   margin-bottom: 5px;
   letter-spacing: 0.06em;
@@ -443,16 +449,17 @@ body {
   flex-shrink: 0;
 }
 
+/* Earthy warm tan — gives the bars a physical, fabric-like quality */
 .sc-bar-connector {
   width: 30px; /* TABLE_BAR_W */
   height: 6px; /* INTER_GAP */
-  background: #b8a080;
+  background: var(--color-orange);
   border-top: 1px dashed rgba(255, 255, 255, 0.25);
 }
 
 .sc-bar-section {
   width: 30px; /* TABLE_BAR_W */
-  background: #b8a080;
+  background: var(--color-orange);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -467,7 +474,7 @@ body {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: 8px;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.04em;
 }
 
@@ -485,12 +492,12 @@ body {
 }
 
 .sc-eight-top__bar {
-  background: #b8a080;
+  background: var(--color-orange);
   border-radius: 4px;
   padding: 3px 0;
   text-align: center;
   font-size: 9px;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.85);
   letter-spacing: 0.05em;
   font-weight: 500;
 }
@@ -508,8 +515,9 @@ body {
   gap: 10px;
 }
 
+/* Primary — special / elevated */
 .sc-two-top__bar {
-  background: #7a5030;
+  background: var(--color-primary);
   border-radius: 4px;
   padding: 3px 12px;
   text-align: center;
@@ -525,7 +533,8 @@ body {
 
 /* ─── Seat circle ─────────────────────────────────────────────────────────────── */
 .sc-seat {
-    @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer transition-colors;
+    @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer;
+    transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
 }
 
 /* Orphaned guest warning badge */
@@ -533,49 +542,96 @@ body {
     @apply absolute -top-1 -right-1 text-xs leading-none pointer-events-none z-10 filter drop-shadow;
 }
 
+/* Warm cream — resting, not yet placed */
 .sc-seat--empty {
-  background: #f0ece6;
-  border: 2px solid #d4c4a8;
-  color: #ccc;
-  font-weight: 400;
+  @apply bg-warm/60 font-normal border-orange/20;
 }
 
+/* Slate blue-grey — placed, at rest, neutral */
 .sc-seat--occupied {
-    @apply bg-primary/70 border-primary text-white font-semibold;
-    &:hover {
-        @apply bg-primary/80;
-    }
+  @apply bg-orange/20 border-orange/50 text-primary font-semibold cursor-grab;
+  &:hover {
+    @apply bg-blue-dark/50 border-blue-dark font-semibold;
+  }
 }
 
-.sc-seat--moving {
-  background: #f5c842;
-  border: 2px solid #c8a020;
-  color: #6b4c00;
-  font-weight: 700;
-}
+/* ─── Seat circle highlights ─────────────────────────────────────────────────── */
 
-.sc-seat--drop-target {
-  background: #e8f5ec;
-  border: 2px dashed #5aad78;
-  color: #9dcbac;
-  font-weight: 400;
-}
-
-/* ─── Seat circle highlights (lit from guest list hover/click or seat hover) ─── */
+/* Primary ring — self, the selected person */
 .sc-seat--hl-self {
-  box-shadow: 0 0 0 3px #b8a882;
+    @apply ring-primary/95 ring-0 border-primary bg-primary/80;
   z-index: 2;
+  transition-delay: 80ms;
 }
 
+/* Sky / blue-dark — partner / +1 (lighter, accessible blue) */
 .sc-seat--hl-partner {
-  box-shadow: 0 0 0 3px #93c5fd;
-  z-index: 2;
+  @apply bg-blue-dark/20 border-blue-dark/50 font-semibold;
+  transition-delay: 80ms;
 }
 
+/* Blue / blue-med-light — family / same last name (cooler, more distant) */
 .sc-seat--hl-lastname {
-  box-shadow: 0 0 0 3px #fdba74;
-  z-index: 2;
+    @apply bg-orange/50;
+  transition-delay: 80ms;
 }
+
+/* Primary — active / selected / "in hand" */
+.sc-seat--moving {
+  @apply bg-primary text-white font-bold border-none! ring-0!;
+}
+
+/* Sky — lightest blue, "available here" */
+.sc-seat--drop-target {
+  @apply bg-sky/30 font-normal transition-all;
+  border: 2px dashed var(--color-blue-dark);
+  &:hover {
+    @apply bg-sky/80!;
+  }
+}
+
+/* Seat being dragged — source dims */
+.sc-seat--dragging {
+  opacity: 0.35;
+  cursor: grabbing !important;
+}
+
+/* Primary dark — unmistakable drop destination */
+.sc-seat--drag-over {
+  @apply text-white! bg-primary-dark/80!;
+  border-color: var(--color-primary) !important;
+  transform: scale(1.14);
+  transition: transform 0.08s ease;
+  z-index: 10;
+}
+
+/* ─── Table/section bar drag states ──────────────────────────────────────────── */
+
+/* Bar being dragged */
+.sc-bar--dragging {
+  opacity: 0.4;
+  cursor: grabbing !important;
+}
+
+/* Bar the drag is hovering over — matches seat drag-over */
+.sc-bar--drag-over {
+  background: var(--color-primary-dark) !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px var(--color-primary);
+}
+
+/* Grab cursor on all draggable bars */
+.sc-bar-section,
+.sc-eight-top__bar {
+  cursor: grab;
+  user-select: none;
+}
+.sc-bar-section:active,
+.sc-eight-top__bar:active {
+  cursor: grabbing;
+}
+
+
 
 /* ─── Seat tooltip (full name on hover) ──────────────────────────────────────── */
 .sc-seat__tooltip {
@@ -584,7 +640,7 @@ body {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #3d3228;
+  background: var(--color-primary);
   color: #fff;
   padding: 3px 9px;
   border-radius: 5px;
@@ -607,7 +663,7 @@ body {
 }
 
 .sc-household + .sc-household {
-  border-top: 1px solid #f0ece6;
+  border-top: 1px solid var(--color-blue);
   padding-top: 3px;
 }
 
@@ -623,25 +679,21 @@ body {
   opacity: 0.82;
 }
 
-/* ─── Guest hover highlights (lit up when hovering a seat on the chart) ─────── */
+/* ─── Guest list highlights ──────────────────────────────────────────────────── */
 
-/* The hovered guest's own list item: subtle ring */
-.sc-guest--hl-self {
-  box-shadow: 0 0 0 2px #b8a882;
-}
+/* Primary ring — self */
+/* .sc-guest--hl-self {
+    @apply ring-primary/50 ring-2;
+} */
 
-/* Their +1 / partner: blue */
 .sc-guest--hl-partner {
-  background: #eff6ff !important;
-  border-color: #93c5fd !important;
-  color: #1e40af !important;
+  @apply border-2 border-orange;
 }
 
-/* Same last name (family): warm amber */
 .sc-guest--hl-lastname {
-  background: #fff7ed !important;
-  border-color: #fdba74 !important;
-  color: #7c2d12 !important;
+  @apply bg-blue/40!;
+  border-color: var(--color-blue-med-light) !important;
+  color: var(--color-primary) !important;
 }
 
 /* ─── Hover legend (appears inside panel header while hovering a seat) ────────── */
@@ -650,10 +702,10 @@ body {
   align-items: center;
   gap: 8px;
   font-size: 10px;
-  color: #9a8a7a;
+  color: var(--color-blue-med);
   margin-top: 7px;
   padding-top: 7px;
-  border-top: 1px solid #f0ece6;
+  border-top: 1px solid var(--color-blue);
 }
 
 .sc-hl-dot {
@@ -664,5 +716,5 @@ body {
   flex-shrink: 0;
 }
 
-.sc-hl-dot--partner  { background: #93c5fd; }
-.sc-hl-dot--lastname { background: #fdba74; }
+.sc-hl-dot--partner  { background: var(--color-blue-dark); }
+.sc-hl-dot--lastname { background: var(--color-blue-med-light); }

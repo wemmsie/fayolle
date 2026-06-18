@@ -56,30 +56,40 @@ function shortName(name) {
 }
 
 // ─── Seat component ───────────────────────────────────────────────────────────
-function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, size = 44 }) {
+function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, size = 44 }) {
   const name = assignments[seatId] || null;
-  const occupied = !!name;
-  const isBeingMoved = occupied && name === selectedGuest;
-  const isDropTarget = !occupied && !!selectedGuest;
-  const isOrphaned = !!name && !!orphanedNames?.has(name);
-  const hlClass = getHlClass ? getHlClass(name) : '';
+  const occupied      = !!name;
+  const isBeingMoved  = occupied && name === selectedGuest;
+  const isDragging    = drag?.draggingSeat === seatId;
+  const isDragOver    = drag?.dragOverSeat === seatId;
+  const isDropTarget  = !occupied && (!!selectedGuest || !!drag?.draggingSeat || !!drag?.draggingGuest);
+  const isOrphaned    = !!name && !!orphanedNames?.has(name);
+  const hlClass       = getHlClass ? getHlClass(name) : '';
 
   let stateClass;
-  if (isBeingMoved)       stateClass = 'sc-seat--moving';
-  else if (occupied)      stateClass = 'sc-seat--occupied';
-  else if (isDropTarget)  stateClass = 'sc-seat--drop-target';
-  else                    stateClass = 'sc-seat--empty';
+  if (isDragging)        stateClass = 'sc-seat--dragging';
+  else if (isDragOver)   stateClass = 'sc-seat--drag-over';
+  else if (isBeingMoved) stateClass = 'sc-seat--moving';
+  else if (occupied)     stateClass = 'sc-seat--occupied';
+  else if (isDropTarget) stateClass = 'sc-seat--drop-target';
+  else                   stateClass = 'sc-seat--empty';
 
   return (
     <div
-      onClick={() => onSeatClick(seatId)}
-      onMouseEnter={() => name && onHover?.(name)}
+      draggable={occupied}
+      onClick={() => !drag?.draggingSeat && onSeatClick(seatId)}
+      onMouseEnter={() => name && !drag?.draggingSeat && onHover?.(name)}
       onMouseLeave={() => onHover?.(null)}
+      onDragStart={occupied ? e => drag?.onSeatDragStart?.(seatId, e) : undefined}
+      onDragOver={e => drag?.onSeatDragOver?.(seatId, e)}
+      onDragLeave={() => drag?.onSeatDragLeave?.(seatId)}
+      onDrop={() => drag?.onSeatDrop?.(seatId)}
+      onDragEnd={() => drag?.onSeatDragEnd?.()}
       className={`sc-seat ${stateClass}${hlClass ? ` ${hlClass}` : ''}`}
       style={{ width: size, height: size, fontSize: size > 46 ? 9 : 8 }}
     >
       {name ? shortName(name) : ''}
-      {name && <span className="sc-seat__tooltip">{name}</span>}
+      {/* {name && <span className="sc-seat__tooltip">{name}</span>} */}
       {isOrphaned && <span className="sc-seat__warning">⚠️</span>}
     </div>
   );
@@ -93,20 +103,31 @@ const TABLE_BAR_W = 30;                            // width of the vertical bar 
 const SECTION_H = SEAT_SIZE * 4 + SEAT_GAP * 3;   // height of one 4-seat section = 188px
 const INTER_GAP = 6;                               // gap between sub-table sections in a column
 
-function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass }) {
+function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
+  const isTableDragging = drag?.draggingTable === tableId;
+  const isTableDragOver = drag?.dragOverTable === tableId;
   return (
     <div className="sc-eight-top">
       <div className="sc-eight-top__row">
         {topSeatIds(tableId).map(id => (
-          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} />
+          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
         ))}
       </div>
-      <div className="sc-eight-top__bar" style={{ width: TABLE_WIDTH }}>
+      <div
+        draggable
+        onDragStart={e => drag?.onTableDragStart?.(tableId, e)}
+        onDragOver={e => drag?.onTableDragOver?.(tableId, e)}
+        onDragLeave={() => drag?.onTableDragLeave?.(tableId)}
+        onDrop={() => drag?.onTableDrop?.(tableId)}
+        onDragEnd={() => drag?.onTableDragEnd?.()}
+        className={['sc-eight-top__bar', isTableDragging ? 'sc-bar--dragging' : '', isTableDragOver ? 'sc-bar--drag-over' : ''].filter(Boolean).join(' ')}
+        style={{ width: TABLE_WIDTH }}
+      >
         {label}
       </div>
       <div className="sc-eight-top__row">
         {bottomSeatIds(tableId).map(id => (
-          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} />
+          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
         ))}
       </div>
     </div>
@@ -114,7 +135,7 @@ function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick
 }
 
 // ─── Rotated banquet column (1–3 connected 8-tops, seats left & right) ────────
-function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass }) {
+function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
   const n = tableIds.length;
   return (
     <div className="sc-banquet">
@@ -127,7 +148,7 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
               {ti > 0 && <div className="sc-banquet__gap" />}
               <div className="sc-banquet__seats">
                 {leftSeatIds(tableId).map(id => (
-                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} />
+                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
                 ))}
               </div>
             </div>
@@ -139,13 +160,21 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
             <div key={tableId} className="sc-banquet__section">
               {ti > 0 && <div className="sc-bar-connector" />}
               <div
+                draggable
+                onDragStart={e => drag?.onTableDragStart?.(tableId, e)}
+                onDragOver={e => drag?.onTableDragOver?.(tableId, e)}
+                onDragLeave={() => drag?.onTableDragLeave?.(tableId)}
+                onDrop={() => drag?.onTableDrop?.(tableId)}
+                onDragEnd={() => drag?.onTableDragEnd?.()}
                 className={[
                   'sc-bar-section',
                   n === 1 ? 'sc-bar-section--solo'
                   : ti === 0 ? 'sc-bar-section--top'
                   : ti === n - 1 ? 'sc-bar-section--bottom'
                   : 'sc-bar-section--middle',
-                ].join(' ')}
+                  drag?.draggingTable === tableId ? 'sc-bar--dragging' : '',
+                  drag?.dragOverTable === tableId ? 'sc-bar--drag-over' : '',
+                ].filter(Boolean).join(' ')}
                 style={{ height: SECTION_H }}
               >
                 <span className="sc-bar-section__label">{tableLabel(tableId)}</span>
@@ -160,7 +189,7 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
               {ti > 0 && <div className="sc-banquet__gap" />}
               <div className="sc-banquet__seats">
                 {rightSeatIds(tableId).map(id => (
-                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} />
+                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
                 ))}
               </div>
             </div>
@@ -172,14 +201,14 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
 }
 
 // ─── 2-top table (Bride & Groom) ─────────────────────────────────────────────
-function TwoTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass }) {
+function TwoTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
   return (
     <div className="sc-two-top">
         <div className="sc-two-top__spacer"></div>
         <div className="sc-two-top__bar">{label}</div>
         <div className="sc-two-top__row">
             {allSeatIds(tableId, 2).map(id => (
-            <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} size={52} />
+            <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} size={52} />
             ))}
         </div>
     </div>
@@ -235,6 +264,19 @@ function SeatingApp() {
   const [hoveredGuest, setHoveredGuest] = useState(null);
   const guestItemRefs = useRef({});
 
+  // ── Drag state (seat-level + table-section-level + guest-list-level) ──────────
+  const [draggingSeat, setDraggingSeat] = useState(null);
+  const [dragOverSeat, setDragOverSeat] = useState(null);
+  const [draggingTable, setDraggingTable] = useState(null);
+  const [dragOverTable, setDragOverTable] = useState(null);
+  const [draggingGuest, setDraggingGuest] = useState(null); // name being dragged from guest list
+  // Refs for synchronous reads during dragover (state is async)
+  const draggingSeatRef  = useRef(null);
+  const draggingTableRef = useRef(null);
+  const dragOverSeatRef  = useRef(null);
+  const dragOverTableRef = useRef(null);
+  const draggingGuestRef = useRef(null);
+
   // ── Last name helper ──────────────────────────────────────────────────────────────
   function lastName(name) {
     if (!name) return '';
@@ -251,14 +293,145 @@ function SeatingApp() {
     }
   }
 
-  const sortedHouseholds = [...households].sort((a, b) =>
-    lastName(a.primary || '').localeCompare(lastName(b.primary || ''))
-  );
-
   // Push current assignments onto the undo stack before a mutation
   function pushHistory(current) {
     setHistory(prev => [...prev.slice(-49), current]);
   }
+
+  // ── Drag helpers ──────────────────────────────────────────────────────────────
+  function clearDragState() {
+    draggingSeatRef.current  = null; setDraggingSeat(null);
+    draggingTableRef.current = null; setDraggingTable(null);
+    dragOverSeatRef.current  = null; setDragOverSeat(null);
+    dragOverTableRef.current = null; setDragOverTable(null);
+    draggingGuestRef.current = null; setDraggingGuest(null);
+  }
+
+  // Seat drag
+  function handleSeatDragStart(seatId, e) {
+    e.dataTransfer.effectAllowed = 'move';
+    draggingSeatRef.current = seatId;
+    setDraggingSeat(seatId);
+  }
+  function handleSeatDragOver(seatId, e) {
+    if (draggingTableRef.current) return; // table drag in progress
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverSeatRef.current !== seatId) {
+      dragOverSeatRef.current = seatId;
+      setDragOverSeat(seatId);
+    }
+  }
+  function handleSeatDragLeave(seatId) {
+    if (dragOverSeatRef.current === seatId) {
+      dragOverSeatRef.current = null;
+      setDragOverSeat(null);
+    }
+  }
+  function handleSeatDrop(targetSeatId) {
+    // Guest-list drag: place/swap the dragged guest into this seat
+    if (draggingGuestRef.current) {
+      const guestName = draggingGuestRef.current;
+      pushHistory(assignments);
+      setAssignments(prev => {
+        const next = { ...prev };
+        // Find guest's current seat (if already seated)
+        let sourceSeatId = null;
+        for (const [sid, g] of Object.entries(next)) {
+          if (g === guestName) { sourceSeatId = sid; break; }
+        }
+        const targetGuest = next[targetSeatId] || null;
+        if (sourceSeatId) delete next[sourceSeatId];
+        // If both had seats, swap; otherwise displace target to unassigned
+        if (targetGuest && sourceSeatId) next[sourceSeatId] = targetGuest;
+        next[targetSeatId] = guestName;
+        return next;
+      });
+      setSelectedGuest(null);
+      clearDragState();
+      return;
+    }
+    // Seat-to-seat drag
+    const src = draggingSeatRef.current;
+    if (!src || src === targetSeatId) { clearDragState(); return; }
+    pushHistory(assignments);
+    setAssignments(prev => {
+      const next = { ...prev };
+      const draggedGuest = next[src] || null;
+      const targetGuest  = next[targetSeatId] || null;
+      if (draggedGuest) next[targetSeatId] = draggedGuest; else delete next[targetSeatId];
+      if (targetGuest)  next[src]          = targetGuest;  else delete next[src];
+      return next;
+    });
+    setSelectedGuest(null);
+    clearDragState();
+  }
+  function handleSeatDragEnd() { clearDragState(); }
+
+  // Guest-list drag (drag a name from the panel onto any seat)
+  function handleGuestListDragStart(name, e) {
+    e.dataTransfer.effectAllowed = 'move';
+    draggingGuestRef.current = name;
+    setDraggingGuest(name);
+    // Build a circle drag image matching the seated seat style
+    const el = document.createElement('div');
+    el.textContent = shortName(name);
+    Object.assign(el.style, {
+      width: '44px', height: '44px', borderRadius: '50%',
+      background: 'var(--color-primary)', color: '#fff',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '8px', fontWeight: '600', fontFamily: 'system-ui, sans-serif',
+      position: 'fixed', top: '-100px', left: '-100px', pointerEvents: 'none',
+    });
+    document.body.appendChild(el);
+    e.dataTransfer.setDragImage(el, 22, 22);
+    requestAnimationFrame(() => document.body.removeChild(el));
+  }
+  function handleGuestListDragEnd() { clearDragState(); }
+
+  // Table-section drag (swaps all 8 seat assignments between two sections)
+  function handleTableDragStart(tableId, e) {
+    e.stopPropagation();
+    e.dataTransfer.effectAllowed = 'move';
+    draggingTableRef.current = tableId;
+    setDraggingTable(tableId);
+  }
+  function handleTableDragOver(tableId, e) {
+    if (draggingSeatRef.current) return; // seat drag in progress
+    if (draggingTableRef.current === tableId) return; // same table, skip
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverTableRef.current !== tableId) {
+      dragOverTableRef.current = tableId;
+      setDragOverTable(tableId);
+    }
+  }
+  function handleTableDragLeave(tableId) {
+    if (dragOverTableRef.current === tableId) {
+      dragOverTableRef.current = null;
+      setDragOverTable(null);
+    }
+  }
+  function handleTableDrop(targetTableId) {
+    const src = draggingTableRef.current;
+    if (!src || src === targetTableId) { clearDragState(); return; }
+    pushHistory(assignments);
+    setAssignments(prev => {
+      const next = { ...prev };
+      for (let n = 1; n <= 8; n++) {
+        const srcId = `${src}-${n}`;
+        const tgtId = `${targetTableId}-${n}`;
+        const srcGuest = next[srcId] || null;
+        const tgtGuest = next[tgtId] || null;
+        if (srcGuest) next[tgtId] = srcGuest; else delete next[tgtId];
+        if (tgtGuest) next[srcId] = tgtGuest; else delete next[srcId];
+      }
+      return next;
+    });
+    clearDragState();
+  }
+  function handleTableDragEnd() { clearDragState(); }
 
   const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
 
@@ -379,17 +552,10 @@ function SeatingApp() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [selectedGuest, assignments]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Auto-scroll guest list to related names when a seat is clicked/selected ────
+  // ── Auto-scroll guest list to the selected guest when a seat/name is clicked ───
   useEffect(() => {
     if (!selectedGuest) return;
-    const partner = partnerOf[selectedGuest.toLowerCase()];
-    const selLast  = lastName(selectedGuest);
-    const allNames = sortedHouseholds.flatMap(h =>
-      [h.primary, h.partner, ...(h.kids || [])].filter(Boolean)
-    );
-    const scrollTarget = partner
-      || allNames.find(n => lastName(n) === selLast && n !== selectedGuest);
-    const el = scrollTarget ? guestItemRefs.current[scrollTarget] : null;
+    const el = guestItemRefs.current[selectedGuest];
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [selectedGuest]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -456,6 +622,15 @@ function SeatingApp() {
     Object.values(assignments).filter(name => name && !guestSet.has(name))
   );
 
+  // Unassigned households first, then alphabetical by primary last name
+  const members = h => [h.primary, h.partner, ...(h.kids || [])].filter(Boolean);
+  const sortedHouseholds = [...households].sort((a, b) => {
+    const aAllSeated = members(a).length > 0 && members(a).every(n => assignedNames.has(n));
+    const bAllSeated = members(b).length > 0 && members(b).every(n => assignedNames.has(n));
+    if (aAllSeated !== bAllSeated) return aAllSeated ? 1 : -1;
+    return lastName(a.primary || '').localeCompare(lastName(b.primary || ''));
+  });
+
   // ── Hover highlight helpers ───────────────────────────────────────────────────
   const highlightName  = hoveredGuest || selectedGuest || null;
   const hovLow         = highlightName ? highlightName.toLowerCase() : null;
@@ -498,9 +673,12 @@ function SeatingApp() {
       <div
         key={name}
         ref={el => { guestItemRefs.current[name] = el; }}
+        draggable
         onClick={() => handleGuestClick(name)}
         onMouseEnter={() => setHoveredGuest(name)}
         onMouseLeave={() => setHoveredGuest(null)}
+        onDragStart={e => drag.onGuestListDragStart(name, e)}
+        onDragEnd={() => drag.onGuestListDragEnd()}
         className={`sc-guest ${stateClass} ${roleClass} ${hlClass}`.trim()}
       >
         <span className="sc-guest__name">{name}</span>
@@ -519,6 +697,23 @@ function SeatingApp() {
       </div>
     );
   }
+
+  // ── Drag prop bundle ──────────────────────────────────────────────────────────
+  const drag = {
+    draggingSeat, dragOverSeat, draggingTable, dragOverTable, draggingGuest,
+    onSeatDragStart:      handleSeatDragStart,
+    onSeatDragOver:       handleSeatDragOver,
+    onSeatDragLeave:      handleSeatDragLeave,
+    onSeatDrop:           handleSeatDrop,
+    onSeatDragEnd:        handleSeatDragEnd,
+    onTableDragStart:     handleTableDragStart,
+    onTableDragOver:      handleTableDragOver,
+    onTableDragLeave:     handleTableDragLeave,
+    onTableDrop:          handleTableDrop,
+    onTableDragEnd:       handleTableDragEnd,
+    onGuestListDragStart: handleGuestListDragStart,
+    onGuestListDragEnd:   handleGuestListDragEnd,
+  };
 
   const filteredGuests = search.trim()
     ? guests.filter(g => g.toLowerCase().includes(search.toLowerCase()))
@@ -634,6 +829,7 @@ function SeatingApp() {
             orphanedNames={orphanedNames}
             onHover={setHoveredGuest}
             getHlClass={getSeatHlClass}
+            drag={drag}
           />
 
           {/* Middle zone: Tables 2–5 on top, head tables nested below */}
@@ -650,6 +846,7 @@ function SeatingApp() {
                   orphanedNames={orphanedNames}
                   onHover={setHoveredGuest}
                   getHlClass={getSeatHlClass}
+                  drag={drag}
                 />
               ))}
             </div>
@@ -659,8 +856,8 @@ function SeatingApp() {
               <div className="sc-middle__head-row">
                 {HEAD_TABLES.map(({ id, label, seats }) =>
                   seats === 2
-                    ? <TwoTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} />
-                    : <EightTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} />
+                    ? <TwoTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} />
+                    : <EightTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} />
                 )}
               </div>
             </div>
@@ -676,6 +873,7 @@ function SeatingApp() {
             orphanedNames={orphanedNames}
             onHover={setHoveredGuest}
             getHlClass={getSeatHlClass}
+            drag={drag}
           />
         </div>
 
