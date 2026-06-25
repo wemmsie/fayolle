@@ -1,6 +1,7 @@
 // Source of truth for RSVP web app script:
 // https://script.google.com/home/projects/1wYQ8NpI4CClVNYY93dWstn6_6XBFciyowpxzAqFl-OVV6_pxOsIGvdom/edit
-
+// Google Sheets Share File:
+// https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/edit?usp=sharing
 function doPost(e) {
   return handleRequest(e);
 }
@@ -113,15 +114,17 @@ function handleRequest(e) {
 function readSeatingData() {
   var ss = SpreadsheetApp.openById('1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs');
 
-  // Collect RSVP'd Yes guests from Guests sheet
+  // Collect RSVP'd Yes + Pending guests from Guests sheet
   var guestSheet = ss.getSheetByName('Guests');
   var guests = [];
   var households = [];
+  var rsvpValuesSeen = {};
   if (guestSheet) {
     var gRows = guestSheet.getDataRange().getValues();
     for (var i = 1; i < gRows.length; i++) {
       var rsvp = (gRows[i][1] || '').toString().trim().toLowerCase(); // Col B
-      if (rsvp !== 'yes') continue;
+      rsvpValuesSeen[rsvp] = (rsvpValuesSeen[rsvp] || 0) + 1;
+      if (rsvp !== 'yes' && rsvp !== 'pend') continue;
       var colC = (gRows[i][2]  || '').toString().trim(); // primary guest
       var colE = (gRows[i][4]  || '').toString().trim(); // partner / plus-one
       var colU = (gRows[i][20] || '').toString().trim(); // kid 1
@@ -156,7 +159,7 @@ function readSeatingData() {
   }
 
   return ContentService.createTextOutput(
-    JSON.stringify({ status: 'ok', guests: guests, assignments: assignments, households: households })
+    JSON.stringify({ status: 'ok', guests: guests, assignments: assignments, households: households, debug: { rsvpValuesSeen: rsvpValuesSeen } })
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
