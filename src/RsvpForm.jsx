@@ -427,7 +427,7 @@ export function RsvpForm({ onOpenPlace }) {
     const partner = partnerMap.get(name.toLowerCase()) || null;
     setPairedPartner(partner);
     const existingRsvp = rsvpMap.get(name.toLowerCase()) || null;
-    setAlreadyRsvpd(existingRsvp);
+    setAlreadyRsvpd(existingRsvp === 'pend' ? null : existingRsvp);
     setPartyInviteAvailable(partyInviteMap.get(name.toLowerCase()) || false);
     setDinnerInviteAvailable(dinnerInviteMap.get(name.toLowerCase()) || false);
     setKidsAllowed(kidsAllowedMap.get(name.toLowerCase()) || false);

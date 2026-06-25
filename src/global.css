@@ -1457,7 +1457,7 @@ button,
 }
 
 .radio-label {
-  @apply text-sm md:text-base flex items-center gap-2 font-normal;
+  @apply text-sm md:text-base flex items-center gap-2 font-normal select-none;
 }
 
 /* Attendance pills */
