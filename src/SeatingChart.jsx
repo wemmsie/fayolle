@@ -9,12 +9,12 @@ const AUTH_KEY = 'fayolle_seating_auth';
 // ─── Layout ───────────────────────────────────────────────────────────────────
 // Main room: 6 connected banquet tables, each made of 2–3 eight-top sections (3|2|2|2|2|3)
 const MAIN_COLUMNS = [
-  { label: 'Table 1', tables: ['T01', 'T02', 'T03'] },
-  { label: 'Table 2', tables: ['T04', 'T05'] },
-  { label: 'Table 3', tables: ['T06', 'T07'] },
-  { label: 'Table 4', tables: ['T08', 'T09'] },
-  { label: 'Table 5', tables: ['T10', 'T11'] },
-  { label: 'Table 6', tables: ['T12', 'T13', 'T14'] },
+  { label: 'Table 2', tables: ['T01', 'T02', 'T03'] },
+  { label: 'Table 3', tables: ['T04', 'T05'] },
+  { label: 'Table 4', tables: ['T06', 'T07'] },
+  { label: 'Table 5', tables: ['T08', 'T09'] },
+  { label: 'Table 6', tables: ['T10', 'T11'] },
+  { label: 'Table 7', tables: ['T12', 'T13', 'T14'] },
 ];
 
 // Head table section (faces the main grid, at the front of the room)
@@ -813,11 +813,6 @@ function SeatingApp() {
 
       {/* ── Right: Chart ─────────────────────────────────────────────────────── */}
       <div className="sc-chart">
-
-        <div className="sc-section-label">
-          6 Banquet Tables — 3 | 2 | 2 | 2 | 2 | 3 eight-top sections
-        </div>
-
         <div className="sc-main-grid">
           {/* Table 1 — outer left (3 sections) */}
           <BanquetColumn
@@ -852,7 +847,7 @@ function SeatingApp() {
             </div>
             <div className="sc-middle__head">
               <div className="sc-middle__divider" />
-              <div className="sc-section-label">Head Tables — 8-top | Bride &amp; Groom | 8-top</div>
+              <div className="sc-section-label">Table 1</div>
               <div className="sc-middle__head-row">
                 {HEAD_TABLES.map(({ id, label, seats }) =>
                   seats === 2
@@ -863,7 +858,7 @@ function SeatingApp() {
             </div>
           </div>
 
-          {/* Table 6 — outer right (3 sections) */}
+          {/* Table 7 — outer right (3 sections) */}
           <BanquetColumn
             tableIds={MAIN_COLUMNS[5].tables}
             label={MAIN_COLUMNS[5].label}

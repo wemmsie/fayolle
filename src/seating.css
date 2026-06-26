@@ -118,13 +118,7 @@ body {
 
 /* ─── Left panel (guest list) ────────────────────────────────────────────────── */
 .sc-panel {
-  width: 230px;
-  flex-shrink: 0;
-  background: #fff;
-  border-right: 1px solid var(--color-blue);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  @apply md:flex hidden w-auto shrink-0 bg-white border-r border-blue flex-col h-screen;
 }
 
 .sc-panel__header {

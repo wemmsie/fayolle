@@ -172,13 +172,13 @@ function writeSeatingData(data) {
 
   // ── Map seat prefix → table label ──────────────────────────────────────────
   var SEAT_TABLE_MAP = {
-    'T01': 'Table 1', 'T02': 'Table 1', 'T03': 'Table 1',
-    'T04': 'Table 2', 'T05': 'Table 2',
-    'T06': 'Table 3', 'T07': 'Table 3',
-    'T08': 'Table 4', 'T09': 'Table 4',
-    'T10': 'Table 5', 'T11': 'Table 5',
-    'T12': 'Table 6', 'T13': 'Table 6', 'T14': 'Table 6',
-    'HL':  'Head',    'HC':  'Head',    'HR':  'Head',
+    'T01': 'Table 2', 'T02': 'Table 2', 'T03': 'Table 2',
+    'T04': 'Table 3', 'T05': 'Table 3',
+    'T06': 'Table 4', 'T07': 'Table 4',
+    'T08': 'Table 5', 'T09': 'Table 5',
+    'T10': 'Table 6', 'T11': 'Table 6',
+    'T12': 'Table 7', 'T13': 'Table 7', 'T14': 'Table 7',
+    'HL':  'Table 1', 'HC':  'Table 1', 'HR':  'Table 1',
   };
 
   function tableForSeat(seatId) {
