@@ -110,6 +110,12 @@ function handleRequest(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// ─── Helper: split a full name into first / last ────────────────────────────
+function splitName(fullName) {
+  var parts = (fullName || '').trim().split(/\s+/);
+  return { first: parts[0] || '', last: parts.slice(1).join(' ') };
+}
+
 // ─── Seating: read ────────────────────────────────────────────────────────────
 // Returns all RSVP'd-Yes guest names (cols C, E, U, V, W) + existing seat assignments.
 function readSeatingData() {
@@ -166,19 +172,19 @@ function readSeatingData() {
 
 // ─── Seating: write ───────────────────────────────────────────────────────────
 // Replaces the entire Seating sheet with the provided seat → guest mapping,
-// and writes the table label (Table 1–6 or Head) into Col J of the Guests sheet.
+// and writes the table label (01–6 or Head) into Col J of the Guests sheet.
 function writeSeatingData(data) {
   var ss = SpreadsheetApp.openById('1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs');
 
   // ── Map seat prefix → table label ──────────────────────────────────────────
   var SEAT_TABLE_MAP = {
-    'T01': 'Table 2', 'T02': 'Table 2', 'T03': 'Table 2',
-    'T04': 'Table 3', 'T05': 'Table 3',
-    'T06': 'Table 4', 'T07': 'Table 4',
-    'T08': 'Table 5', 'T09': 'Table 5',
-    'T10': 'Table 6', 'T11': 'Table 6',
-    'T12': 'Table 7', 'T13': 'Table 7', 'T14': 'Table 7',
-    'HL':  'Table 1', 'HC':  'Table 1', 'HR':  'Table 1',
+    'T01': '02', 'T02': '02', 'T03': '02',
+    'T04': '03', 'T05': '03',
+    'T06': '04', 'T07': '04',
+    'T08': '05', 'T09': '05',
+    'T10': '06', 'T11': '06',
+    'T12': '07', 'T13': '07', 'T14': '07',
+    'HL':  '01', 'HC':  '01', 'HR':  '01',
   };
 
   function tableForSeat(seatId) {
@@ -205,16 +211,22 @@ function writeSeatingData(data) {
     seatingSheet.clearContents();
   }
 
-  seatingSheet.getRange(1, 1).setValue('Seat ID');
-  seatingSheet.getRange(1, 2).setValue('Guest Name');
-  seatingSheet.getRange(1, 3).setValue('Table');
+  seatingSheet.getRange(1, 1).setValue('Seat ID');    // A
+  seatingSheet.getRange(1, 2).setValue('Guest Name'); // B – full name (for back-compat)
+  seatingSheet.getRange(1, 3).setValue('First Name'); // C
+  seatingSheet.getRange(1, 4).setValue('Last Name');  // D
+  seatingSheet.getRange(1, 5).setValue('Table');      // E – zero-padded (01, 02 …)
 
   var rowIndex = 2;
   for (var sid in assignments) {
     if (Object.prototype.hasOwnProperty.call(assignments, sid) && assignments[sid]) {
+      var fullName = assignments[sid];
+      var nameParts = splitName(fullName);
       seatingSheet.getRange(rowIndex, 1).setValue(sid);
-      seatingSheet.getRange(rowIndex, 2).setValue(assignments[sid]);
-      seatingSheet.getRange(rowIndex, 3).setValue(tableForSeat(sid));
+      seatingSheet.getRange(rowIndex, 2).setValue(fullName);
+      seatingSheet.getRange(rowIndex, 3).setValue(nameParts.first);
+      seatingSheet.getRange(rowIndex, 4).setValue(nameParts.last);
+      seatingSheet.getRange(rowIndex, 5).setValue(tableForSeat(sid));
       rowIndex++;
     }
   }
