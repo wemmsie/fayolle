@@ -110,10 +110,15 @@ function handleRequest(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ─── Helper: split a full name into first / last ────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function splitName(fullName) {
   var parts = (fullName || '').trim().split(/\s+/);
   return { first: parts[0] || '', last: parts.slice(1).join(' ') };
+}
+// "01" → "Table 1", "02" → "Table 2", "" → ""
+function tableLabel(zeroPadded) {
+  if (!zeroPadded) return '';
+  return 'Table ' + parseInt(zeroPadded, 10);
 }
 
 // ─── Seating: read ────────────────────────────────────────────────────────────
@@ -125,6 +130,7 @@ function readSeatingData() {
   var guestSheet = ss.getSheetByName('Guests');
   var guests = [];
   var households = [];
+  var meals = {}; // guest name → meal value (shortrib | chicken | gnocchi | other)
   var rsvpValuesSeen = {};
   if (guestSheet) {
     var gRows = guestSheet.getDataRange().getValues();
@@ -133,15 +139,26 @@ function readSeatingData() {
       rsvpValuesSeen[rsvp] = (rsvpValuesSeen[rsvp] || 0) + 1;
       if (rsvp !== 'yes' && rsvp !== 'pend') continue;
       var colC = (gRows[i][2]  || '').toString().trim(); // primary guest
+      var colD = (gRows[i][3]  || '').toString().trim(); // primary meal (Col D)
       var colE = (gRows[i][4]  || '').toString().trim(); // partner / plus-one
+      var colF = (gRows[i][5]  || '').toString().trim(); // partner meal (Col F)
       var colU = (gRows[i][20] || '').toString().trim(); // kid 1
       var colV = (gRows[i][21] || '').toString().trim(); // kid 2
       var colW = (gRows[i][22] || '').toString().trim(); // kid 3
+      var colX = (gRows[i][23] || '').toString().trim(); // kid meal 1 (Col X)
+      var colY = (gRows[i][24] || '').toString().trim(); // kid meal 2 (Col Y)
+      var colZ = (gRows[i][25] || '').toString().trim(); // kid meal 3 (Col Z)
       if (colC) guests.push(colC);
       if (colE) guests.push(colE);
       if (colU) guests.push(colU);
       if (colV) guests.push(colV);
       if (colW) guests.push(colW);
+      // Meal lookup (name → meal value)
+      if (colC) meals[colC] = colD;
+      if (colE) meals[colE] = colF;
+      if (colU && colX) meals[colU] = colX;
+      if (colV && colY) meals[colV] = colY;
+      if (colW && colZ) meals[colW] = colZ;
       // Build household object for front-end grouping
       if (colC) {
         var h = { primary: colC };
@@ -166,7 +183,7 @@ function readSeatingData() {
   }
 
   return ContentService.createTextOutput(
-    JSON.stringify({ status: 'ok', guests: guests, assignments: assignments, households: households, debug: { rsvpValuesSeen: rsvpValuesSeen } })
+    JSON.stringify({ status: 'ok', guests: guests, assignments: assignments, households: households, meals: meals, debug: { rsvpValuesSeen: rsvpValuesSeen } })
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -216,19 +233,38 @@ function writeSeatingData(data) {
   seatingSheet.getRange(1, 3).setValue('First Name'); // C
   seatingSheet.getRange(1, 4).setValue('Last Name');  // D
   seatingSheet.getRange(1, 5).setValue('Table');      // E – zero-padded (01, 02 …)
+  // Force col E to text so Sheets doesn't strip leading zeros
+  seatingSheet.getRange(1, 5, seatingSheet.getMaxRows(), 1).setNumberFormat('@');
 
-  var rowIndex = 2;
+  // Collect all assigned seats into an array
+  var seatRows = [];
   for (var sid in assignments) {
     if (Object.prototype.hasOwnProperty.call(assignments, sid) && assignments[sid]) {
-      var fullName = assignments[sid];
-      var nameParts = splitName(fullName);
-      seatingSheet.getRange(rowIndex, 1).setValue(sid);
-      seatingSheet.getRange(rowIndex, 2).setValue(fullName);
-      seatingSheet.getRange(rowIndex, 3).setValue(nameParts.first);
-      seatingSheet.getRange(rowIndex, 4).setValue(nameParts.last);
-      seatingSheet.getRange(rowIndex, 5).setValue(tableForSeat(sid));
-      rowIndex++;
+      seatRows.push([sid, assignments[sid]]);
     }
+  }
+
+  // Keep HC-1 (Cody) and HC-2 (Emily) first; sort everyone else alphabetically by full name
+  var headCouple = seatRows.filter(function(r) { return r[0] === 'HC-1' || r[0] === 'HC-2'; });
+  var rest = seatRows.filter(function(r) { return r[0] !== 'HC-1' && r[0] !== 'HC-2'; });
+  rest.sort(function(a, b) {
+    var lastA = splitName(a[1]).last.toLowerCase();
+    var lastB = splitName(b[1]).last.toLowerCase();
+    return lastA.localeCompare(lastB);
+  });
+  var sortedRows = headCouple.concat(rest);
+
+  var rowIndex = 2;
+  for (var ri = 0; ri < sortedRows.length; ri++) {
+    var sid = sortedRows[ri][0];
+    var fullName = sortedRows[ri][1];
+    var nameParts = splitName(fullName);
+    seatingSheet.getRange(rowIndex, 1).setValue(sid);
+    seatingSheet.getRange(rowIndex, 2).setValue(fullName);
+    seatingSheet.getRange(rowIndex, 3).setValue(nameParts.first.toLowerCase());
+    seatingSheet.getRange(rowIndex, 4).setValue(nameParts.last.replace(/-(?!\s)/g, '- '));
+    seatingSheet.getRange(rowIndex, 5).setValue(tableForSeat(sid));
+    rowIndex++;
   }
 
   // ── Update Col J (primary guest, Col C) and Col K (plus-one, Col E) ────────
@@ -239,17 +275,17 @@ function writeSeatingData(data) {
       var primaryName = (gRows[i][2] || '').toString().trim(); // Col C = primary guest
       var plusOneName = (gRows[i][4] || '').toString().trim(); // Col E = plus-one
 
-      // Col J (col index 10) = primary guest's table assignment
+      // Col J (col index 10) = primary guest's table assignment ("Table 1", "Table 2" …)
       if (primaryName) {
         var primaryTable = guestTableMap.hasOwnProperty(primaryName.toLowerCase())
-          ? guestTableMap[primaryName.toLowerCase()] : '';
+          ? tableLabel(guestTableMap[primaryName.toLowerCase()]) : '';
         guestSheet.getRange(i + 1, 10).setValue(primaryTable);
       }
 
       // Col K (col index 11) = plus-one guest's table assignment
       if (plusOneName) {
         var plusOneTable = guestTableMap.hasOwnProperty(plusOneName.toLowerCase())
-          ? guestTableMap[plusOneName.toLowerCase()] : '';
+          ? tableLabel(guestTableMap[plusOneName.toLowerCase()]) : '';
         guestSheet.getRange(i + 1, 11).setValue(plusOneTable);
       }
     }

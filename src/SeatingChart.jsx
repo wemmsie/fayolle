@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import './seating.css';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -26,6 +26,45 @@ const HEAD_TABLES = [
 
 // Total seats: 14 × 8 + 8 + 2 + 8 = 130
 const TOTAL_SEATS = 14 * 8 + 8 + 2 + 8;
+
+// ─── Meal helpers ─────────────────────────────────────────────────────────────
+function normalizeMeal(raw) {
+  if (!raw) return null;
+  const s = raw.toLowerCase().trim();
+  if (s === 'chicken') return 'chicken';
+  if (s === 'gnocchi') return 'gnocchi';
+  if (s === 'shortrib' || s.includes('rib')) return 'rib';
+  if (s === 'other') return 'other';
+  return null; // no meal / unknown
+}
+const MEAL_EMOJI  = { chicken: '🐓', gnocchi: '🥬', rib: '🍖', other: '✨' };
+const MEAL_LABEL  = { chicken: 'Chicken', gnocchi: 'Gnocchi', rib: 'Short Rib', other: 'Other' };
+const MEAL_KEYS   = ['chicken', 'gnocchi', 'rib', 'other'];
+
+// Sub-table groupings for the meal cheat sheet
+const CHEAT_SHEET_GROUPS = [
+  { groupLabel: 'Table 2', rows: [
+    { id: 'T01', label: '1' }, { id: 'T02', label: '2' }, { id: 'T03', label: '3' },
+  ]},
+  { groupLabel: 'Table 3', rows: [
+    { id: 'T04', label: '4' }, { id: 'T05', label: '5' },
+  ]},
+  { groupLabel: 'Table 4', rows: [
+    { id: 'T06', label: '6' }, { id: 'T07', label: '7' },
+  ]},
+  { groupLabel: 'Table 5', rows: [
+    { id: 'T08', label: '8' }, { id: 'T09', label: '9' },
+  ]},
+  { groupLabel: 'Table 6', rows: [
+    { id: 'T10', label: '10' }, { id: 'T11', label: '11' },
+  ]},
+  { groupLabel: 'Table 7', rows: [
+    { id: 'T12', label: '12' }, { id: 'T13', label: '13' }, { id: 'T14', label: '14' },
+  ]},
+  { groupLabel: 'Table 1 (Head)', rows: [
+    { id: 'HL', label: 'Head Left' }, { id: 'HC', label: '♥ Couple' }, { id: 'HR', label: 'Head Right' },
+  ]},
+];
 
 // ─── Seat ID helpers ──────────────────────────────────────────────────────────
 function topSeatIds(tableId) {
@@ -56,7 +95,7 @@ function shortName(name) {
 }
 
 // ─── Seat component ───────────────────────────────────────────────────────────
-function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, size = 44 }) {
+function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, mealInfo, size = 44 }) {
   const name = assignments[seatId] || null;
   const occupied      = !!name;
   const isBeingMoved  = occupied && name === selectedGuest;
@@ -65,6 +104,7 @@ function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, 
   const isDropTarget  = !occupied && (!!selectedGuest || !!drag?.draggingSeat || !!drag?.draggingGuest);
   const isOrphaned    = !!name && !!orphanedNames?.has(name);
   const hlClass       = getHlClass ? getHlClass(name) : '';
+  const mealKey       = (mealInfo?.showMeals && name) ? normalizeMeal(mealInfo.meals?.[name] || '') : null;
 
   let stateClass;
   if (isDragging)        stateClass = 'sc-seat--dragging';
@@ -76,7 +116,7 @@ function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, 
 
   return (
     <div
-      draggable={occupied}
+      draggable={occupied && !drag?.locked}
       onClick={() => !drag?.draggingSeat && onSeatClick(seatId)}
       onMouseEnter={() => name && !drag?.draggingSeat && onHover?.(name)}
       onMouseLeave={() => onHover?.(null)}
@@ -91,6 +131,7 @@ function Seat({ seatId, assignments, selectedGuest, onSeatClick, orphanedNames, 
       {name ? shortName(name) : ''}
       {/* {name && <span className="sc-seat__tooltip">{name}</span>} */}
       {isOrphaned && <span className="sc-seat__warning">⚠️</span>}
+      {mealKey && <span className="sc-seat__meal">{MEAL_EMOJI[mealKey]}</span>}
     </div>
   );
 }
@@ -103,14 +144,14 @@ const TABLE_BAR_W = 30;                            // width of the vertical bar 
 const SECTION_H = SEAT_SIZE * 4 + SEAT_GAP * 3;   // height of one 4-seat section = 188px
 const INTER_GAP = 6;                               // gap between sub-table sections in a column
 
-function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
+function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, mealInfo }) {
   const isTableDragging = drag?.draggingTable === tableId;
   const isTableDragOver = drag?.dragOverTable === tableId;
   return (
     <div className="sc-eight-top">
       <div className="sc-eight-top__row">
         {topSeatIds(tableId).map(id => (
-          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
+          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} mealInfo={mealInfo} />
         ))}
       </div>
       <div
@@ -127,7 +168,7 @@ function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick
       </div>
       <div className="sc-eight-top__row">
         {bottomSeatIds(tableId).map(id => (
-          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
+          <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} mealInfo={mealInfo} />
         ))}
       </div>
     </div>
@@ -135,7 +176,7 @@ function EightTopTable({ tableId, label, assignments, selectedGuest, onSeatClick
 }
 
 // ─── Rotated banquet column (1–3 connected 8-tops, seats left & right) ────────
-function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
+function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, mealInfo }) {
   const n = tableIds.length;
   return (
     <div className="sc-banquet">
@@ -148,7 +189,7 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
               {ti > 0 && <div className="sc-banquet__gap" />}
               <div className="sc-banquet__seats">
                 {leftSeatIds(tableId).map(id => (
-                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
+                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} mealInfo={mealInfo} />
                 ))}
               </div>
             </div>
@@ -189,7 +230,7 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
               {ti > 0 && <div className="sc-banquet__gap" />}
               <div className="sc-banquet__seats">
                 {rightSeatIds(tableId).map(id => (
-                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} />
+                  <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} mealInfo={mealInfo} />
                 ))}
               </div>
             </div>
@@ -201,16 +242,140 @@ function BanquetColumn({ tableIds, label, assignments, selectedGuest, onSeatClic
 }
 
 // ─── 2-top table (Bride & Groom) ─────────────────────────────────────────────
-function TwoTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag }) {
+function TwoTopTable({ tableId, label, assignments, selectedGuest, onSeatClick, orphanedNames, onHover, getHlClass, drag, mealInfo }) {
   return (
     <div className="sc-two-top">
         <div className="sc-two-top__spacer"></div>
         <div className="sc-two-top__bar">{label}</div>
         <div className="sc-two-top__row">
             {allSeatIds(tableId, 2).map(id => (
-            <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} size={52} />
+            <Seat key={id} seatId={id} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={onSeatClick} orphanedNames={orphanedNames} onHover={onHover} getHlClass={getHlClass} drag={drag} mealInfo={mealInfo} size={52} />
             ))}
         </div>
+    </div>
+  );
+}
+
+// ─── Meal cheat sheet ─────────────────────────────────────────────────────────
+function MealCheatSheet({ assignments, meals }) {
+  // Count meals per sub-table prefix (T01, T02, …, HL, HC, HR)
+  const counts = {};
+  for (const [seatId, name] of Object.entries(assignments)) {
+    if (!name) continue;
+    const tableId = seatId.split('-')[0];
+    const key = normalizeMeal(meals[name] || '') || 'other';
+    if (!counts[tableId]) counts[tableId] = { chicken: 0, gnocchi: 0, rib: 0, other: 0 };
+    counts[tableId][key]++;
+  }
+
+  // Pre-compute group and grand totals
+  const groupData = CHEAT_SHEET_GROUPS.map(({ groupLabel, rows }) => {
+    const grp = { chicken: 0, gnocchi: 0, rib: 0, other: 0 };
+    const dataRows = rows.map(({ id, label }) => {
+      const c = counts[id] || { chicken: 0, gnocchi: 0, rib: 0, other: 0 };
+      MEAL_KEYS.forEach(k => { grp[k] += c[k]; });
+      return { id, label, c };
+    });
+    return { groupLabel, dataRows, grp };
+  });
+  const grand = { chicken: 0, gnocchi: 0, rib: 0, other: 0 };
+  groupData.forEach(({ grp }) => MEAL_KEYS.forEach(k => { grand[k] += grp[k]; }));
+  const grandTotal = MEAL_KEYS.reduce((s, k) => s + grand[k], 0);
+
+  return (
+    <div className="sc-cheatsheet">
+      <table className="sc-cheatsheet__table">
+        <thead>
+          <tr className="sc-cheatsheet__head-row">
+            <th className="sc-cheatsheet__th sc-cheatsheet__th--label">Sub-table</th>
+            {MEAL_KEYS.map(k => (
+              <th key={k} className="sc-cheatsheet__th">{MEAL_EMOJI[k]} {MEAL_LABEL[k]}</th>
+            ))}
+            <th className="sc-cheatsheet__th sc-cheatsheet__th--total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {groupData.map(({ groupLabel, dataRows, grp }) => {
+            const grpTotal = MEAL_KEYS.reduce((s, k) => s + grp[k], 0);
+            return (
+              <Fragment key={groupLabel}>
+                <tr className="sc-cheatsheet__group-header">
+                  <td colSpan={MEAL_KEYS.length + 2}>{groupLabel}</td>
+                </tr>
+                {dataRows.map(({ id, label, c }) => {
+                  const rowTotal = MEAL_KEYS.reduce((s, k) => s + c[k], 0);
+                  return (
+                    <tr key={id} className="sc-cheatsheet__row">
+                      <td className="sc-cheatsheet__td sc-cheatsheet__td--label">{label}</td>
+                      {MEAL_KEYS.map(k => (
+                        <td key={k} className="sc-cheatsheet__td">{c[k] > 0 ? c[k] : <span className="sc-cheatsheet__zero">—</span>}</td>
+                      ))}
+                      <td className="sc-cheatsheet__td sc-cheatsheet__td--total">{rowTotal > 0 ? rowTotal : <span className="sc-cheatsheet__zero">—</span>}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="sc-cheatsheet__subtotal">
+                  <td className="sc-cheatsheet__td sc-cheatsheet__td--label">Subtotal</td>
+                  {MEAL_KEYS.map(k => (
+                    <td key={k} className="sc-cheatsheet__td">{grp[k] > 0 ? grp[k] : <span className="sc-cheatsheet__zero">—</span>}</td>
+                  ))}
+                  <td className="sc-cheatsheet__td sc-cheatsheet__td--total">{grpTotal > 0 ? grpTotal : <span className="sc-cheatsheet__zero">—</span>}</td>
+                </tr>
+              </Fragment>
+            );
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="sc-cheatsheet__grand-total">
+            <td className="sc-cheatsheet__td sc-cheatsheet__td--label">Grand Total</td>
+            {MEAL_KEYS.map(k => (
+              <td key={k} className="sc-cheatsheet__td">{grand[k] > 0 ? grand[k] : <span className="sc-cheatsheet__zero">—</span>}</td>
+            ))}
+            <td className="sc-cheatsheet__td sc-cheatsheet__td--total">{grandTotal}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  );
+}
+
+// ─── Unlock modal (inline password prompt for edit access) ─────────────────────
+function UnlockModal({ onAuth, onClose }) {
+  const [val, setVal] = useState('');
+  const [err, setErr] = useState(false);
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  function submit(e) {
+    e.preventDefault();
+    if (val === SEATING_PASSWORD) {
+      onAuth();
+    } else {
+      setErr(true);
+      setVal('');
+      inputRef.current?.focus();
+    }
+  }
+
+  return (
+    <div className="sc-unlock-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <form onSubmit={submit} className="sc-unlock-modal">
+        <div className="sc-unlock-modal__icon">🔓</div>
+        <div className="sc-unlock-modal__title">Unlock Editing</div>
+        <input
+          ref={inputRef}
+          type="password"
+          value={val}
+          onChange={e => { setVal(e.target.value); setErr(false); }}
+          placeholder="Password"
+          className={`sc-gate__input${err ? ' sc-gate__input--error' : ''}`}
+        />
+        {err && <p className="sc-gate__error">Incorrect password.</p>}
+        <div className="sc-unlock-modal__actions">
+          <button type="button" onClick={onClose} className="sc-unlock-modal__cancel">Cancel</button>
+          <button type="submit" className="sc-unlock-modal__submit">Unlock</button>
+        </div>
+      </form>
     </div>
   );
 }
@@ -252,8 +417,13 @@ function PasswordGate({ onAuth }) {
 
 // ─── Main seating app ─────────────────────────────────────────────────────────
 function SeatingApp() {
+  const [locked, setLocked] = useState(() => localStorage.getItem(AUTH_KEY) !== '1');
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [guests, setGuests] = useState([]);
   const [assignments, setAssignments] = useState({});
+  const [meals, setMeals] = useState({}); // name → meal value
+  const [showMeals, setShowMeals] = useState(false);
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
   const [history, setHistory] = useState([]); // undo stack of past assignments snapshots
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -309,6 +479,7 @@ function SeatingApp() {
 
   // Seat drag
   function handleSeatDragStart(seatId, e) {
+    if (locked) { e.preventDefault(); return; }
     e.dataTransfer.effectAllowed = 'move';
     draggingSeatRef.current = seatId;
     setDraggingSeat(seatId);
@@ -370,6 +541,7 @@ function SeatingApp() {
 
   // Guest-list drag (drag a name from the panel onto any seat)
   function handleGuestListDragStart(name, e) {
+    if (locked) { e.preventDefault(); return; }
     e.dataTransfer.effectAllowed = 'move';
     draggingGuestRef.current = name;
     setDraggingGuest(name);
@@ -391,6 +563,7 @@ function SeatingApp() {
 
   // Table-section drag (swaps all 8 seat assignments between two sections)
   function handleTableDragStart(tableId, e) {
+    if (locked) { e.preventDefault(); return; }
     e.stopPropagation();
     e.dataTransfer.effectAllowed = 'move';
     draggingTableRef.current = tableId;
@@ -449,6 +622,7 @@ function SeatingApp() {
         if (data.guests) setGuests([...data.guests].sort((a, b) => a.localeCompare(b)));
         if (data.assignments) setAssignments(data.assignments);
         if (data.households) setHouseholds(data.households);
+        if (data.meals) setMeals(data.meals);
         setLoading(false);
       })
       .catch(() => {
@@ -457,8 +631,21 @@ function SeatingApp() {
       });
   }, [scriptUrl]);
 
+  // ── Lock / unlock ─────────────────────────────────────────────────────────────
+  function handleUnlock() {
+    localStorage.setItem(AUTH_KEY, '1');
+    setLocked(false);
+    setShowUnlockModal(false);
+  }
+  function handleLock() {
+    localStorage.removeItem(AUTH_KEY);
+    setLocked(true);
+    setSelectedGuest(null);
+  }
+
   // ── Seat click handler ────────────────────────────────────────────────────────
   function handleSeatClick(seatId) {
+    if (locked) return;
     const occupant = assignments[seatId];
 
     if (selectedGuest) {
@@ -503,11 +690,13 @@ function SeatingApp() {
 
   // ── Guest pool click ─────────────────────────────────────────────────────────
   function handleGuestClick(name) {
+    if (locked) return;
     setSelectedGuest(prev => (prev === name ? null : name));
   }
 
   // ── Unassign a guest ──────────────────────────────────────────────────────────
   function unassignGuest(name) {
+    if (locked) return;
     pushHistory(assignments);
     setAssignments(prev => {
       const next = { ...prev };
@@ -526,6 +715,7 @@ function SeatingApp() {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       // Delete / Backspace → remove selected guest from their seat
+      if (locked) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedGuest) {
         const isSeated = Object.values(assignments).includes(selectedGuest);
         if (isSeated) {
@@ -577,33 +767,45 @@ function SeatingApp() {
   // ── CSV export ────────────────────────────────────────────────────────────────
   function handleExportCSV() {
     const SEAT_TABLE_MAP = {
-      T01: 'Table 1', T02: 'Table 1', T03: 'Table 1',
-      T04: 'Table 2', T05: 'Table 2',
-      T06: 'Table 3', T07: 'Table 3',
-      T08: 'Table 4', T09: 'Table 4',
-      T10: 'Table 5', T11: 'Table 5',
-      T12: 'Table 6', T13: 'Table 6', T14: 'Table 6',
-      HL: 'Head', HC: 'Head', HR: 'Head',
+      T01: '02', T02: '02', T03: '02',
+      T04: '03', T05: '03',
+      T06: '04', T07: '04',
+      T08: '05', T09: '05',
+      T10: '06', T11: '06',
+      T12: '07', T13: '07', T14: '07',
+      HL: '01', HC: '01', HR: '01',
     };
     function tableForSeat(seatId) {
       return SEAT_TABLE_MAP[seatId.split('-')[0]] || '';
     }
-    // Sort: by table label, then seat ID
-    const rows = Object.entries(assignments)
+    function splitName(fullName) {
+      const parts = (fullName || '').trim().split(/\s+/);
+      return { first: parts[0] || '', last: parts.slice(1).join(' ') };
+    }
+
+    const allRows = Object.entries(assignments)
       .filter(([, name]) => name)
-      .map(([seatId, name]) => ({ seatId, name, table: tableForSeat(seatId) }))
-      .sort((a, b) => {
-        if (a.table < b.table) return -1;
-        if (a.table > b.table) return 1;
-        return a.seatId.localeCompare(b.seatId, undefined, { numeric: true });
+      .map(([seatId, name]) => {
+        const { first, last } = splitName(name);
+        return { seatId, name, first: first.toLowerCase(), last: last.replace(/-(?!\s)/g, '- '), num: tableForSeat(seatId) };
       });
 
-    const escape = v => `"${v.replace(/"/g, '""')}"`;
+    // HC-1 (Cody) and HC-2 (Emily) always first; rest sorted by last name
+    const headCouple = allRows.filter(r => r.seatId === 'HC-1' || r.seatId === 'HC-2')
+      .sort((a, b) => a.seatId.localeCompare(b.seatId, undefined, { numeric: true }));
+    const rest = allRows
+      .filter(r => r.seatId !== 'HC-1' && r.seatId !== 'HC-2')
+      .sort((a, b) => a.last.toLowerCase().localeCompare(b.last.toLowerCase()));
+    const rows = [...headCouple, ...rest];
+
+    const escape = v => `"${(v || '').replace(/"/g, '""')}"`;
     const lines = [
-      ['Guest Name', 'Table', 'Seat ID'].map(escape).join(','),
-      ...rows.map(r => [r.name, r.table, r.seatId].map(escape).join(',')),
+      ['Key', 'Temp', 'First', 'Last', 'Num'].map(escape).join(','),
+      ...rows.map(r => [r.seatId, r.name, r.first, r.last, r.num].map(escape).join(',')),
     ];
-    const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    // Prepend UTF-8 BOM so Adobe Illustrator reads accents and special characters correctly
+    const bom = '\uFEFF';
+    const blob = new Blob([bom + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -673,7 +875,7 @@ function SeatingApp() {
       <div
         key={name}
         ref={el => { guestItemRefs.current[name] = el; }}
-        draggable
+        draggable={!locked}
         onClick={() => handleGuestClick(name)}
         onMouseEnter={() => setHoveredGuest(name)}
         onMouseLeave={() => setHoveredGuest(null)}
@@ -700,6 +902,7 @@ function SeatingApp() {
 
   // ── Drag prop bundle ──────────────────────────────────────────────────────────
   const drag = {
+    locked,
     draggingSeat, dragOverSeat, draggingTable, dragOverTable, draggingGuest,
     onSeatDragStart:      handleSeatDragStart,
     onSeatDragOver:       handleSeatDragOver,
@@ -714,6 +917,9 @@ function SeatingApp() {
     onGuestListDragStart: handleGuestListDragStart,
     onGuestListDragEnd:   handleGuestListDragEnd,
   };
+
+  // ── Meal info bundle ──────────────────────────────────────────────────────────
+  const mealInfo = { meals, showMeals };
 
   const filteredGuests = search.trim()
     ? guests.filter(g => g.toLowerCase().includes(search.toLowerCase()))
@@ -737,6 +943,7 @@ function SeatingApp() {
   }
 
   return (
+    <Fragment>
     <div className="sc-app">
 
       {/* ── Left: Guest Pool ─────────────────────────────────────────────────── */}
@@ -777,7 +984,7 @@ function SeatingApp() {
 
         {/* Footer: selected indicator + save */}
         <div className="sc-panel__footer">
-          {selectedGuest && (
+          {!locked && selectedGuest && (
             <div className="sc-placing-badge">
               <span>Placing: <strong>{selectedGuest}</strong></span>
               <span
@@ -789,25 +996,38 @@ function SeatingApp() {
               </span>
             </div>
           )}
-          <button
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            className={[
-              'sc-btn-save',
-              saveStatus === 'saving' ? 'sc-btn-save--saving'
-              : saveStatus === 'saved' ? 'sc-btn-save--saved'
-              : saveStatus === 'error' ? 'sc-btn-save--error'
-              : '',
-            ].join(' ').trim()}
-          >
-            {saveStatus === 'saving' ? 'Saving…'
-              : saveStatus === 'saved' ? '✓ Saved!'
-              : saveStatus === 'error' ? '✕ Error — try again'
-              : 'Save Chart'}
-          </button>
-          <button onClick={handleExportCSV} className="sc-btn-export">
-            ↓ Export CSV
-          </button>
+          {locked ? (
+            <button onClick={() => setShowUnlockModal(true)} className="sc-btn-lock sc-btn-lock--locked">
+              🔒 Unlock Editing
+            </button>
+          ) : (
+            <button onClick={handleLock} className="sc-btn-lock sc-btn-lock--unlocked">
+              🔓 Lock Seats
+            </button>
+          )}
+          {!locked && (
+            <>
+              <button
+                onClick={handleSave}
+                disabled={saveStatus === 'saving'}
+                className={[
+                  'sc-btn-save',
+                  saveStatus === 'saving' ? 'sc-btn-save--saving'
+                  : saveStatus === 'saved' ? 'sc-btn-save--saved'
+                  : saveStatus === 'error' ? 'sc-btn-save--error'
+                  : '',
+                ].join(' ').trim()}
+              >
+                {saveStatus === 'saving' ? 'Saving…'
+                  : saveStatus === 'saved' ? '✓ Saved!'
+                  : saveStatus === 'error' ? '✕ Error — try again'
+                  : 'Save Chart'}
+              </button>
+              <button onClick={handleExportCSV} className="sc-btn-export">
+                ↓ Export CSV
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -825,6 +1045,7 @@ function SeatingApp() {
             onHover={setHoveredGuest}
             getHlClass={getSeatHlClass}
             drag={drag}
+            mealInfo={mealInfo}
           />
 
           {/* Middle zone: Tables 2–5 on top, head tables nested below */}
@@ -842,6 +1063,7 @@ function SeatingApp() {
                   onHover={setHoveredGuest}
                   getHlClass={getSeatHlClass}
                   drag={drag}
+                  mealInfo={mealInfo}
                 />
               ))}
             </div>
@@ -851,8 +1073,8 @@ function SeatingApp() {
               <div className="sc-middle__head-row">
                 {HEAD_TABLES.map(({ id, label, seats }) =>
                   seats === 2
-                    ? <TwoTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} />
-                    : <EightTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} />
+                    ? <TwoTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} mealInfo={mealInfo} />
+                    : <EightTopTable key={id} tableId={id} label={label} assignments={assignments} selectedGuest={selectedGuest} onSeatClick={handleSeatClick} orphanedNames={orphanedNames} onHover={setHoveredGuest} getHlClass={getSeatHlClass} drag={drag} mealInfo={mealInfo} />
                 )}
               </div>
             </div>
@@ -869,6 +1091,7 @@ function SeatingApp() {
             onHover={setHoveredGuest}
             getHlClass={getSeatHlClass}
             drag={drag}
+            mealInfo={mealInfo}
           />
         </div>
 
@@ -884,18 +1107,37 @@ function SeatingApp() {
               <span>{label}</span>
             </div>
           ))}
+          <button
+            onClick={() => setShowMeals(v => !v)}
+            className={`sc-btn-toggle${showMeals ? ' sc-btn-toggle--active' : ''}`}
+            title="Toggle meal indicators on seats"
+          >
+            {showMeals ? '🍗 Hide Meals' : '🍗 Show Meals'}
+          </button>
+          <button
+            onClick={() => setShowCheatSheet(v => !v)}
+            className={`sc-btn-toggle${showCheatSheet ? ' sc-btn-toggle--active' : ''}`}
+            title="Toggle meal count cheat sheet"
+          >
+            {showCheatSheet ? '📋 Hide Sheet' : '📋 Meal Sheet'}
+          </button>
           <div className="sc-legend__tip">
             Click a guest to select · click a seat to place · click occupied seat to swap · click selected guest's seat to deselect · Delete/Backspace removes from seat · Ctrl+Z undo
           </div>
         </div>
+        {showCheatSheet && (
+          <MealCheatSheet assignments={assignments} meals={meals} />
+        )}
       </div>
     </div>
+    {showUnlockModal && (
+      <UnlockModal onAuth={handleUnlock} onClose={() => setShowUnlockModal(false)} />
+    )}
+    </Fragment>
   );
 }
 
 // ─── Root export ──────────────────────────────────────────────────────────────
 export function SeatingChart() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === '1');
-  if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
   return <SeatingApp />;
 }

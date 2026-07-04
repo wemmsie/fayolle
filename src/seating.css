@@ -535,6 +535,12 @@ body {
     @apply absolute -top-1 -right-1 text-xs leading-none pointer-events-none z-10 filter drop-shadow;
 }
 
+/* Meal indicator badge (shown when meal display is toggled on) */
+.sc-seat__meal {
+    @apply absolute -bottom-1 -right-1 leading-none pointer-events-none z-10 filter drop-shadow bg-white rounded-full p-1;
+    font-size: 9px;
+}
+
 /* Warm cream — resting, not yet placed */
 .sc-seat--empty {
   @apply bg-warm/60 font-normal border-orange/20;
@@ -712,3 +718,203 @@ body {
 
 .sc-hl-dot--partner  { background: var(--color-blue-dark); }
 .sc-hl-dot--lastname { background: var(--color-blue-med-light); }
+
+/* ─── Meal toggle button ───────────────────────────────────────────────────── */
+.sc-btn-toggle {
+  @apply text-xs px-2 py-1 rounded border border-primary/20 bg-warm/60 text-primary/70 cursor-pointer whitespace-nowrap transition-all;
+  font-family: inherit;
+  flex-shrink: 0;
+  &:hover {
+    @apply bg-orange/20 border-orange/40 text-primary;
+  }
+}
+.sc-btn-toggle--active {
+  @apply bg-orange/25 border-orange/50 text-primary font-medium;
+}
+
+/* ─── Lock / unlock button ─────────────────────────────────────────────────── */
+.sc-btn-lock {
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  margin-bottom: 6px;
+  transition: background 0.15s, opacity 0.15s;
+}
+.sc-btn-lock--locked {
+  background: var(--color-primary);
+  color: #fff;
+  &:hover { opacity: 0.88; }
+}
+.sc-btn-lock--unlocked {
+  background: var(--color-blue);
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-blue-med-light);
+  &:hover { background: var(--color-blue-med-light); }
+}
+
+/* ─── Unlock modal overlay ─────────────────────────────────────────────────── */
+.sc-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.sc-unlock-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 32px 30px 28px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 280px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.sc-unlock-modal__icon {
+  font-size: 30px;
+}
+
+.sc-unlock-modal__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.sc-unlock-modal__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.sc-unlock-modal__cancel {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--color-blue);
+  background: #fff;
+  color: var(--color-blue-med);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { background: var(--color-warm); }
+}
+
+.sc-unlock-modal__submit {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 8px;
+  border: none;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { opacity: 0.88; }
+}
+
+/* ─── Meal cheat sheet ─────────────────────────────────────────────────────── */
+.sc-cheatsheet {
+  margin-top: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--color-blue);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.55);
+}
+
+.sc-cheatsheet__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sc-cheatsheet__head-row th {
+  padding: 6px 10px 5px;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-orange);
+  color: var(--color-primary);
+  background: rgba(255,255,255,0.6);
+}
+
+.sc-cheatsheet__th {
+  text-align: right;
+}
+.sc-cheatsheet__th--label {
+  text-align: left;
+}
+.sc-cheatsheet__th--total {
+  text-align: right;
+  padding-right: 12px;
+}
+
+.sc-cheatsheet__group-header td {
+  padding: 4px 10px 3px;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--color-orange);
+  color: var(--color-primary);
+  opacity: 0.85;
+}
+
+.sc-cheatsheet__row td {
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--color-blue);
+}
+.sc-cheatsheet__row:hover td {
+  background: rgba(255,255,255,0.5);
+}
+
+.sc-cheatsheet__subtotal td {
+  padding: 3px 10px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--color-orange) 12%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--color-orange) 40%, transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--color-orange) 30%, transparent);
+}
+
+.sc-cheatsheet__grand-total td {
+  padding: 5px 10px 6px;
+  font-weight: 700;
+  font-size: 12px;
+  border-top: 2px solid var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(255,255,255,0.7);
+}
+
+.sc-cheatsheet__td {
+  text-align: right;
+  color: var(--color-primary);
+}
+.sc-cheatsheet__td--label {
+  text-align: left;
+  color: var(--color-primary);
+  padding-left: 18px !important;
+}
+.sc-cheatsheet__subtotal .sc-cheatsheet__td--label,
+.sc-cheatsheet__grand-total .sc-cheatsheet__td--label {
+  padding-left: 10px !important;
+}
+.sc-cheatsheet__td--total {
+  font-weight: 600;
+  padding-right: 12px;
+}
+.sc-cheatsheet__zero {
+  opacity: 0.3;
+}

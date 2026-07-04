@@ -152,7 +152,7 @@ function App() {
         <img src={image.overlay2} alt='' className='hero-overlay-img absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/3 w-[120vw] md:w-auto max-h-300 max-w-none pointer-events-none -ml-6! md:-ml-12! z-2' />
         <div className='absolute inset-0 bg-text opacity-50 z-3'></div>
 
-         <a
+         {/* <a
             href='#rsvp'
             onClick={(e) => { e.preventDefault(); document.getElementById('rsvp')?.scrollIntoView({ behavior: 'smooth' }); }}
             className='hero-rsvp-note group block no-underline rounded-xl bg-white/15 md:bg-black/30 ml-5! md:ml-10! absolute z-50 bottom-auto top-20 md:bottom-50  md:top-auto transition-all duration-200 md:hover:bg-black/40 
@@ -164,7 +164,7 @@ function App() {
               <Squiggle height={12} className='w-full text-white/80 mt-1' />
               <span className='text-sm md:text-sm text-white'>pretty please</span>
             </h2>
-          </a>
+          </a> */}
 
         <div className='hero-arrow absolute bottom-5 md:bottom-20 left-1/2 -translate-x-1/2 z-10'>
           <svg
