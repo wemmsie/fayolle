@@ -281,8 +281,12 @@ section {
   @apply flex items-baseline md:pl-[20%] gap-4;
 }
 
+.ish {
+  @apply absolute -bottom-2 -right-2 text-base text-red rotate-10;
+}
+
 .timeline-time {
-  @apply font-sanremo-caps text-2xl md:text-2xl text-primary w-18 shrink-0 text-right;
+  @apply relative font-sanremo-caps text-2xl md:text-2xl text-primary w-18 shrink-0 text-right;
 }
 
 .timeline-event {
@@ -993,24 +997,24 @@ button[type="submit"]:not(.step-continue-btn):active {
 
 .scroll-nav-item {
   @apply flex items-center cursor-pointer border-none rounded-full tracking-tight!
-    transition-all duration-200 text-left bg-white/80 opacity-90 bg-blend-lighten shadow-sm;
-  padding: 0.4rem;
-  gap: 0;
+    transition-all duration-200 text-left bg-white/80 opacity-90 bg-blend-lighten shadow-sm p-2;
 }
 
 .scroll-nav-item.scroll-nav-active {
-  @apply bg-white shadow-sm opacity-100 scale-105;
+  @apply bg-white shadow-sm opacity-100;
 }
 
 @media (hover: hover) {
   .scroll-nav-item:hover {
-    @apply bg-white shadow-md scale-105;
+    @apply bg-white shadow-md translate-x-2;
   }
 
-  .scroll-nav-item:hover .scroll-nav-emoji {
+  /* .scroll-nav-item:hover .scroll-nav-emoji {
     @apply scale-105;
-  }
-
+  } */
+.scroll-nav-label {
+  @apply transition-all;
+}
   .scroll-nav-item:hover .scroll-nav-label {
     @apply text-primary;
   }
@@ -1042,10 +1046,6 @@ button[type="submit"]:not(.step-continue-btn):active {
 
 .scroll-nav-active .scroll-nav-label {
   @apply text-primary font-medium;
-}
-
-.scroll-nav-active .scroll-nav-emoji {
-  @apply scale-105;
 }
 
 /* Place Modal */

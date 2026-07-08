@@ -214,17 +214,17 @@ function App() {
           <div className='text-center mb-10 pl-2 md:pl-0'>
             <h1>when we party</h1>
             <p>
-              We got you covered for the whole event in one place. <a className='button px-3! py-1! -my-0.5! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>Parking</a> is available next door and signs will guide you where you need to go.</p>
-              <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
-                <p className="m-0!">Join us at the <a className='button px-3! py-1! leading-5 md:leading-8 mx-1! -my-0.5!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
-                anytime after 3pm!</p>
+              We got you covered for the whole event in one place. Limited lot <a className='button px-3! py-1! -my-0.5! leading-5 md:leading-8 mx-0!' href='#' onClick={(e) => { e.preventDefault(); setVenueMapOpen(true); }}>parking</a> is available next door with additional street parking just outside, and signs will guide you where you need to go.</p>
+            <div className='flex flex-col items-center md:flex-row md:justify-center md:gap-0 md:flex-wrap'>
+                <p className="m-0!">Please join us at the <a className='button px-3! py-1! leading-5 md:leading-8 mx-1! -my-0.5!' href='#' {...placeButton('Greenhouse Loft', '', '2545 W Diversey Ave, Chicago, IL 60647')}>Greenhouse Loft</a>
+                anytime after 3:30pm 💕</p>
               </div>
-
+{/* <p className='p-3 text-[14px]! opacity-50 max-w-80! bg-primary/10 rounded-xl mt-5!'>Yes, things have been slightly tweaked since you got that invitation, but rest assured, it's all pretty much the same!</p> */}
 
           </div>
           <div className='timeline max-w-xl mx-auto'>
             <div className='timeline-item'>
-              <span className='timeline-time'>4:00</span>
+              <span className='timeline-time'>4:00<span className='ish'>ish</span></span>
               <div>
                 <span className='timeline-event'>Ceremony</span>
                 <span className='timeline-detail'>Short and sweet</span>
@@ -238,7 +238,7 @@ function App() {
               </div>
             </div>
             <div className='timeline-item'>
-              <span className='timeline-time'>5:30</span>
+              <span className='timeline-time'>6:00</span>
               <div>
                 <span className='timeline-event'>Dinner</span>
                 <span className='timeline-detail'>With a late night snack</span>
