@@ -16,9 +16,9 @@ const TODO_PLACES = {
   do: [
     { name: 'Architectural Boat Tour', tag: 'activity', tip: 'See the skyline from the river', label: '⭐️ Architectural Boat Tour' },
     { name: 'Art Institute of Chicago', tag: 'museum', tip: 'World-class art collection', label: '⭐️ Art Institute Chicago' },
+    { name: 'Field Museum', tag: 'museum', tip: 'Paleontology and Pokémon, super cool!', label: '⭐️ Pokémon Fossil Museum' },
     { name: 'Chicago Cultural Center', tag: 'museum', tip: 'Historic landmark with art exhibits', label: 'Chicago Cultural Center' },
     { name: 'Garfield Park Conservatory', tag: 'park', tip: 'Free indoor botanical garden', label: '⭐️ Garfield Park Conservatory' },
-    { name: 'Lakefront Trail', tag: 'park', tip: 'Scenic 18-mile path along Lake Michigan', label: 'Lakefront Trail' },
     { name: 'Osaka Garden at Jackson Park', tag: 'park', tip: 'Beautiful Japanese garden in the city', label: 'Osaka Garden' },
     { name: 'Peggy Notebaert Nature Museum', tag: 'museum', tip: 'Interactive exhibits and daily 2pm butterfly release', label: 'Peggy Notebaert Nature Museum' },
   ],

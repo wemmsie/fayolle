@@ -231,12 +231,22 @@
   },
   "The Perch Kitchen and Tap": {
     "displayName": "The Perch Kitchen and Tap",
-    "formattedAddress": "2310 N Sheffield Ave, Chicago, IL 60614, USA",
+    "formattedAddress": "1932 W Division St, Chicago, IL 60622, USA",
     "rating": 4.7,
     "userRatingCount": 892,
     "photoUrl": "https://img.partyslate.com/photos/1499259/photo-97d8cf22-4031-4c12-abb5-d7bed0d201fe.jpeg?tr=w-640",
     "websiteURI": "http://theperchnorthalley.com/",
     "googleMapsURI": "https://www.google.com/maps/search/The+Perch+Kitchen+and+Tap,+Chicago,+IL",
     "reservable": true
+  },
+  "Field Museum": {
+    "displayName": "Pokémon Fossils at The Field Museum",
+    "formattedAddress": "1400 S Lake Shore Dr, Chicago, IL 60605, USA",
+    "rating": 4.8,
+    "userRatingCount": 31160,
+    "photoUrl": "https://cdn.mos.cms.futurecdn.net/Xiv5uNfCPefghq9Q695WkH.png",
+    "websiteURI": "https://www.fieldmuseum.org/",
+    "googleMapsURI": "https://maps.google.com/?cid=16009864978517456157",
+    "reservable": false
   }
 }

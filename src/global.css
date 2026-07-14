@@ -1058,7 +1058,7 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .modal-content {
-  @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden;
+  @apply relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-3 overflow-hidden;
   animation: modalIn 0.25s ease-out;
 }
 
@@ -1099,7 +1099,7 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .modal-body {
-  @apply px-5 py-4;
+  @apply px-4 py-8;
 }
 
 .modal-name {
@@ -1300,7 +1300,7 @@ button[type="submit"]:not(.step-continue-btn):active {
 }
 
 .suggestion-button {
-  @apply inline-block px-6 py-3 m-1 rounded-full bg-primary text-white font-medium text-lg border-2 border-primary transition-all transform
+  @apply inline-block px-6 py-2 m-1 rounded-full bg-primary text-white font-medium text-lg border-2 border-primary transition-all transform
   cursor-pointer;
 }
 
@@ -1442,10 +1442,19 @@ button,
 .suggestion-button,
 .back-button,
 .not-me-button,
+.pill,
 .step-continue-btn {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+
+.pill {
+  @apply inline-flex items-center gap-2 px-6 py-2 pt-1.5 rounded-full text-sm md:text-base cursor-pointer
+    transition-all duration-200 font-medium border-2 border-primary/20 select-none bg-transparent;
+    &:hover {
+      @apply border-primary/40 bg-primary text-white;
+    }
 }
 
 .radio-group {
@@ -1791,14 +1800,33 @@ button,
 
 /* ═══ RSVP Summary ═══ */
 .rsvp-summary {
-  @apply rounded-xl overflow-hidden;
+  @apply rounded-xl;
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(2,65,89,0.18);
 }
 
 .rsvp-summary-row {
-  @apply flex gap-4 px-4 md:px-5 py-2.5 md:py-3 items-center;
+  @apply flex gap-4 px-4 md:px-5 py-2.5 md:py-2.5 items-center;
   border-top: 1px solid rgba(2,65,89,0.05);
+
+  .address {
+    @apply text-xs md:text-sm text-text-light flex bg-transparent border-none cursor-pointer text-left font-routed;
+    position: relative;
+    border-radius: 5px;
+    padding: 3px 8px 3px 2px;
+    margin-left: -2px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    .pin {
+      @apply scale-100 translate-y-0;
+    }
+  }
+}
+
+@media (hover: hover) {
+  .rsvp-summary-row .group:hover .address {
+    background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+    color: var(--color-primary);
+  }
 }
 
 .rsvp-summary-row:first-child {
@@ -1813,8 +1841,8 @@ button,
 
 .rsvp-summary-label {
   @apply text-[0.65rem] md:text-xs font-semibold uppercase tracking-wider shrink-0 text-right;
-  width: 2.5rem;
-  min-width: 2.5rem;
+  width: 2.8rem;
+  min-width: 2.8rem;
   color: var(--color-primary);
   opacity: 0.45;
 }
@@ -1825,6 +1853,35 @@ button,
 
 .rsvp-summary-dietary {
   @apply absolute -top-0.5 -right-1 text-[0.8rem] leading-none;
+}
+
+.copy-tooltip {
+  @apply rotate-3 absolute bg-primary text-white text-sm font-semibold px-2 py-1 rounded whitespace-nowrap pointer-events-none z-10 font-routed tracking-wider right-0;
+  bottom: calc(100% + 7px);
+  animation:
+    tooltipIn  0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    tooltipOut 0.2s  ease-in 1.8s forwards;
+}
+
+.copy-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 10px;
+  width: 0;
+  height: 0;
+  border: 5px solid transparent;
+  border-top-color: var(--color-primary);
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.88) rotate(-2deg); }
+  to   { opacity: 1; transform: translateY(0)   scale(1)    rotate(-2deg); }
+}
+
+@keyframes tooltipOut {
+  from { opacity: 1; transform: translateY(0)   scale(1)    rotate(-2deg); }
+  to   { opacity: 0; transform: translateY(-4px) scale(0.92) rotate(-2deg); }
 }
 
 /* Summary meal chip — color-coded */

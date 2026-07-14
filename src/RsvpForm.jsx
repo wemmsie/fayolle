@@ -61,6 +61,57 @@ function spawnSparkles(e) {
 // Google Sheet published CSV URL for live guest+partner data
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Clean+Guests';
 
+// Guests sheet — full RSVP details (meals, kids, dietary, welcome event)
+const GUESTS_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1Fg_lQNt-CxaRj89w_3RcXAO7ip-qHJnVIk0sCWqpKMs/gviz/tq?tqx=out:csv&sheet=Guests';
+
+// Parse the Guests sheet to find a specific guest's full RSVP data.
+// Two-pass: prefer primary (colC) match over plus-one (colE) match so that
+// duplicate-row households always return the row with the full kid data.
+// Col layout: A=welcome event, B=RSVP, C=primary name, D=primary meal,
+// E=plus-one name, F=plus-one meal, I=email, O=total count,
+// T=kid count, U–W=kid names 1–3, X–Z=kid meals 1–3, AA=dietary, AB=food notes, AE=message
+function splitCsvRows(csv) {
+  // Proper CSV row splitter — respects newlines inside quoted fields
+  const rows = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i];
+    if (ch === '"') { inQuotes = !inQuotes; cur += ch; }
+    else if (ch === '\n' && !inQuotes) { rows.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  if (cur.trim()) rows.push(cur);
+  return rows;
+}
+function parseGuestRsvpRow(csv, guestName) {
+  const rows = splitCsvRows(csv.trim());
+  const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[''`]/g, '').trim();
+  const target = norm(guestName);
+  const extract = (cols, isPlusOne) => ({
+    welcomeEvent: cols[0] ?? '',
+    meal:        isPlusOne ? (cols[5] ?? '') : (cols[3] ?? ''),
+    plusOneName: isPlusOne ? (cols[2] ?? '') : (cols[4] ?? ''),
+    plusOneMeal: isPlusOne ? (cols[3] ?? '') : (cols[5] ?? ''),
+    kidCount:    parseInt(cols[19] ?? '0') || 0,
+    kidName1: cols[20] ?? '', kidName2: cols[21] ?? '', kidName3: cols[22] ?? '',
+    kidMeal1: cols[23] ?? '', kidMeal2: cols[24] ?? '', kidMeal3: cols[25] ?? '',
+    dietaryNotes: cols[26] ?? '',
+    foodNotes:    cols[27] ?? '',
+    message:      cols[30] ?? '',
+  });
+  let plusOneRow = null;
+  for (const row of rows) {
+    const cols = (row.match(/"([^"]*)"/g) ?? []).map(c => c.replace(/"/g, '').trim());
+    if (cols.length < 3) continue;
+    const colC = norm(cols[2] ?? '');
+    const colE = norm(cols[4] ?? '');
+    if (colC === target) return extract(cols, false);
+    if (colE === target && !plusOneRow) plusOneRow = extract(cols, true);
+  }
+  return plusOneRow || false;
+}
+
 // Parse CSV rows into guest objects (handles quoted fields)
 // Clean Guests: Col D (index 3) = party invite flag (TRUE/FALSE)
 // Clean Guests: Col F (index 5) = dinner invite flag (TRUE/FALSE)
@@ -221,6 +272,9 @@ export function RsvpForm({ onOpenPlace }) {
   const [gateView, setGateView] = useState('form'); // 'form' | 'suggestions' | 'notfound'
   const [alreadyRsvpd, setAlreadyRsvpd] = useState(null); // 'yes' | 'no' | null
   const [editingRsvp, setEditingRsvp] = useState(false); // user chose to edit existing RSVP
+  const [showRsvpDetailsModal, setShowRsvpDetailsModal] = useState(false);
+  const [savedRsvpData, setSavedRsvpData] = useState(null); // null=pending, false=not found, object=loaded
+  const [copiedAddr, setCopiedAddr] = useState(null); // key of last-copied address, clears after 2s
   const [step, setStep] = useState(0); // wizard step: 0=attendance, 1=email, 2=kids, 3=meals, 4=dietary, 5=details, 6=review
   const [maxStep, setMaxStep] = useState(0); // highest step ever reached
   const [isStepFadingOut, setIsStepFadingOut] = useState(false);
@@ -237,6 +291,7 @@ export function RsvpForm({ onOpenPlace }) {
       setPlusOneName('');
       setAttending('');
       setAlreadyRsvpd(null);
+      setSavedRsvpData(null);
       setEditingRsvp(false);
       setPartyInviteAvailable(false);
       setDinnerInviteAvailable(false);
@@ -427,7 +482,27 @@ export function RsvpForm({ onOpenPlace }) {
     const partner = partnerMap.get(name.toLowerCase()) || null;
     setPairedPartner(partner);
     const existingRsvp = rsvpMap.get(name.toLowerCase()) || null;
-    setAlreadyRsvpd(existingRsvp === 'pend' ? null : existingRsvp);
+    const resolvedRsvp = existingRsvp === 'pend' ? null : existingRsvp;
+    setAlreadyRsvpd(resolvedRsvp);
+    if (resolvedRsvp) {
+      setSavedRsvpData(null);
+      fetch(`${GUESTS_SHEET_CSV_URL}&cb=${Date.now()}`)
+        .then(res => res.text())
+        .then(csv => {
+          const parsed = parseGuestRsvpRow(csv, name);
+          console.group(`[RSVP] Guest data for "${name}"`);
+          console.log('Raw result:', parsed);
+          if (parsed) {
+            console.log('Meal:', parsed.meal, '| Plus-one meal:', parsed.plusOneMeal);
+            console.log('Kid count:', parsed.kidCount, '| Names:', [parsed.kidName1, parsed.kidName2, parsed.kidName3].filter(Boolean));
+            console.log('Kid meals:', [parsed.kidMeal1, parsed.kidMeal2, parsed.kidMeal3].filter(Boolean));
+            console.log('Dietary:', parsed.dietaryNotes, '| Food notes:', parsed.foodNotes);
+          }
+          console.groupEnd();
+          setSavedRsvpData(parsed);
+        })
+        .catch(() => setSavedRsvpData(false));
+    }
     setPartyInviteAvailable(partyInviteMap.get(name.toLowerCase()) || false);
     setDinnerInviteAvailable(dinnerInviteMap.get(name.toLowerCase()) || false);
     setKidsAllowed(kidsAllowedMap.get(name.toLowerCase()) || false);
@@ -1003,9 +1078,215 @@ export function RsvpForm({ onOpenPlace }) {
     }
   };
 
+  const handleCopyAddr = (text, key) => {
+    const done = () => {
+      setCopiedAddr(key);
+      setTimeout(() => setCopiedAddr(prev => prev === key ? null : prev), 2200);
+    };
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(done);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch (_) {}
+      ta.remove(); done();
+    }
+  };
+
   return (
     <>
       <div ref={formTopRef} />
+      {showRsvpDetailsModal && (
+        <div
+          className='modal-backdrop'
+          onClick={(e) => { if (e.target === e.currentTarget) setShowRsvpDetailsModal(false); }}
+        >
+          <div className='modal-content'>
+            <button className='modal-close' onClick={() => setShowRsvpDetailsModal(false)} aria-label='Close'>&times;</button>
+            <div className='modal-body pb-0!'>
+              <h2 className='modal-name text-center! mb-1! font-sanremo-caps! text-xl! tracking-wide!'>Your RSVP</h2>
+              <p className='text-center text-text-light mb-4!'>Here's what we have on file for you.</p>
+              <div className='rsvp-summary'>
+                <div className='rsvp-summary-row'>
+                  <span className='rsvp-summary-label'>RSVP</span>
+                  <span className='rsvp-summary-value'>
+                    {alreadyRsvpd === 'yes'
+                      ? <span className='text-green-600 font-medium'>✓ Attending</span>
+                      : <span className='text-red font-medium'>✗ Not attending</span>}
+                  </span>
+                </div>
+                {/* Meals + kids — loaded from Guests sheet */}
+                {alreadyRsvpd === 'yes' && savedRsvpData === null && (
+                  <div className='rsvp-summary-row rsvp-summary-divide'>
+                    <span className='rsvp-summary-label'>Guests</span>
+                    <span className='rsvp-summary-value text-text-light text-xs! italic'>Loading…</span>
+                  </div>
+                )}
+                {alreadyRsvpd === 'yes' && savedRsvpData && (() => {
+                  const findMeal = (s) => meals.find(m =>
+                    m.shortTitle.toLowerCase() === (s || '').toLowerCase() ||
+                    m.value.toLowerCase() === (s || '').toLowerCase()
+                  );
+                  const guestFirst = verifiedName.trim().split(/\s+/)[0];
+                  const guestMeal = findMeal(savedRsvpData.meal);
+                  const plusFirst = (savedRsvpData.plusOneName || '').trim().split(/\s+/)[0];
+                  const plusMeal = findMeal(savedRsvpData.plusOneMeal);
+                  const effectiveKidCount = savedRsvpData.kidCount
+                    || [savedRsvpData.kidName1, savedRsvpData.kidName2, savedRsvpData.kidName3].filter(Boolean).length;
+                  const kids = [
+                    { name: savedRsvpData.kidName1, meal: savedRsvpData.kidMeal1 },
+                    { name: savedRsvpData.kidName2, meal: savedRsvpData.kidMeal2 },
+                    { name: savedRsvpData.kidName3, meal: savedRsvpData.kidMeal3 },
+                  ].slice(0, effectiveKidCount).filter(k => k.name);
+                  return (
+                    <>
+                      {guestMeal && (
+                        <div className='rsvp-summary-row rsvp-summary-divide'>
+                          <span className='rsvp-summary-label'>Guests</span>
+                          <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
+                            <span>{guestFirst}</span>
+                            <span className={`summary-meal-chip ${guestMeal.color}`}>{guestMeal.shortTitle}</span>
+                          </span>
+                        </div>
+                      )}
+                      {plusFirst && plusMeal && (
+                        <div className='rsvp-summary-row'>
+                          <span className='rsvp-summary-label'></span>
+                          <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
+                            <span>{plusFirst}</span>
+                            <span className={`summary-meal-chip ${plusMeal.color}`}>{plusMeal.shortTitle}</span>
+                          </span>
+                        </div>
+                      )}
+                      {kids.map((kid, i) => {
+                        const kidFirst = kid.name.trim().split(/\s+/)[0] || kid.name;
+                        const kidMeal = findMeal(kid.meal);
+                        return (
+                          <div key={i} className={`rsvp-summary-row${i === 0 ? ' rsvp-summary-divide' : ''}`}>
+                            <span className='rsvp-summary-label'>{i === 0 ? 'Kids' : ''}</span>
+                            <span className='rsvp-summary-value flex items-center gap-2 flex-wrap'>
+                              <span>{kidFirst}</span>
+                              {kidMeal && <span className={`summary-meal-chip ${kidMeal.color}`}>{kidMeal.shortTitle}</span>}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {(savedRsvpData.dietaryNotes || savedRsvpData.foodNotes) && (
+                        <div className='rsvp-summary-row rsvp-summary-divide'>
+                          <span className='rsvp-summary-label'>⚠️</span>
+                          <span className='rsvp-summary-value text-red/80! text-sm!'>
+                            {[savedRsvpData.dietaryNotes, savedRsvpData.foodNotes].filter(Boolean).join(' · ')}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+                {(dinnerInviteAvailable || partyInviteAvailable) && alreadyRsvpd === 'yes' && (
+                  <div className='rsvp-summary-row rsvp-summary-divide'>
+                    <span className='rsvp-summary-label'>Fri Aug 7</span>
+                    <span className='rsvp-summary-value flex flex-col gap-1.5 items-start cursor-pointer group' onClick={() => handleCopyAddr('1932 W Division St, Chicago, IL 60622', 'perch')}>
+                      <span className='flex flex-wrap md:flex-nowrap gap-0 relative items-start'>
+                        {dinnerInviteAvailable && (
+                          <span className='text-white bg-primary font-sanremo-caps rotate-1 px-2 text-sm! py-0.5! tracking-wide inline-block'>
+                            Dinner · 5-7:30 PM
+                          </span>
+                        )}
+                        {dinnerInviteAvailable && partyInviteAvailable && (
+                          <span className='welcome-divider font-sanremo-caps text-[30px]! leading-none w-0 h-0 relative! mr-2 bottom-3! inline-block translate-none! left-auto!'>&amp;</span>
+                        )}
+                        {partyInviteAvailable && (
+                          <span className='text-white bg-red px-2 text-sm! py-0.5! font-sanremo-caps -rotate-1 tracking-wide inline-block'>
+                            Party · 7:30-10 PM
+                          </span>
+                        )}
+                      </span>
+                      <div
+                        className='address relative'
+                      >
+                        {copiedAddr === 'perch' && <span className='copy-tooltip'>address copied!</span>}
+                        <div className='pin'>📍</div>
+                        <div>The Perch · 1932 W Division St, Chicago</div>
+                      </div>
+                    </span>
+                  </div>
+                )}
+                <div className='rsvp-summary-row rsvp-summary-divide'>
+                    <span className='rsvp-summary-label'>Sat Aug 8</span>
+                    <span className='rsvp-summary-value flex flex-col gap-1 items-start cursor-pointer group' onClick={() => handleCopyAddr('2545 W Diversey Ave, Chicago, IL 60618', 'greenhouse')}>
+                        <span className='text-white bg-blue-dark px-2 text-sm! py-0.5! font-sanremo-caps rotate-1 tracking-wider'>
+                          Wedding · 4-11 PM
+                      </span>
+                      <div
+                        className='address'
+                      >
+                        {copiedAddr === 'greenhouse' && <span className='copy-tooltip'>address copied!</span>}
+                        <div className='pin'>📍</div>
+                        <div>Greenhouse Loft · 2545 W Diversey Ave, Chicago</div>
+                      </div>
+                    </span>
+                  </div>
+              </div>
+            </div>
+            <div className='flex flex-col sm:flex-row items-center justify-center gap-3 px-8 py-6'>
+              <button
+                type='button'
+                className='pill w-full sm:w-auto justify-center border-primary/20! text-primary/50! hover:bg-transparent! hover:text-primary! hover:border-primary/30!'
+                style={{background: 'color-mix(in srgb, var(--color-primary) 4%, transparent)'}}
+                onClick={() => setShowRsvpDetailsModal(false)}
+              >
+                Looks good ✓
+              </button>
+              <button
+                type='button'
+                className='pill w-full sm:w-auto justify-center border-red/30! text-red! hover:bg-red! hover:text-white! hover:border-red!'
+                style={{background: 'color-mix(in srgb, var(--color-red) 6%, transparent)'}}
+                onClick={() => {
+                  setShowRsvpDetailsModal(false);
+                  setEditingRsvp(true);
+                  if (savedRsvpData) {
+                    const findMeal = (s) => meals.find(m =>
+                      m.shortTitle.toLowerCase() === (s || '').toLowerCase() ||
+                      m.value.toLowerCase() === (s || '').toLowerCase()
+                    );
+                    // Preload adult meal choices (index 0 = guest, index 1 = plus-one)
+                    const mealChoices = {};
+                    const guestMeal = findMeal(savedRsvpData.meal);
+                    if (guestMeal) mealChoices[0] = guestMeal.value;
+                    if (savedRsvpData.plusOneName) {
+                      const plusMeal = findMeal(savedRsvpData.plusOneMeal);
+                      if (plusMeal) mealChoices[1] = plusMeal.value;
+                    }
+                    // Preload kids
+                    const ekc = savedRsvpData.kidCount
+                      || [savedRsvpData.kidName1, savedRsvpData.kidName2, savedRsvpData.kidName3].filter(Boolean).length;
+                    const kidNames = ekc > 0
+                      ? [savedRsvpData.kidName1, savedRsvpData.kidName2, savedRsvpData.kidName3].slice(0, ekc).map(n => n || '')
+                      : undefined;
+                    const kidMeals = {};
+                    if (ekc > 0) {
+                      [savedRsvpData.kidMeal1, savedRsvpData.kidMeal2, savedRsvpData.kidMeal3]
+                        .slice(0, ekc)
+                        .forEach((shortTitle, i) => {
+                          const m = meals.find(x => x.shortTitle.toLowerCase() === (shortTitle || '').toLowerCase());
+                          if (m) kidMeals[i] = m.value;
+                        });
+                    }
+                    setFormData(prev => ({
+                      ...prev,
+                      mealChoices,
+                      ...(ekc > 0 ? { kidCount: ekc, kidNames, kidMeals } : {}),
+                    }));
+                  }
+                }}
+              >
+                Change Something
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isSubmitted ? (
         <div className='rsvp-panel relative'>
           <h1 className='text-center text-5xl!'>heck yeah!</h1>
@@ -1191,20 +1472,18 @@ export function RsvpForm({ onOpenPlace }) {
             <h1 className='text-center mb-4!'>
               {alreadyRsvpd === 'yes' ? 'you\'re all set!' : 'we got your note'}
             </h1>
+            <p className='mb-3! mt-8! tracking-wide!'>👋 Hi, <span className='font-sanremo-caps! text-red!'>{verifiedName}</span></p>
             <p className='mb-6!'>
               {alreadyRsvpd === 'yes'
                 ? `Looks like you've already RSVP'd - see you soon!`
                 : `We have you down as not attending. We'll miss you!`}
             </p>
-            {/* <p className='text-base! mb-6!'>
-              Need to make changes?
-            </p> */}
             <button
               type='button'
-              className='step-continue-btn step-continue-ready'
-              onClick={() => setEditingRsvp(true)}
+              className='step-continue-btn step-continue-ready mb-3!'
+              onClick={() => setShowRsvpDetailsModal(true)}
             >
-              Change RSVP
+              View RSVP
             </button>
           </div>
         </div>
