@@ -386,7 +386,7 @@ function App() {
       </section>
 
       {/* RSVP */}
-      <section id='rsvp' className='theme-blue pl-6! md:pl-22! px-6! md:px-10! pt-[7vh]! md:pt-[15vh] pb-16 max-h-300 h-full min-h-screen'>
+      <section id='rsvp' className='theme-blue pl-6! md:pl-22! px-6! md:px-10! pt-[8vh]! md:pt-[16vh] pb-16 max-h-300 h-full min-h-screen'>
         <div className='block-inner w-full'>
           <div className='form-container relative max-w-2xl mx-auto w-full'>
             <RsvpForm onOpenPlace={setActivePlace} />
