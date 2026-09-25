@@ -74,6 +74,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         'deets-please': resolve(__dirname, 'deets-please.html'),
         seating: resolve(__dirname, 'seating.html'),
+        jillrob: resolve(__dirname, 'jillrob.html'),
       },
     },
   },

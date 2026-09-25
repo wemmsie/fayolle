@@ -1,0 +1,459 @@
+@import 'tailwindcss';
+@import './global.css';
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  background: var(--color-warm);
+}
+
+.jr-app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-warm);
+}
+
+.jr-chart {
+  flex: 1;
+  overflow: auto;
+  padding: 40px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 50px;
+}
+
+/* ─── Head row ─────────────────────────────────────────────────────────────── */
+.jr-head-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.jr-head-group__label {
+  font-size: 9px;
+  color: var(--color-blue-med-light);
+  font-weight: 600;
+  margin-bottom: 5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.jr-head-row {
+  display: flex;
+  justify-content: center;
+}
+
+.jr-head-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.jr-head-top__row {
+  display: flex;
+  align-items: center;
+}
+
+.jr-head-top__seats {
+  display: flex;
+  gap: 4px;
+}
+
+/* Matches the 6px seam between bar sections so seats align to their halves. */
+.jr-head-top__seat-gap {
+  width: 6px;
+}
+
+.jr-head-top__bar-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.jr-head-top__bar {
+  background: var(--color-orange);
+  padding: 13px 0;
+}
+
+.jr-head-top__bar--left  { border-radius: 4px 0 0 4px; }
+.jr-head-top__bar--right { border-radius: 0 4px 4px 0; }
+
+.jr-head-top__bar-connector {
+  width: 6px;
+  background: var(--color-orange);
+  border-left: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Divider between head and guest tables ───────────────────────────────── */
+.jr-divider {
+  width: 60%;
+  max-width: 640px;
+  border-top: 1px dashed var(--color-blue);
+  margin: 24px 0 20px;
+}
+
+/* ─── Rows of banquet columns ─────────────────────────────────────────────── */
+.jr-columns {
+  display: flex;
+  gap: 50px;
+  align-items: center;
+  justify-content: center;
+}
+
+.jr-columns--back {
+  margin-top: 40px;
+}
+
+/* ─── Banquet column (vertical, seats on both sides) ──────────────────────── */
+.jr-banquet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.jr-banquet__label {
+  font-size: 9px;
+  color: var(--color-blue-med-light);
+  font-weight: 600;
+  margin-bottom: 5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.jr-banquet__body {
+  display: flex;
+  gap: 4px;
+}
+
+.jr-banquet__side {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.jr-banquet__section {
+  display: flex;
+  flex-direction: column;
+}
+
+.jr-banquet__seats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jr-banquet__gap {
+  height: 6px;
+}
+
+/* ─── Vertical table bar for banquet columns ──────────────────────────────── */
+.jr-bar-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.jr-bar-connector {
+  width: 30px;
+  height: 6px;
+  background: var(--color-orange);
+  border-top: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.jr-bar-section {
+  width: 30px;
+  background: var(--color-orange);
+}
+
+.jr-bar-section--solo   { border-radius: 4px; }
+.jr-bar-section--top    { border-radius: 4px 4px 0 0; }
+.jr-bar-section--bottom { border-radius: 0 0 4px 4px; }
+.jr-bar-section--middle { border-radius: 0; }
+
+/* ─── Seat circle ─────────────────────────────────────────────────────────── */
+.jr-seat {
+  @apply relative flex items-center justify-center rounded-full border-2 border-solid text-xs font-medium text-center leading-tight cursor-pointer transition-all;
+  font-size: 8px;
+}
+
+/* Orphaned guest warning badge */
+.jr-seat__warning {
+  @apply absolute -top-1 -right-1 text-xs leading-none pointer-events-none z-10 filter drop-shadow;
+}
+
+/* Warm cream — resting, not yet placed */
+.jr-seat--empty {
+  @apply bg-warm/60 font-normal border-orange/20;
+}
+
+/* Placed, at rest */
+.jr-seat--occupied {
+  @apply bg-orange/20 border-orange/50 text-primary font-semibold cursor-grab;
+  &:hover {
+    @apply bg-blue-dark/50 border-blue-dark font-semibold text-primary!;
+  }
+}
+
+/* Highlight: self (selected/hovered person) */
+.jr-seat--hl-self {
+  @apply bg-blue-dark/50 border-blue-dark font-semibold text-primary!;
+  z-index: 2;
+  transition-delay: 80ms;
+}
+
+/* Highlight: partner / +1 */
+.jr-seat--hl-partner {
+  @apply bg-blue-dark/20 border-blue-dark/50 font-semibold;
+  transition-delay: 80ms;
+}
+
+/* Highlight: same last name */
+.jr-seat--hl-lastname {
+  @apply bg-orange/50;
+  transition-delay: 80ms;
+}
+
+/* "In hand" — the selected guest's current seat */
+.jr-seat--moving {
+  @apply bg-primary text-white! font-bold border-none! ring-0!;
+}
+
+/* Available drop target */
+.jr-seat--drop-target {
+  @apply bg-sky/30 font-normal transition-all;
+  border: 2px dashed var(--color-blue-dark);
+  &:hover {
+    @apply bg-sky/80!;
+  }
+}
+
+/* Source of a drag */
+.jr-seat--dragging {
+  @apply bg-primary text-white! border-primary transition-all;
+  opacity: 0.35;
+  cursor: grabbing !important;
+}
+
+/* Drag destination */
+.jr-seat--drag-over {
+  @apply text-white! bg-primary/80!;
+  border-color: var(--color-primary) !important;
+  transform: scale(1.14);
+  transition: transform 0.08s ease;
+  z-index: 10;
+}
+
+/* ─── Table/section bar drag states ────────────────────────────────────────── */
+.jr-bar--dragging {
+  opacity: 0.4;
+  cursor: grabbing !important;
+}
+.jr-bar--drag-over {
+  background: var(--color-primary-dark) !important;
+  box-shadow: 0 0 0 3px var(--color-primary);
+}
+.jr-bar-section,
+.jr-head-top__bar {
+  cursor: grab;
+  user-select: none;
+}
+.jr-bar-section:active,
+.jr-head-top__bar:active {
+  cursor: grabbing;
+}
+
+/* ─── Left panel (guest list) ──────────────────────────────────────────────── */
+.jr-panel {
+  @apply md:flex hidden w-auto shrink-0 bg-white border-r border-blue flex-col h-screen;
+}
+
+.jr-panel__header {
+  padding: 16px 12px 10px;
+  border-bottom: 1px solid var(--color-blue);
+}
+
+.jr-panel__title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.jr-panel__stats {
+  font-size: 11px;
+  color: var(--color-blue-med);
+  margin-bottom: 10px;
+}
+
+.jr-panel__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--color-blue);
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+}
+
+.jr-panel__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 8px 4px;
+  min-width: 220px;
+}
+
+.jr-panel__empty {
+  color: var(--color-blue-med-light);
+  font-size: 12px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.jr-panel__footer {
+  padding: 10px 10px 12px;
+  border-top: 1px solid var(--color-blue);
+}
+
+/* ─── Household grouping ──────────────────────────────────────────────────── */
+.jr-household {
+  border-top: 1px dotted color-mix(in srgb, var(--color-primary) 20%, transparent);
+  padding-top: 4px;
+  margin-top: 4px;
+}
+.jr-household:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+
+/* ─── Guest items ─────────────────────────────────────────────────────────── */
+.jr-guest {
+  @apply border! px-2 py-1 mb-1 rounded cursor-pointer flex justify-between items-center gap-1 leading-tight transition-colors font-medium border-primary;
+  &:hover {
+    @apply border-blue bg-blue/50;
+  }
+}
+
+.jr-guest--unassigned {
+  @apply bg-blue/50 text-primary border-primary;
+  &:hover {
+    @apply bg-blue/70 border-primary/80 text-primary;
+  }
+}
+
+.jr-guest--seated {
+  @apply bg-warm/80! text-primary border-orange;
+  &:hover {
+    @apply bg-orange/30! border-orange/80 text-primary;
+  }
+}
+
+.jr-guest--selected {
+  @apply bg-primary! text-white! font-semibold;
+}
+
+.jr-guest--partner {
+  margin-left: 8px;
+}
+
+.jr-guest--hl-self     { @apply ring-2 ring-blue-dark; }
+.jr-guest--hl-partner  { @apply ring-1 ring-blue-dark/60; }
+.jr-guest--hl-lastname { @apply ring-1 ring-orange; }
+
+.jr-guest__name {
+  font-size: 12px;
+}
+.jr-guest__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.jr-guest__seat-id {
+  font-size: 10px;
+  color: var(--color-blue-med-light);
+}
+.jr-guest__remove {
+  font-size: 11px;
+  color: var(--color-blue-med-light);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+/* ─── Placing badge (footer) ──────────────────────────────────────────────── */
+.jr-placing-badge {
+  @apply bg-primary/10 text-primary;
+  border: 1px solid var(--color-blue-med-light);
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 11px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.jr-placing-badge__dismiss {
+  cursor: pointer;
+  color: var(--color-blue-med-light);
+  margin-left: 6px;
+  font-size: 13px;
+}
+
+/* ─── Save button ─────────────────────────────────────────────────────────── */
+.jr-btn-save {
+  @apply w-full py-2 rounded border-none font-bold text-sm text-white transition-colors cursor-pointer bg-primary;
+  &:hover { @apply bg-primary-dark; }
+}
+.jr-btn-save--saving { @apply bg-primary; cursor: default; }
+.jr-btn-save--saved  { @apply bg-blue-med; }
+.jr-btn-save--error  { @apply bg-red; }
+
+/* ─── Legend ──────────────────────────────────────────────────────────────── */
+.jr-legend {
+  margin-top: 24px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 11px;
+  color: var(--color-blue-med);
+}
+.jr-legend__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.jr-legend__swatch {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.jr-legend__tip {
+  color: var(--color-blue-med-light);
+  margin-left: 8px;
+}
+
+/* ─── Loading / error ─────────────────────────────────────────────────────── */
+.jr-loading,
+.jr-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  box-sizing: border-box;
+  color: var(--color-primary);
+}
+.jr-error {
+  background: var(--color-red-light);
+  color: var(--color-red);
+}
+.jr-error__icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
